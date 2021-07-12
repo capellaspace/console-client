@@ -1,4 +1,4 @@
-# capella-console-client
+# 🛰️ capella-console-client 🐐
 Python SDK for api.capellaspace.com (search, order, download)
 
 
@@ -62,7 +62,9 @@ Contributions are very much welcomed and appreciated. Head over to the documenta
 
 
 ## License
-Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE). Copyright 2021 Capella Space.
+Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE)
+
+• Copyright 2021 • Capella Space •
 
 
 ## TODO

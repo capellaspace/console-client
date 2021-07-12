@@ -47,7 +47,14 @@ ALL_SUPPORTED_FIELDS = SUPPORTED_SEARCH_FIELDS | SUPPORTED_QUERY_FIELDS
 
 ALL_SUPPORTED_SORTBY = ALL_SUPPORTED_FIELDS | {"id"}
 
-OPERATOR_SUFFIXES = {"eq", "in", "gt", "gte", "lt", "lte" }  # , "startsWith", "endsWith"} not supported by current STAC server
+OPERATOR_SUFFIXES = {
+    "eq",
+    "in",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+}  # , "startsWith", "endsWith"} not supported by current STAC server
 
 
 STAC_PREFIXED_BY_QUERY_FIELDS = {
