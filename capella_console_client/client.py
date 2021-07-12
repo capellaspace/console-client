@@ -213,7 +213,7 @@ class CapellaConsoleClient:
             raise ValueError("Please provide stac_ids or items")
 
         if stac_ids is None:
-            stac_ids = [f["id"] for f in items]
+            stac_ids = [f["id"] for f in items]  # type: ignore
 
         logger.info(f"submitting order for {', '.join(stac_ids)}")
 
@@ -418,7 +418,7 @@ class CapellaConsoleClient:
             show_progress=show_progress,
         )
 
-        return by_stac_id
+        return by_stac_id  # type: ignore
 
     def download_product(
         self,

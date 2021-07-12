@@ -11,7 +11,7 @@ pip install capella-console-client
 ## Usage
 
 
-```python3
+```python
 from capella_console_client import CapellaConsoleClient
 from getpass import getpass
 

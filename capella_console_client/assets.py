@@ -16,7 +16,7 @@ from capella_console_client.exceptions import ConnectError
 @dataclass
 class DownloadRequest:
     url: str
-    local_path: Path = ""
+    local_path: Optional[Path] = None
     asset_key: str = "asset"
     stac_id: str = ""
 
@@ -197,7 +197,7 @@ def _register_progress_task(
     dl_request: DownloadRequest, progress: rich.progress.Progress, asset_size: int
 ) -> rich.progress.TaskID:
     file_name_str = str(dl_request.local_path)
-    if dl_request.local_path:
+    if dl_request.local_path and isinstance(dl_request.local_path, Path):
         file_name_str = dl_request.local_path.name
     download_task = progress.add_task(
         "Download", total=asset_size, filename=file_name_str

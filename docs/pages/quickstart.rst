@@ -42,4 +42,4 @@ Execute this snippet to authenticate with Capella's Console API and search, orde
 
 Intrigued? 
 
-Check out the many examples in :ref:`advanced` and the :ref:`api-reference`.
+Check out the many examples in :ref:`example_usage` and the :ref:`api-reference`.
