@@ -176,6 +176,11 @@ download single product
 
     # ⌛ like to watch progress bars? ⌛ - set show_progress = True in order to get feedback on download status (time remaining, transfer stats, ...)
     product_paths = client.download_product(assets_presigned, local_dir='/tmp', override=True, threaded=True, show_progress=True)
+
+
+Output
+.. code:: bash
+
     2021-06-21 20:28:16,734 - 🛰️  Capella Space 🐐 - INFO - downloading product CAPELLA_C03_SP_SLC_HH_20210621202423_20210621202425 to /tmp
     CAPELLA_C03_SP_SLC_HH_20210621202423_20210621202425.tif             ━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.7%  • 68.3/366.1 MB  • 8.4 MB/s  • 0:00:38
     CAPELLA_C03_SP_GEO_HH_20210621202413_20210621202435_preview.tif     ━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 34.4%  • 49.1/142.7 MB  • 8.7 MB/s  • 0:00:12

@@ -241,7 +241,7 @@ def test_get_collects_for_task_not_completed(test_client, auth_httpx_mock):
 @pytest.mark.parametrize("search_args,expected", get_search_test_cases())
 def test_search(search_args, expected, search_client):
     search_client.search(**search_args)
-    assert client._paginated_search.call_args.args[1] == expected
+    assert client._paginated_search.call_args[0][1] == expected
 
 
 def test_list_specific_order(test_client, auth_httpx_mock):
