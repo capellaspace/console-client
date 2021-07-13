@@ -27,7 +27,12 @@ client = CapellaConsoleClient(
 )
 
 # search
-capella_stac_items = client.search(constellation="capella", limit=1)
+capella_stac_items = client.search(
+    constellation="capella",
+    instrument_mode="spotlight",
+    product_type__in=["SLC", "GEO"],
+    limit=2
+)
 
 # order
 order_id = client.submit_order(items=capella_stac_items)
@@ -37,6 +42,7 @@ assets_presigned = client.get_presigned_assets(order_id)
 product_paths = client.download_products(
     assets_presigned, 
     local_dir='/tmp',
+    include=['thumbnail', 'raster', 'metadata'],
     override=True,
     threaded=True,
     show_progress=True

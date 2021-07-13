@@ -34,6 +34,11 @@ progress_bar = rich.progress.Progress(
 )
 
 
+def _flush_progress_bar(progress: rich.progress.Progress) -> None:
+    for task_id in progress.task_ids:
+        progress.remove_task(task_id)
+
+
 def _gather_download_requests(
     assets_presigned: Dict[str, Any],
     local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
@@ -107,6 +112,9 @@ def _perform_download(
     local_paths_by_key = {}
 
     with progress_bar as progress:
+
+        _flush_progress_bar(progress)
+
         # serially
         if not threaded:
             for dl_request in download_requests:
@@ -174,7 +182,7 @@ def _download_asset(
         with open(local_path, "wb") as f:
             with httpx.stream("GET", dl_request.url) as response:
                 if show_progress:
-                    download_task = _register_progress_task(
+                    download_task_id = _register_progress_task(
                         dl_request, progress, asset_size
                     )
 
@@ -183,13 +191,14 @@ def _download_asset(
 
                     if show_progress:
                         progress.update(
-                            download_task, completed=response.num_bytes_downloaded
+                            download_task_id, completed=response.num_bytes_downloaded
                         )
     except httpx.ConnectError as e:
         raise ConnectError(f"Could not connect to {dl_request.url}: {e}") from None
 
     if not show_progress:
         logger.info(f"successfully downloaded to {local_path}")
+
     return local_path
 
 
@@ -199,10 +208,10 @@ def _register_progress_task(
     file_name_str = str(dl_request.local_path)
     if dl_request.local_path and isinstance(dl_request.local_path, Path):
         file_name_str = dl_request.local_path.name
-    download_task = progress.add_task(
+    download_task_id = progress.add_task(
         "Download", total=asset_size, filename=file_name_str
     )
-    return download_task
+    return download_task_id
 
 
 def _get_filename(pre_signed_url: str) -> str:

@@ -17,9 +17,7 @@ class CapellaConsoleSession(httpx.Client):
             *args,
             event_hooks={"response": event_hooks},
             timeout=DEFAULT_TIMEOUT,
-            headers={
-                "Content-Type": "application/json; charset=utf-8",
-            },
+            headers={"Content-Type": "application/json; charset=utf-8",},
             **kwargs,
         )
         self.customer_id = None

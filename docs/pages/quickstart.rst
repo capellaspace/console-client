@@ -24,7 +24,12 @@ Execute this snippet to authenticate with Capella's Console API and search, orde
   )
 
   # search
-  capella_stac_items = client.search(constellation="capella", limit=1)
+  capella_stac_items = client.search(
+    constellation="capella",
+    instrument_mode="spotlight",
+    product_type__in=["SLC", "GEO"],
+    limit=2
+  )
 
   # order
   order_id = client.submit_order(items=capella_stac_items)

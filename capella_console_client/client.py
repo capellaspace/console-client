@@ -35,6 +35,24 @@ class AuthMethod(Enum):
 
 
 class CapellaConsoleClient:
+    """
+    API client for https://api.capellaspace.com.
+
+    API docs: https://docs.capellaspace.com/accessing-data/searching-for-data
+
+    Args:
+        email: email on api.capellaspace.com
+        password: password on api.capellaspace.com
+        token: valid JWT access token
+        verbose: flag to enable verbose logging
+        no_token_check: does not check if provided JWT token is valid
+
+    Note
+
+    * provide either email and password or a valid jwt token for authentication
+    * basic  take precedence over token if both provided
+    """
+
     def __init__(
         self,
         email: Optional[str] = None,
@@ -44,22 +62,6 @@ class CapellaConsoleClient:
         no_token_check: bool = False,
         base_url: Optional[str] = CONSOLE_API_URL,
     ):
-        """
-        API client for https://api.capellaspace.com.
-
-        API docs: https://docs.capellaspace.com/accessing-data/searching-for-data
-
-        Args:
-            email: email on console.capellaspace.com.
-            password: password on console.capellaspace.com.
-            token: valid JWT access token
-            verbose: flag to enable verbose logging
-            no_token_check: does not check if provided JWT token is valid
-
-        Note:
-        * provide either email and password or a valid jwt token for authentication
-        * basic  take precedence over token if both provided
-        """
 
         self.verbose = verbose
         if verbose:
@@ -71,12 +73,11 @@ class CapellaConsoleClient:
         self._sesh = CapellaConsoleSession(base_url=base_url, verbose=verbose)
         self._authenticate(email, password, token, no_token_check)
 
+        suffix = f"({self.base_url})" if self.base_url != CONSOLE_API_URL else ""
         if no_token_check:
-            logger.info(f"successfully authenticated ({self.base_url})")
+            logger.info(f"successfully authenticated {suffix}")
         else:
-            logger.info(
-                f"successfully authenticated as {self._sesh.email} ({self.base_url})"
-            )
+            logger.info(f"successfully authenticated as {self._sesh.email} {suffix}")
 
     def _authenticate(
         self,
@@ -119,6 +120,9 @@ class CapellaConsoleClient:
     def whoami(self) -> Dict[str, Any]:
         """
         display user info
+
+        Returns:
+            Dict[str, Any]: return of GET /user
         """
         with self._sesh as session:
             resp = session.get("/user")
@@ -128,6 +132,12 @@ class CapellaConsoleClient:
     def get_task(self, tasking_request_id: str) -> Dict[str, Any]:
         """
         fetch task for the specified `tasking_request_id`
+
+        Args:
+            tasking_request_id: tasking request UUID
+
+        Returns:
+            Dict[str, Any]: task metadata
         """
         with self._sesh as session:
             task_response = session.get(f"/task/{tasking_request_id}")
@@ -143,7 +153,13 @@ class CapellaConsoleClient:
 
     def get_collects_for_task(self, task: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        get all the collects associated with this task (see :func:`.get_task`)
+        get all the collects associated with this task (see :py:meth:`get_task()`)
+
+        Args:
+            task: task metadata - return of :py:meth:`get_task()`
+
+        Returns:
+            List[Dict[str, Any]]: collect metadata associated
         """
         tasking_request_id = task["properties"]["taskingrequestId"]
         if not self.is_task_completed(task):
@@ -158,7 +174,7 @@ class CapellaConsoleClient:
 
     # ORDER
     def list_orders(
-        self, order_ids: List[str] = None, is_active: bool = False
+        self, order_ids: Optional[List[str]] = None, is_active: Optional[bool] = False
     ) -> List[Dict[str, Any]]:
         """
         list orders
@@ -166,6 +182,9 @@ class CapellaConsoleClient:
         Args:
             order_ids: list only specific orders
             is_active: list only active (non-expired) orders
+
+        Returns:
+            List[Dict[str, Any]]: metadata of orders
         """
         orders = []
 
@@ -200,19 +219,25 @@ class CapellaConsoleClient:
         check_active_orders: bool = False,
     ) -> str:
         """
-        submit an order by STAC IDs
+        submit an order by `stac_ids` of `items`.
+
+        Note:
+        `stac_ids` takes precedence if both `stac_ids` and `items` are provided
 
         Args:
             stac_ids: STAC IDs that active order should include
-            items: STAC items, returned by :func:`.search`
+            items: STAC items, returned by :py:meth:`search`
             check_active_orders: check if any active order containing ALL `stac_ids` is available
                 if True: returns that order ID
                 if False: submits a new order and returns new order ID
+
+            Returns:
+                str: order UUID
         """
-        if stac_ids is None and items is None:
+        if not stac_ids and not items:
             raise ValueError("Please provide stac_ids or items")
 
-        if stac_ids is None:
+        if not stac_ids:
             stac_ids = [f["id"] for f in items]  # type: ignore
 
         logger.info(f"submitting order for {', '.join(stac_ids)}")
@@ -256,8 +281,9 @@ class CapellaConsoleClient:
         logger.info(f"successfully submitted order {order_id}")
         return order_id  # type: ignore
 
-    def _find_active_order(self, stac_ids: List[str]) -> Union[str, None]:
-        """find active order containing ALL specified `stac_ids`
+    def _find_active_order(self, stac_ids: List[str]) -> Optional[str]:
+        """
+        find active order containing ALL specified `stac_ids`
 
         Args:
             stac_ids: STAC IDs that active order should include
@@ -289,8 +315,26 @@ class CapellaConsoleClient:
         get presigned assets hrefs for all products contained in order
 
         Args:
-            order_id: active order ID (see :func:`.submit_order`)
+            order_id: active order ID (see :py:meth:`submit_order`)
             stac_ids: filter presigned assets by STAC IDs
+
+        Returns:
+            List[Dict[str, Any]]: List of assets of respective product, e.g.
+
+            .. highlight:: python
+            .. code-block:: python
+
+                [
+                    {
+                        "<asset_type>": {
+                            "title": ...,
+                            "href": ...,
+                            "type": ...
+                        },
+                        ...
+                    }
+                ]
+
         """
         logger.info(f"getting presigned assets for order {order_id}")
         with self._sesh as session:
@@ -319,10 +363,10 @@ class CapellaConsoleClient:
         downloads a presigned asset url to disk
 
         Args:
-            pre_signed_url: presigned asset url, see :func:`.get_presigned_assets`
+            pre_signed_url: presigned asset url, see :py:meth:`get_presigned_assets`
             local_path: local output path - file is written to OS's temp dir if not provided
             override: override already existing `local_path`
-            show_progress: show download status via progressbar
+            show_progress: show download status progressbar
         """
         dl_request = DownloadRequest(
             url=pre_signed_url,
@@ -344,9 +388,9 @@ class CapellaConsoleClient:
         download all products associated with a tasking request
 
         Args:
-            tasking_request_id: taskingRequestId of the task request you wish to download all associated products for
+            tasking_request_id: tasking request UUID of the task request you wish to download all associated products for
 
-        see :func:`.download_products` for a description of the optional function arguments.
+        see :py:meth:`download_products` for a description of the optional function arguments.
         """
         task = self.get_task(tasking_request_id)
 
@@ -376,9 +420,10 @@ class CapellaConsoleClient:
 
         Args:
             assets_presigned: mapping of presigned assets of multiple products
-            local_dir: local directory where assets are saved to
+            local_dir: local directory where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
             exclude: black-listing, which assets should be excluded, e.g. ["HH", "thumbnail"] => download ALL except HH and thumbnail assets
+
                      NOTE: explicit DENY overrides explicit ALLOW
 
                      asset choices:
@@ -387,7 +432,20 @@ class CapellaConsoleClient:
 
             override: override already existing
             threaded: download assets of product in multiple threads
-            show_progress: show download status via progressbar
+            show_progress: show download status progressbar
+
+        Returns:
+            Dict[str, Dict[str, Path]]: Local paths of downloaded files keyed by STAC id and asset type, e.g.
+
+            .. highlight:: python
+            .. code-block:: python
+
+                {
+                    "stac_id_1": {
+                        "<asset_type>": <path-to-asset>,
+                        ...
+                    }
+                }
         """
         local_dir = Path(local_dir)
 
@@ -435,7 +493,7 @@ class CapellaConsoleClient:
 
         Args:
             assets_presigned: mapping of presigned assets of product
-            local_dir: local directory where assets are saved to
+            local_dir: local directory where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
             exclude: black-listing, which assets should be excluded, e.g. ["HH", "thumbnail"] => download ALL except HH and thumbnail assets
                      NOTE: explicit DENY overrides explicit ALLOW
@@ -447,7 +505,18 @@ class CapellaConsoleClient:
 
             override: override already existing
             threaded: download assets of product in multiple threads
-            show_progress: show download status via progressbar
+            show_progress: show download status progressbar
+
+        Returns:
+            Dict[str, Path]: Local paths of downloaded files keyed by asset type, e.g.
+
+            .. highlight:: python
+            .. code-block:: python
+
+                {
+                    "<asset_type>": <path-to-asset>,
+                    ...
+                }
         """
         download_requests = _gather_download_requests(
             assets_presigned, local_dir, include, exclude
@@ -464,44 +533,38 @@ class CapellaConsoleClient:
     # SEARCH
     def search(self, **kwargs) -> List[Dict[str, Any]]:
         """
-        paginated search for up to 500 matches (if no higher limit specified)
+        paginated search for up to 500 matches (if no bigger limit specified)
 
         Find more information at https://docs.capellaspace.com/accessing-data/searching-for-data
 
         supported search filters:
-         • ids: List[str], e.g. ["CAPELLA_C02_SP_GEO_HH_20201109060434_20201109060437"])
+
          • bbox: List[float, float, float, float], e.g. [12.35, 41.78, 12.61, 42]
-         • limit: int, default: 500
-         • intersects: geometry component of the GeoJSON, e.g. {'type': 'Point', 'coordinates': [-113.1, 51.1]}
-         • collections: List[str], e.g. ["capella-open-data"]
-
-
-        for more information see STAC specs:
-            - https://github.com/radiantearth/stac-spec/blob/master/item-spec/json-schema/instrument.json
-            - https://github.com/radiantearth/stac-spec/blob/master/extensions/sar/json-schema/schema.json
-            - https://github.com/radiantearth/stac-spec/blob/master/extensions/view/json-schema/schema.json
-            - https://github.com/radiantearth/stac-spec/blob/master/extensions/sat/json-schema/schema.json
-
-        supported fields:
+         • billable_area: Billable Area in m^2
          • center_frequency: number, Center Frequency (GHz)
+         • collections: List[str], e.g. ["capella-open-data"]
          • collect_id: str, capella internal collect-uuid, e.g. '78616ccc-0436-4dc2-adc8-b0a1e316b095'
          • constellation: str, e.g. "capella"
          • datetime: str, e.g. "2020-02-12T00:00:00Z"
          • frequency_band: str, Frequency band, one of "P", "L", "S", "C", "X", "Ku", "K", "Ka"
+         • ids: List[str], e.g. `["CAPELLA_C02_SP_GEO_HH_20201109060434_20201109060437"]`
+         • intersects: geometry component of the GeoJSON, e.g. {'type': 'Point', 'coordinates': [-113.1, 51.1]}
          • incidence_angle: number, Center incidence angle, between 0 and 90
          • instruments: list
          • instrument_mode: str, Instrument mode, one of "spotlight", "stripmap", "sliding_spotlight"
+         • limit: int, default: 500
          • look_angle: number, e.g. 10
          • looks_azimuth: int, e.g. 5
          • looks_equivalent_number: int, Equivalent number of looks (ENL), e.g. 3
          • looks_range: int, e.g. 5
          • observation_direction: str, Antenna pointing direction, one of "right", "left"
          • orbit_state: str, Orbit State, one of "ascending", "descending"
-         • platform: str, e.g. "capella-2"
-         • product_category: str, one of "standard", "custom", "extended"
+         • orbital_plane: int, Orbital Plane, inclination angle of orbit
          • pixel_spacing_azimuth: number, Pixel spacing azimuth (m), e.g. 0.5
          • pixel_spacing_range: number, Pixel spacing range (m), e.g. 0.5
+         • platform: str, e.g. "capella-2"
          • polarizations: str, one of "HH", "VV", "HV", "VH"
+         • product_category: str, one of "standard", "custom", "extended"
          • product_type: str, one of "SLC", "GEO"
          • resolution_azimuth: float, Resolution azimuth (m), e.g. 0.5
          • resolution_ground_range: float, Resolution ground range (m), e.g. 0.5
@@ -519,6 +582,8 @@ class CapellaConsoleClient:
         sorting:
         • sortby: List[str] - must be supported fields, e.g. ["+datetime"]
 
+        Returns:
+            List[Dict[str, Any]]: STAC items matched
         """
         payload = _build_search_payload(**kwargs)
         logger.info(f"searching catalog with payload {payload}")

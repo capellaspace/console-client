@@ -193,8 +193,7 @@ def test_chatty_client(auth_httpx_mock):
 @pytest.fixture
 def authed_tasking_request_mock(auth_httpx_mock):
     auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/task/abc",
-        json=get_mock_responses("/task/abc"),
+        url=f"{CONSOLE_API_URL}/task/abc", json=get_mock_responses("/task/abc"),
     )
     yield auth_httpx_mock
 
@@ -227,8 +226,7 @@ def test_get_collects_for_task(test_client, authed_tasking_request_mock):
 
 def test_get_collects_for_task_not_completed(test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/task/def",
-        json=get_mock_responses("/task/def"),
+        url=f"{CONSOLE_API_URL}/task/def", json=get_mock_responses("/task/def"),
     )
 
     # we should get task 'def', see that it's not completed, and throw an exception
@@ -344,9 +342,7 @@ def test_submit_order_previously_ordered(non_expired_order_mock, httpx_mock):
 
 def test_submit_order_invalid_stac_id(test_client, httpx_mock):
     httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/catalog/search",
-        method="POST",
-        json={"features": []},
+        url=f"{CONSOLE_API_URL}/catalog/search", method="POST", json={"features": []},
     )
 
     with pytest.raises(NoValidStacIdsError):
@@ -650,20 +646,17 @@ def test_product_download_exclude_overrides_include(test_client):
 
 def test_download_products_for_task(auth_httpx_mock):
     auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/task/abc",
-        json=get_mock_responses("/task/abc"),
+        url=f"{CONSOLE_API_URL}/task/abc", json=get_mock_responses("/task/abc"),
     )
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/collects/list/abc",
         json=get_mock_responses("/collects/list/abc"),
     )
     auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids(),
+        url=f"{CONSOLE_API_URL}/catalog/search", json=search_catalog_get_stac_ids(),
     )
     auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders",
-        json=post_mock_responses("/submitOrder"),
+        url=f"{CONSOLE_API_URL}/orders", json=post_mock_responses("/submitOrder"),
     )
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/1/download",

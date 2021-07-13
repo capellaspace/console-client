@@ -325,9 +325,7 @@ def search_catalog_get_stac_ids() -> Dict[str, Any]:
 
 def post_mock_responses(endpoint: str) -> Dict[str, Any]:
     return {
-        "/token": {
-            "accessToken": "MOCK_TOKEN",
-        },
+        "/token": {"accessToken": "MOCK_TOKEN",},
         "/submitOrder": {
             "userId": "MOCK_ID",
             "organizationId": "MOCK_ORG_ID",
@@ -382,38 +380,20 @@ def get_search_test_cases():
             {"query": {"constellation": {"eq": "other"}}},
             id="filter_invalid_kwargs",
         ),
+        pytest.param(dict(constellation__INVALID="other"), {}, id="invalid_op",),
         pytest.param(
-            dict(constellation__INVALID="other"),
-            {},
-            id="invalid_op",
-        ),
-        pytest.param(
-            dict(
-                product_type=["SLC", "GEO"],
-            ),
-            {
-                "query": {
-                    "sar:product_type": {"in": ["SLC", "GEO"]},
-                },
-            },
+            dict(product_type=["SLC", "GEO"],),
+            {"query": {"sar:product_type": {"in": ["SLC", "GEO"]},},},
             id="in_implicit",
         ),
         pytest.param(
-            dict(
-                product_type__in=["SLC", "GEO"],
-            ),
-            {
-                "query": {
-                    "sar:product_type": {"in": ["SLC", "GEO"]},
-                },
-            },
+            dict(product_type__in=["SLC", "GEO"],),
+            {"query": {"sar:product_type": {"in": ["SLC", "GEO"]},},},
             id="in_explicit",
         ),
         pytest.param(
             dict(look_angle__gte=0.9, look_angle__lte=12.0),
-            {
-                "query": {"view:look_angle": {"gte": 0.9, "lte": 12.0}},
-            },
+            {"query": {"view:look_angle": {"gte": 0.9, "lte": 12.0}},},
             id="gte_lte",
         ),
         pytest.param(
@@ -433,16 +413,12 @@ def get_search_test_cases():
         # ),
         pytest.param(
             dict(sortby="id"),
-            {
-                "sortby": [{"field": "id", "direction": "asc"}],
-            },
+            {"sortby": [{"field": "id", "direction": "asc"}],},
             id="singleSortby",
         ),
         pytest.param(
             dict(sortby="-id"),
-            {
-                "sortby": [{"field": "id", "direction": "desc"}],
-            },
+            {"sortby": [{"field": "id", "direction": "desc"}],},
             id="singleSortbyDesc",
         ),
         pytest.param(

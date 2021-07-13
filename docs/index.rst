@@ -15,7 +15,7 @@
   :alt: Supported Python Versions
 
 
-🛰️ 🐐 **capella_console_client** is the Python SDK for `api.capellaspace.com <https://api.capellaspace.com>`_ (search, order, download - `see API docs <https://docs.capellaspace.com/api/data-access>`_) 🛰️ 🐐
+**capella-console-client** is the Python SDK for `api.capellaspace.com <https://api.capellaspace.com>`_ (search, order, download - `see API docs <https://docs.capellaspace.com/api/data-access>`_)
 
 How does this help me? Check out the :ref:`quickstart`.
 

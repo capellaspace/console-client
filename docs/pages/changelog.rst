@@ -117,3 +117,4 @@ History
 * open sourcing (poetry packaging, docs, lint)
 * adding `items` to `submit_order`
 * whitelisting additional search fields
+* flush progressbar on bulk download
