@@ -401,6 +401,11 @@ def test_submit_order_items(test_client, httpx_mock):
     }
 
 
+def test_submit_order_missing_input(test_client):
+    with pytest.raises(ValueError):
+        test_client.submit_order()
+
+
 def test_get_presigned_assets(auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/1/download",
@@ -549,6 +554,16 @@ def test_product_download_threaded_within_dir(download_client):
         # within temp_dir
         for p in paths:
             assert p.relative_to(temp_dir)
+
+
+def test_download_product_missing_input(test_client):
+    with pytest.raises(ValueError):
+        test_client.download_product()
+
+
+def test_download_products_missing_input(test_client):
+    with pytest.raises(ValueError):
+        test_client.download_products()
 
 
 def test_products_download_threaded_within_dir(download_client):

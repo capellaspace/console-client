@@ -38,9 +38,8 @@ capella_stac_items = client.search(
 order_id = client.submit_order(items=capella_stac_items)
 
 # download
-assets_presigned = client.get_presigned_assets(order_id)
 product_paths = client.download_products(
-    assets_presigned, 
+    order_id=order_id, 
     local_dir='/tmp',
     include=['thumbnail', 'raster', 'metadata'],
     override=True,

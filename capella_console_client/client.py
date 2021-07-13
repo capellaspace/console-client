@@ -1,7 +1,7 @@
 import logging
 
 from datetime import datetime
-from typing import List, Dict, Any, Union, Optional
+from typing import List, Dict, Any, Union, Optional, no_type_check
 from collections import defaultdict
 from pathlib import Path
 import tempfile
@@ -25,6 +25,7 @@ from capella_console_client.assets import (
     DownloadRequest,
     _gather_download_requests,
     _get_asset_bytesize,
+    _derive_stac_id,
 )
 from capella_console_client.search import _build_search_payload, _paginated_search
 
@@ -407,7 +408,8 @@ class CapellaConsoleClient:
 
     def download_products(
         self,
-        assets_presigned: List[Dict[str, Any]],
+        assets_presigned: Optional[List[Dict[str, Any]]] = None,
+        order_id: Optional[str] = None,
         local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
         include: Union[List[str], str] = None,
         exclude: Union[List[str], str] = None,
@@ -419,7 +421,11 @@ class CapellaConsoleClient:
         download all assets of multiple products
 
         Args:
-            assets_presigned: mapping of presigned assets of multiple products
+            assets_presigned: mapping of presigned assets of multiple products, see :py:meth:`get_presigned_assets`
+            order_id: optionally provide `order_id` instead of `assets_presigned`, see :py:meth:`submit_order`
+
+                      NOTE: assets_presigned takes precedence if both order_id and assets_presigned are provided
+
             local_dir: local directory where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
             exclude: black-listing, which assets should be excluded, e.g. ["HH", "thumbnail"] => download ALL except HH and thumbnail assets
@@ -448,6 +454,12 @@ class CapellaConsoleClient:
                 }
         """
         local_dir = Path(local_dir)
+
+        if not assets_presigned and not order_id:
+            raise ValueError("please provide either assets_presigned or order_id")
+
+        if not assets_presigned:
+            assets_presigned = self.get_presigned_assets(order_id)  # type: ignore
 
         suffix = "s" if len(assets_presigned) > 1 else ""
         logger.info(f"downloading {len(assets_presigned)} product{suffix}")
@@ -480,7 +492,8 @@ class CapellaConsoleClient:
 
     def download_product(
         self,
-        assets_presigned: Dict[str, Any],
+        assets_presigned: Optional[Dict[str, Any]] = None,
+        order_id: Optional[str] = None,
         local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
         include: Union[List[str], str] = None,
         exclude: Union[List[str], str] = None,
@@ -492,7 +505,11 @@ class CapellaConsoleClient:
         download all assets of a product
 
         Args:
-            assets_presigned: mapping of presigned assets of product
+            assets_presigned: mapping of presigned assets of multiple products, see :py:meth:`get_presigned_assets`
+            order_id: optionally provide `order_id` instead of `assets_presigned`, see :py:meth:`submit_order`
+
+                      NOTE: assets_presigned takes precedence if both order_id and assets_presigned are provided
+
             local_dir: local directory where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
             exclude: black-listing, which assets should be excluded, e.g. ["HH", "thumbnail"] => download ALL except HH and thumbnail assets
@@ -518,9 +535,13 @@ class CapellaConsoleClient:
                     ...
                 }
         """
-        download_requests = _gather_download_requests(
-            assets_presigned, local_dir, include, exclude
-        )
+        if not assets_presigned and not order_id:
+            raise ValueError("please provide either assets_presigned or order_id")
+
+        if not assets_presigned:
+            assets_presigned = self._get_first_presigned_from_order(order_id)
+
+        download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)  # type: ignore
 
         return _perform_download(
             download_requests=download_requests,
@@ -529,6 +550,16 @@ class CapellaConsoleClient:
             verbose=self.verbose,
             show_progress=show_progress,
         )
+
+    @no_type_check
+    def _get_first_presigned_from_order(self, order_id: str) -> Dict[str, Any]:
+        assets_presigned = self.get_presigned_assets(order_id)
+        if len(assets_presigned) > 1:
+            logger.warning(
+                f"order {order_id} contains {len(assets_presigned)} products - using first one ({_derive_stac_id(assets_presigned)})"
+            )
+            assets_presigned = assets_presigned[0]
+        return assets_presigned
 
     # SEARCH
     def search(self, **kwargs) -> List[Dict[str, Any]]:

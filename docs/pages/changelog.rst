@@ -111,10 +111,11 @@ History
 * re-adding client.get_asset_bytesize
 
 
-0.7.0 (2021-07-12)
+0.7.0 (2021-07-13)
 ------------------
 
 * open sourcing (poetry packaging, docs, lint)
 * adding `items` to `submit_order`
 * whitelisting additional search fields
 * flush progressbar on bulk download
+* directly passing in `order_id` into `download_product[s]`

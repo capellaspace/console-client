@@ -25,20 +25,20 @@ Execute this snippet to authenticate with Capella's Console API and search, orde
 
   # search
   capella_stac_items = client.search(
-    constellation="capella",
-    instrument_mode="spotlight",
-    product_type__in=["SLC", "GEO"],
-    limit=2
+      constellation="capella",
+      instrument_mode="spotlight",
+      product_type__in=["SLC", "GEO"],
+      limit=2
   )
 
   # order
   order_id = client.submit_order(items=capella_stac_items)
 
   # download
-  assets_presigned = client.get_presigned_assets(order_id)
   product_paths = client.download_products(
-      assets_presigned, 
+      order_id=order_id, 
       local_dir='/tmp',
+      include=['thumbnail', 'raster', 'metadata'],
       override=True,
       threaded=True,
       show_progress=True

@@ -48,11 +48,7 @@ def _gather_download_requests(
     local_dir = Path(local_dir)
     assert local_dir.exists(), f"{local_dir} does not exist"
 
-    raster_asset = assets_presigned.get("HH")
-    if raster_asset is None:
-        raster_asset = assets_presigned["VV"]
-
-    stac_id = _get_stac_id(raster_asset["href"])
+    stac_id = _derive_stac_id(assets_presigned)
 
     logger.info(f"downloading product {stac_id} to {local_dir}")
     if include:
@@ -85,9 +81,13 @@ def _gather_download_requests(
     return download_requests
 
 
-def _get_stac_id(pre_signed_url: str) -> str:
+def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
+    raster_asset = assets_presigned.get("HH")
+    if raster_asset is None:
+        raster_asset = assets_presigned["VV"]
+
     STAC_ID_REGEX = re.compile("^.*(CAPELLA_C\\d{2}_\\w+_\\w+_\\d{14}_\\d{14}).*$")
-    return STAC_ID_REGEX.findall(pre_signed_url)[0]
+    return STAC_ID_REGEX.findall(raster_asset["href"])[0]
 
 
 def _prep_include_exclude(filter_stmnt: Union[str, List[str]]) -> List[str]:
@@ -172,7 +172,7 @@ def _download_asset(
         asset_size = _get_asset_bytesize(dl_request.url)
         suffix += f"({_sizeof_fmt(asset_size)})"
     except Exception:
-        logger.warning(f"Couldn't derive size of {local_path.name} ... that's ok")
+        # logger.warning(f"Couldn't derive size of {local_path.name} ... that's ok")
         asset_size = -1
 
     if not show_progress:
