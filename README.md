@@ -1,4 +1,12 @@
 # 🛰️ capella-console-client 🐐
+
+[![Version](https://img.shields.io/pypi/v/capella-console-client.svg)](https://pypi.org/project/capella-console-client/)
+[![License](https://img.shields.io/pypi/l/capella-console-client.svg)](#)
+[![CI](https://github.com/capellaspace/console-client/workflows/ci.yml/badge.svg)](#)
+[![Coverage](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)
+[![Supported Python Versions](https://img.shields.io/pypi/pyversions/capella-console-client.svg)](https://pypi.org/project/capella-console-client/)
+[![Documentation](https://readthedocs.org/projects/capella-console-client/badge/?version=latest)](https://capella-console-client.readthedocs.io/en/latest/?badge=latest)
+
 Python SDK for api.capellaspace.com (search, order, download)
 
 
