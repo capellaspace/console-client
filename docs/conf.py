@@ -1,7 +1,5 @@
-import json
 import os
 import sys
-import traceback
 
 sys.path.insert(0, os.path.abspath("../"))
 from capella_console_client.version import __version__

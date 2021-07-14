@@ -28,6 +28,7 @@ from capella_console_client.assets import (
     _derive_stac_id,
 )
 from capella_console_client.search import _build_search_payload, _paginated_search
+from capella_console_client.validate import _validate_uuid
 
 
 class AuthMethod(Enum):
@@ -175,13 +176,13 @@ class CapellaConsoleClient:
 
     # ORDER
     def list_orders(
-        self, order_ids: Optional[List[str]] = None, is_active: Optional[bool] = False
+        self, *order_ids: Optional[str], is_active: Optional[bool] = False
     ) -> List[Dict[str, Any]]:
         """
         list orders
 
         Args:
-            order_ids: list only specific orders
+            order_id: list only specific orders (variadic, specify multiple)
             is_active: list only active (non-expired) orders
 
         Returns:
@@ -189,11 +190,16 @@ class CapellaConsoleClient:
         """
         orders = []
 
+        if order_ids:
+            for order_id in order_ids:
+                _validate_uuid(order_id)
+
         # prefilter non expired
         if is_active:
             orders = _get_non_expired_orders(session=self._sesh)
             if order_ids:
-                orders = [o for o in orders if o["orderId"] in order_ids]
+                set_order_ids = set(order_ids)
+                orders = [o for o in orders if o["orderId"] in set_order_ids]
         else:
             # list all orders
             if not order_ids:
@@ -213,11 +219,30 @@ class CapellaConsoleClient:
 
         return orders
 
+    def get_stac_items_of_order(
+        self, order_id: str, ids_only: bool = False
+    ) -> Union[List[str], List[Dict[str, Any]]]:
+        """
+        get stac items of an existing order
+
+        Args:
+            order_id: order id
+        """
+        _validate_uuid(order_id)
+        order_meta = self.list_orders(order_id)[0]
+
+        stac_ids = [item["granuleId"] for item in order_meta["items"]]
+        if ids_only:
+            return stac_ids
+
+        return self.search(ids=stac_ids)
+
     def submit_order(
         self,
         stac_ids: Optional[List[str]] = None,
         items: Optional[List[Dict[str, Any]]] = None,
         check_active_orders: bool = False,
+        omit_search: bool = False,
     ) -> str:
         """
         submit an order by `stac_ids` of `items`.
@@ -231,7 +256,7 @@ class CapellaConsoleClient:
             check_active_orders: check if any active order containing ALL `stac_ids` is available
                 if True: returns that order ID
                 if False: submits a new order and returns new order ID
-
+            omit_search: omit search to ensure provided STAC IDs are valid - only works if `items` are provided
             Returns:
                 str: order UUID
         """
@@ -241,14 +266,21 @@ class CapellaConsoleClient:
         if not stac_ids:
             stac_ids = [f["id"] for f in items]  # type: ignore
 
-        logger.info(f"submitting order for {', '.join(stac_ids)}")
-
         if check_active_orders:
             order_id = self._find_active_order(stac_ids)
             if order_id is not None:
+                logger.info(f"found active order {order_id}")
                 return order_id
 
-        stac_records = self.search(ids=stac_ids)
+        logger.info(f"submitting order for {', '.join(stac_ids)}")
+        if stac_ids and not omit_search:
+            stac_records = self.search(ids=stac_ids)
+        else:
+            if omit_search and not items:
+                logger.warning(
+                    "setting omit_search=True only works in combination providing items instead of stac_ids"
+                )
+            stac_records = items  # type: ignore
 
         if not stac_records:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
@@ -337,6 +369,7 @@ class CapellaConsoleClient:
                 ]
 
         """
+        _validate_uuid(order_id)
         logger.info(f"getting presigned assets for order {order_id}")
         with self._sesh as session:
             res_dl = session.get(f"/orders/{order_id}/download")
@@ -416,6 +449,7 @@ class CapellaConsoleClient:
         override: bool = False,
         threaded: bool = False,
         show_progress: bool = False,
+        flat: bool = True,
     ) -> Dict[str, Dict[str, Path]]:
         """
         download all assets of multiple products
@@ -439,6 +473,11 @@ class CapellaConsoleClient:
             override: override already existing
             threaded: download assets of product in multiple threads
             show_progress: show download status progressbar
+            flat: all downloaded assets are downloaded directly to `local_dir` by default
+                  set `flat` to False in order to save the respective product assets in separate directory, named after the STAC id, e.g.
+                    /tmp/<stac_id_1>/<stac_id_1>.tif
+                    /tmp/<stac_id_2>/<stac_id_2>.tif
+                    ...
 
         Returns:
             Dict[str, Dict[str, Path]]: Local paths of downloaded files keyed by STAC id and asset type, e.g.
@@ -459,6 +498,7 @@ class CapellaConsoleClient:
             raise ValueError("please provide either assets_presigned or order_id")
 
         if not assets_presigned:
+            _validate_uuid(order_id)
             assets_presigned = self.get_presigned_assets(order_id)  # type: ignore
 
         suffix = "s" if len(assets_presigned) > 1 else ""
@@ -470,7 +510,7 @@ class CapellaConsoleClient:
         # gather
         for cur_assets in assets_presigned:
             cur_download_requests = _gather_download_requests(
-                cur_assets, local_dir, include, exclude
+                cur_assets, local_dir, include, exclude, flat
             )
 
             by_stac_id[cur_download_requests[0].stac_id] = {
@@ -539,6 +579,7 @@ class CapellaConsoleClient:
             raise ValueError("please provide either assets_presigned or order_id")
 
         if not assets_presigned:
+            _validate_uuid(order_id)
             assets_presigned = self._get_first_presigned_from_order(order_id)
 
         download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)  # type: ignore
@@ -572,7 +613,7 @@ class CapellaConsoleClient:
 
          • bbox: List[float, float, float, float], e.g. [12.35, 41.78, 12.61, 42]
          • billable_area: Billable Area in m^2
-         • center_frequency: number, Center Frequency (GHz)
+         • center_frequency: Union[int, float], Center Frequency (GHz)
          • collections: List[str], e.g. ["capella-open-data"]
          • collect_id: str, capella internal collect-uuid, e.g. '78616ccc-0436-4dc2-adc8-b0a1e316b095'
          • constellation: str, e.g. "capella"
@@ -580,19 +621,19 @@ class CapellaConsoleClient:
          • frequency_band: str, Frequency band, one of "P", "L", "S", "C", "X", "Ku", "K", "Ka"
          • ids: List[str], e.g. `["CAPELLA_C02_SP_GEO_HH_20201109060434_20201109060437"]`
          • intersects: geometry component of the GeoJSON, e.g. {'type': 'Point', 'coordinates': [-113.1, 51.1]}
-         • incidence_angle: number, Center incidence angle, between 0 and 90
-         • instruments: list
+         • incidence_angle: Union[int, float], Center incidence angle, between 0 and 90
+         • instruments: List[str], leveraged instruments, e.g. ["capella-radar-5"]
          • instrument_mode: str, Instrument mode, one of "spotlight", "stripmap", "sliding_spotlight"
          • limit: int, default: 500
-         • look_angle: number, e.g. 10
+         • look_angle: Union[int, float], e.g. 28.4
          • looks_azimuth: int, e.g. 5
          • looks_equivalent_number: int, Equivalent number of looks (ENL), e.g. 3
          • looks_range: int, e.g. 5
          • observation_direction: str, Antenna pointing direction, one of "right", "left"
          • orbit_state: str, Orbit State, one of "ascending", "descending"
          • orbital_plane: int, Orbital Plane, inclination angle of orbit
-         • pixel_spacing_azimuth: number, Pixel spacing azimuth (m), e.g. 0.5
-         • pixel_spacing_range: number, Pixel spacing range (m), e.g. 0.5
+         • pixel_spacing_azimuth: Union[int, float], Pixel spacing azimuth (m), e.g. 0.5
+         • pixel_spacing_range: Union[int, float], Pixel spacing range (m), e.g. 0.5
          • platform: str, e.g. "capella-2"
          • polarizations: str, one of "HH", "VV", "HV", "VH"
          • product_category: str, one of "standard", "custom", "extended"

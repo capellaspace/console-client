@@ -119,7 +119,13 @@ def _paginated_search(
             )
             payload["page"] = page
 
-    logger.info(f"found {len(features)} features")
+    len_feat = len(features)
+
+    if not len_feat:
+        logger.info(f"found no STAC items matching your query")
+    else:
+        multiple_suffix = "s" if len_feat > 1 else ""
+        logger.info(f"found {len(features)} STAC item{multiple_suffix}")
     return features
 
 

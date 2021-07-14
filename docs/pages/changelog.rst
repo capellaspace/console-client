@@ -119,3 +119,7 @@ History
 * whitelisting additional search fields
 * flush progressbar on bulk download
 * directly passing in `order_id` into `download_product[s]`
+* upon submitting order: omit search to ensure provided STAC IDs are valid in conjunction with provided items
+* routine to retrieve stac items of existing order
+* simplistic uuid validation
+* split up test suite

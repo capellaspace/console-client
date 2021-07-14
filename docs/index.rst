@@ -17,6 +17,16 @@
 
 **capella-console-client** is the Python SDK for `api.capellaspace.com <https://api.capellaspace.com>`_ (search, order, download - `see API docs <https://docs.capellaspace.com/api/data-access>`_)
 
+License
+=======
+
+.. code-block:: console
+
+  $ pip install capella-console-client
+
+For more detail see :ref:`installation`
+
+
 How does this help me? Check out the :ref:`quickstart`.
 
 License

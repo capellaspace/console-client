@@ -5,16 +5,15 @@ Contributor's Guide
 Steps for Submitting Code
 #########################
 Contributions are very much welcomed and appreciated. Every little bit of help
-counts, so do not hesitate!
+counts, so please do not hesitate!
 
 1. Check for open issues, or open a new issue to start some discussion around
-   a feature idea or bug. There is a `contributor friendly tag`_ for issues
-   that should be ideal for people who are not familiar with the codebase yet.
+   a feature idea or bug.
 
 2. Fork `the repository <https://github.com/capellaspace/console-client>`_ on GitHub to
    start making your changes.
 
-3. Write some tests that show the bug is fixed or that the feature works as
+3. Write tests that show the bug is fixed or that the feature works as
    expected.
 
 4. Ensure your code passes the style checks by running
@@ -38,7 +37,6 @@ counts, so do not hesitate!
 7. Send a pull request and bug the maintainer until it gets merged and
    published 🙂
 
-.. _`contributor friendly tag`: https://github.com/capellaspace/console-client/issues?direction=desc&labels=good+first+issue&page=1&sort=upd
 
 Bug Reports
 ###########
@@ -69,25 +67,3 @@ Create a New Release
 4. ``git tag`` the commit with the release version number.
 
 GitHub Actions will build and push the updated library to PyPi.
-
-Create a Command Line Recording
-*******************************
-
-1. Install the following tools:
-
-    .. code-block:: console
-
-      $ brew install asciinema
-      $ npm install --global asciicast2gif
-
-2. Start the recording with ``asciinema``:
-    .. code-block:: console
-
-      $ asciinema rec
-
-3. Do the thing you want to record.
-
-4. Convert to gif using ``asciicast2gif``:
-    .. code-block:: console
-
-      $ asciicast2gif -h 7 -w 120 -s 2 <recording> output.gif

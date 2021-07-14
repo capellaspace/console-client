@@ -12,27 +12,26 @@ Execute this snippet to authenticate with Capella's Console API and search, orde
   from capella_console_client import CapellaConsoleClient
   from getpass import getpass
 
-  # user creds
-  email = input('console user (user@capellaspace.com): ').strip() 
+  # user credentials on console.capellaspace.com
+  email = input('console user (user@email.com): ').strip() 
   pw = getpass('console password: ').strip()  
 
-  # auth
+  # authenticate
   client = CapellaConsoleClient(
       email=email, 
       password=pw,
       verbose=True
   )
 
-  # search
-  capella_stac_items = client.search(
-      constellation="capella",
+  # search 
+  stac_items = client.search(
       instrument_mode="spotlight",
       product_type__in=["SLC", "GEO"],
       limit=2
   )
 
   # order
-  order_id = client.submit_order(items=capella_stac_items)
+  order_id = client.submit_order(items=stac_items)
 
   # download
   product_paths = client.download_products(

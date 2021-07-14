@@ -44,11 +44,16 @@ def _gather_download_requests(
     local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
     include: Union[List[str], str] = None,
     exclude: Union[List[str], str] = None,
+    flat: bool = True,
 ) -> List[DownloadRequest]:
     local_dir = Path(local_dir)
     assert local_dir.exists(), f"{local_dir} does not exist"
 
     stac_id = _derive_stac_id(assets_presigned)
+
+    if flat:
+        local_dir /= stac_id
+        local_dir.mkdir(exist_ok=True)
 
     logger.info(f"downloading product {stac_id} to {local_dir}")
     if include:
@@ -70,12 +75,13 @@ def _gather_download_requests(
         if exclude and key in exclude:
             continue
 
+        local_path = local_dir / _get_filename(asset["href"])
         download_requests.append(
             DownloadRequest(
                 stac_id=stac_id,
                 asset_key=key,
                 url=asset["href"],
-                local_path=local_dir / _get_filename(asset["href"]),
+                local_path=local_path,
             )
         )
     return download_requests

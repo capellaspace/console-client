@@ -23,27 +23,26 @@ pip install capella-console-client
 from capella_console_client import CapellaConsoleClient
 from getpass import getpass
 
-# user creds
-email = input('console user (user@capellaspace.com): ').strip() 
+# user credentials on console.capellaspace.com
+email = input('console user (user@email.com): ').strip() 
 pw = getpass('console password: ').strip()  
 
-# auth
+# authenticate
 client = CapellaConsoleClient(
     email=email, 
     password=pw,
     verbose=True
 )
 
-# search
-capella_stac_items = client.search(
-    constellation="capella",
+# search 
+stac_items = client.search(
     instrument_mode="spotlight",
     product_type__in=["SLC", "GEO"],
     limit=2
 )
 
 # order
-order_id = client.submit_order(items=capella_stac_items)
+order_id = client.submit_order(items=stac_items)
 
 # download
 product_paths = client.download_products(
@@ -60,7 +59,7 @@ product_paths = client.download_products(
 
 ## Documentation
 
-Documentation for `capella_console_client` is available [here](TODO).
+The documentation for `capella_console_client` can be found [here](https://capella-console-client.readthedocs.io/en/latest/?badge=latest).
 
 ## Support
 
@@ -71,7 +70,7 @@ would be very helpful.
 
 ## Contributing
 
-Contributions are very much welcomed and appreciated. Head over to the documentation on [how to contribute](TODO).
+Contributions are very much welcomed and appreciated. See [how to contribute](https://capella-console-client.readthedocs.io/en/stable/pages/contributors.html) for more information.
 
 
 ## License
