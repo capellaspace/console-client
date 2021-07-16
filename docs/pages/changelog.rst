@@ -111,7 +111,7 @@ History
 * re-adding client.get_asset_bytesize
 
 
-0.7.0 (2021-07-16)
+0.7.0 (2021-07-12)
 ------------------
 
 * open sourcing (poetry packaging, docs, lint)
@@ -119,6 +119,10 @@ History
 * whitelisting additional search fields
 * flush progressbar on bulk download
 * directly passing in `order_id` into `download_product[s]`
+
+
+0.7.1 (2021-07-16)
+------------------
 * upon submitting order: omit search to ensure provided STAC IDs are valid in conjunction with provided items
 * routine to retrieve stac items of existing order
 * simplistic uuid validation
