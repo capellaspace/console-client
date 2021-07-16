@@ -26,7 +26,7 @@ counts, so please do not hesitate!
 
   .. code-block:: console
 
-    $ pytest --cov capella_console_client -v
+    $ pytest --cov capella_console_client --cov-report=html -sv
 
 6. Check the type checks pass by running
 
@@ -52,18 +52,3 @@ Feature Requests
 
 Feature requests should be made to the
 `issue tracker <https://github.com/capellaspace/console-client/issues>`_.
-
-Other
-#####
-
-Create a New Release
-********************
-
-1. Update the version number in `capella_console_client/version.py` and
-   `pyproject.toml`.
-
-2. Add a new section for the release to :ref:`changelog`.
-3. Commit these changes.
-4. ``git tag`` the commit with the release version number.
-
-GitHub Actions will build and push the updated library to PyPi.

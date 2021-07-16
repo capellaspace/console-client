@@ -26,13 +26,21 @@ Installation
 
 For more detail see :ref:`installation`
 
+Requirements
+============
 
-How does this help me? Check out the :ref:`quickstart`.
+* ``python >= 3.6``
+* ``capella-console-client`` requires an active account on `console.capellaspace.com <https://console.capellaspace.com>`_. Sign up for an account `here <https://console.capellaspace.com/user/register/>`_
+
+
+Usage
+=====
+
+Check out the :ref:`quickstart`, the many examples in :ref:`example_usage` and the :ref:`api-reference`.
 
 License
 =======
-Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_.
-Copyright 2021 Capella Space
+• Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_ • 2021 • Capella Space •
 
 .. toctree::
    :hidden:
@@ -42,7 +50,6 @@ Copyright 2021 Capella Space
    pages/example_usage
    pages/api_reference
    pages/support
-   Examples <https://github.com/capellaspace/console-client/tree/master/examples>
 
 .. toctree::
    :hidden:

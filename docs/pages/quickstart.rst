@@ -4,7 +4,7 @@
 Quickstart
 **********
 
-Execute this snippet to authenticate with Capella's Console API and **search, order and download** 2 **open-data** products.
+Execute the following snippet to authenticate with Capella's Console API and **search, order and download** 2 free **open-data** products.
 
 .. code:: python3
 
@@ -37,11 +37,9 @@ Execute this snippet to authenticate with Capella's Console API and **search, or
   product_paths = client.download_products(
       order_id=order_id, 
       local_dir='/tmp',
-      include=['thumbnail', 'raster', 'metadata'],
-      override=True,
       threaded=True,
       show_progress=True
   )
 
 
-**Does this look useful**? Check out the many examples in :ref:`example_usage` and the :ref:`api-reference`.
+**Interested?** Check out the many examples in :ref:`example_usage` and the :ref:`api-reference`.

@@ -1,9 +1,23 @@
 import base64
+from enum import Enum
+
+from typing import Optional
 
 import httpx
 
-from capella_console_client.config import DEFAULT_TIMEOUT
+from capella_console_client.config import DEFAULT_TIMEOUT, CONSOLE_API_URL
 from capella_console_client.hooks import log_on_4xx_5xx, translate_error_to_exception
+from capella_console_client.logconf import logger
+from capella_console_client.exceptions import (
+    CapellaConsoleClientError,
+    AuthenticationError,
+)
+from capella_console_client.version import __version__
+
+
+class AuthMethod(Enum):
+    BASIC = 1  # email/ password
+    TOKEN = 2  # JWT token
 
 
 class CapellaConsoleSession(httpx.Client):
@@ -19,13 +33,57 @@ class CapellaConsoleSession(httpx.Client):
             timeout=DEFAULT_TIMEOUT,
             headers={
                 "Content-Type": "application/json; charset=utf-8",
+                "User-Agent": f"capella-console-client/{__version__}",
             },
             **kwargs,
         )
         self.customer_id = None
         self.organization_id = None
 
-    def basic_auth(self, email: str, password: str):
+    def authenticate(
+        self,
+        email: Optional[str],
+        password: Optional[str],
+        token: Optional[str],
+        no_token_check: bool = False,
+    ) -> None:
+        try:
+            auth_method = self._get_auth_method(email, password, token)
+            if auth_method == AuthMethod.BASIC:
+                self._basic_auth(email, password)  # type: ignore
+            elif auth_method == AuthMethod.TOKEN:
+                self._token_auth_check(token, no_token_check)  # type: ignore
+        except CapellaConsoleClientError:
+            raise AuthenticationError(
+                f"Unable to authenticate with {self.base_url} ({auth_method}) - please check your credentials."
+            ) from None
+
+        suffix = f"({self.base_url})" if self.base_url != CONSOLE_API_URL else ""
+        if no_token_check:
+            logger.info(f"successfully authenticated {suffix}")
+        else:
+            logger.info(f"successfully authenticated as {self.email} {suffix}")
+
+    def _get_auth_method(
+        self, email: Optional[str], password: Optional[str], token: Optional[str]
+    ) -> AuthMethod:
+        basic_auth_provided = bool(email) and bool(password)
+        has_token = bool(token)
+
+        if not has_token and not basic_auth_provided:
+            raise ValueError("please provide either email and password or token")
+
+        if has_token and basic_auth_provided:
+            logger.info(
+                "both token and email/ password provided ... using email/ password for authentication"
+            )
+
+        auth_method = AuthMethod.BASIC
+        if not basic_auth_provided:
+            auth_method = AuthMethod.TOKEN
+        return auth_method
+
+    def _basic_auth(self, email: str, password: str):
         """
         authenticate with Console API
 
@@ -59,7 +117,7 @@ class CapellaConsoleSession(httpx.Client):
         self.organization_id = con["organizationId"]
         self.email = con["email"]
 
-    def token_auth_check(self, token: str, no_token_check: bool):
+    def _token_auth_check(self, token: str, no_token_check: bool):
         self._set_auth_header(token)
         if not no_token_check:
             self._cache_user_info()

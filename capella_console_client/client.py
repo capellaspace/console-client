@@ -5,7 +5,6 @@ from typing import List, Dict, Any, Union, Optional, no_type_check
 from collections import defaultdict
 from pathlib import Path
 import tempfile
-from enum import Enum
 
 import dateutil.parser  # type: ignore
 
@@ -33,11 +32,6 @@ from capella_console_client.validate import (
     _validate_uuid,
     _validate_stac_id_or_stac_items,
 )
-
-
-class AuthMethod(Enum):
-    BASIC = 1  # email/ password
-    TOKEN = 2  # JWT token
 
 
 class CapellaConsoleClient:
@@ -77,51 +71,8 @@ class CapellaConsoleClient:
         if verbose:
             logger.setLevel(logging.INFO)
 
-        self.base_url = base_url
         self._sesh = CapellaConsoleSession(base_url=base_url, verbose=verbose)
-        self._authenticate(email, password, token, no_token_check)
-
-        suffix = f"({self.base_url})" if self.base_url != CONSOLE_API_URL else ""
-        if no_token_check:
-            logger.info(f"successfully authenticated {suffix}")
-        else:
-            logger.info(f"successfully authenticated as {self._sesh.email} {suffix}")
-
-    def _authenticate(
-        self,
-        email: Optional[str],
-        password: Optional[str],
-        token: Optional[str],
-        no_token_check: bool,
-    ):
-        try:
-            auth_method = self._get_auth_method(email, password, token)
-            if auth_method == AuthMethod.BASIC:
-                self._sesh.basic_auth(email, password)  # type: ignore
-            elif auth_method == AuthMethod.TOKEN:
-                self._sesh.token_auth_check(token, no_token_check)  # type: ignore
-        except CapellaConsoleClientError:
-            raise AuthenticationError(
-                f"Unable to authenticate with {self.base_url} ({auth_method}) - please check your credentials."
-            ) from None
-
-    def _get_auth_method(self, email, password, token) -> AuthMethod:
-        basic_auth_provided = bool(email) and bool(password)
-        has_token = bool(token)
-
-        if not has_token and not basic_auth_provided:
-            raise ValueError("please provide either email and password or token")
-
-        if has_token and basic_auth_provided:
-            logger.info(
-                "both token and email/ password provided ... using email/ password for authentication"
-            )
-
-        if basic_auth_provided:
-            auth_method = AuthMethod.BASIC
-        else:
-            auth_method = AuthMethod.TOKEN
-        return auth_method
+        self._sesh.authenticate(email, password, token, no_token_check)
 
     # USER
     def whoami(self) -> Dict[str, Any]:

@@ -111,7 +111,7 @@ History
 * re-adding client.get_asset_bytesize
 
 
-0.7.0 (2021-07-13)
+0.7.0 (2021-07-16)
 ------------------
 
 * open sourcing (poetry packaging, docs, lint)

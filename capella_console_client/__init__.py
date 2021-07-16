@@ -1,1 +1,1 @@
-from .client import CapellaConsoleClient  # flake8: noqa
+from .client import CapellaConsoleClient

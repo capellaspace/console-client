@@ -5,19 +5,24 @@
 [![CI](https://github.com/capellaspace/console-client/workflows/ci.yml/badge.svg)](#)
 [![Coverage](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/capella-console-client.svg)](https://pypi.org/project/capella-console-client/)
-[![Documentation](https://readthedocs.org/projects/capella-console-client/badge/?version=latest)](https://capella-console-client.readthedocs.io/en/latest/?badge=latest)
+[![Documentation](https://readthedocs.org/projects/capella-console-client/badge/?version=latest)](https://capella-console-client.readthedocs.io)
 
 Python SDK for api.capellaspace.com (search, order, download)
 
 
-## installation
+## Installation
 
 ```bash
 pip install capella-console-client
 ```
 
-## Usage
+## Requirements
 
+* python >= 3.6
+* `capella-console-client` requires an active account on [console.capellaspace.com](https://console.capellaspace.com/). Sign up for an account[here]](https://console.capellaspace.com/user/register/)
+
+
+## Usage
 
 ```python
 from capella_console_client import CapellaConsoleClient
@@ -49,8 +54,6 @@ order_id = client.submit_order(items=stac_items, omit_search=True)
 product_paths = client.download_products(
     order_id=order_id, 
     local_dir='/tmp',
-    include=['thumbnail', 'raster', 'metadata'],
-    override=True,
     threaded=True,
     show_progress=True
 )
@@ -60,7 +63,7 @@ product_paths = client.download_products(
 
 ## Documentation
 
-The documentation for `capella_console_client` can be found [here](https://capella-console-client.readthedocs.io/en/latest/?badge=latest).
+The documentation for `capella_console_client` can be found [here](https://capella-console-client.readthedocs.io).
 
 ## Support
 
@@ -75,11 +78,4 @@ Contributions are very much welcomed and appreciated. See [how to contribute](ht
 
 
 ## License
-Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE)
-
-• Copyright 2021 • Capella Space •
-
-
-## TODO
-
-* token refresh
+• Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE) • Copyright 2021 • Capella Space •
