@@ -15,6 +15,7 @@ from capella_console_client.logconf import logger
 from capella_console_client.exceptions import (
     CapellaConsoleClientError,
     AuthenticationError,
+    InsufficientFundsError,
     OrderRejectedError,
     NoValidStacIdsError,
     TaskNotCompleteError,
@@ -49,10 +50,13 @@ class CapellaConsoleClient:
         verbose: flag to enable verbose logging
         no_token_check: does not check if provided JWT token is valid
 
-    Note
+    Note:
 
     * provide either email and password or a valid jwt token for authentication
-    * basic  take precedence over token if both provided
+
+    NOTE: Precedence order (high to low)
+        1. email and password
+        2. JWT token
     """
 
     def __init__(
@@ -103,7 +107,6 @@ class CapellaConsoleClient:
         basic_auth_provided = bool(email) and bool(password)
         has_token = bool(token)
 
-        # basic auth takes precedence
         if not has_token and not basic_auth_provided:
             raise ValueError("please provide either email and password or token")
 
@@ -153,7 +156,7 @@ class CapellaConsoleClient:
         all_statuses = (s["code"] for s in task["properties"]["statusHistory"])
         return "completed" in all_statuses
 
-    def get_collects_for_task(self, task: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def get_collects_for_task(self, tasking_request_id: str) -> List[Dict[str, Any]]:
         """
         get all the collects associated with this task (see :py:meth:`get_task()`)
 
@@ -163,10 +166,11 @@ class CapellaConsoleClient:
         Returns:
             List[Dict[str, Any]]: collect metadata associated
         """
+        task = self.get_task(tasking_request_id)
         tasking_request_id = task["properties"]["taskingrequestId"]
         if not self.is_task_completed(task):
             raise TaskNotCompleteError(
-                f"Tasking request<{tasking_request_id}> is not in completed state"
+                f"TaskingRequest<{tasking_request_id}> is not in completed state"
             )
 
         with self._sesh as session:
@@ -237,6 +241,39 @@ class CapellaConsoleClient:
 
         return self.search(ids=stac_ids)
 
+    def review_order(
+        self,
+        stac_ids: Optional[List[str]] = None,
+        items: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        if not stac_ids and not items:
+            raise ValueError("Please provide stac_ids or items")
+
+        if not stac_ids:
+            stac_ids = [f["id"] for f in items]  # type: ignore
+
+        logger.info(f"reviewing order for {', '.join(stac_ids)}")
+        if stac_ids and not items:
+            stac_records = self.search(ids=stac_ids)
+        else:
+            stac_records = items  # type: ignore
+
+        if not stac_records:
+            raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
+
+        order_payload = self._construct_order_payload(stac_records)
+
+        # review order
+        with self._sesh as session:
+            review_order_response = session.post(
+                "/orders/review", json=order_payload
+            ).json()
+
+        if not review_order_response.get("authorized", False):
+            raise InsufficientFundsError(
+                review_order_response["authorizationDenialReason"]["message"]
+            )
+
     def submit_order(
         self,
         stac_ids: Optional[List[str]] = None,
@@ -245,10 +282,11 @@ class CapellaConsoleClient:
         omit_search: bool = False,
     ) -> str:
         """
-        submit an order by `stac_ids` of `items`.
+        submit an order by `stac_ids` or `items`.
 
-        Note:
-        `stac_ids` takes precedence if both `stac_ids` and `items` are provided
+        NOTE: Precedence order (high to low)
+            1. stac_ids
+            2. items
 
         Args:
             stac_ids: STAC IDs that active order should include
@@ -285,25 +323,10 @@ class CapellaConsoleClient:
         if not stac_records:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
 
-        def _construct_order_payload(stac_records):
-            by_collect_id = defaultdict(list)
-            for rec in stac_records:
-                by_collect_id[rec["collection"]].append(rec["id"])
+        order_payload = self._construct_order_payload(stac_records)
 
-            order_items = []
-            for collection, stac_ids_of_coll in by_collect_id.items():
-                order_items.extend(
-                    [
-                        {"collectionId": collection, "granuleId": stac_id}
-                        for stac_id in stac_ids_of_coll
-                    ]
-                )
-            return order_items
-
-        order_items = _construct_order_payload(stac_records)
-
+        # perform actual order
         with self._sesh as session:
-            order_payload = dict(items=order_items)
             res_order = session.post("/orders", json=order_payload)
 
         con = res_order.json()
@@ -313,6 +336,21 @@ class CapellaConsoleClient:
 
         logger.info(f"successfully submitted order {order_id}")
         return order_id  # type: ignore
+
+    def _construct_order_payload(self, stac_items):
+        by_collect_id = defaultdict(list)
+        for item in stac_items:
+            by_collect_id[item["collection"]].append(item["id"])
+
+        order_items = []
+        for collection, stac_ids_of_coll in by_collect_id.items():
+            order_items.extend(
+                [
+                    {"collectionId": collection, "granuleId": stac_id}
+                    for stac_id in stac_ids_of_coll
+                ]
+            )
+        return {"items": order_items}
 
     def _find_active_order(self, stac_ids: List[str]) -> Optional[str]:
         """
@@ -415,41 +453,19 @@ class CapellaConsoleClient:
             show_progress=show_progress,
         )["asset"]
 
-    def download_products_for_task(
-        self, tasking_request_id: str, **kwargs
-    ) -> Dict[str, Dict[str, Path]]:
-        """
-        download all products associated with a tasking request
-
-        Args:
-            tasking_request_id: tasking request UUID of the task request you wish to download all associated products for
-
-        see :py:meth:`download_products` for a description of the optional function arguments.
-        """
-        task = self.get_task(tasking_request_id)
-
-        # now gather up all stac IDs associated with all collects associated with this task
-        collect_ids = [coll["collectId"] for coll in self.get_collects_for_task(task)]
-        stac_items = self.search(collect_id__in=collect_ids)
-        stac_ids = [feat["id"] for feat in stac_items]
-
-        # get signed URLs for all the data associated with the stac items
-        order_id = self.submit_order(stac_ids=stac_ids)
-        assets_presigned = self.get_presigned_assets(order_id)
-
-        return self.download_products(assets_presigned=assets_presigned, **kwargs)
-
     def download_products(
         self,
         assets_presigned: Optional[List[Dict[str, Any]]] = None,
         order_id: Optional[str] = None,
+        tasking_request_id: Optional[str] = None,
+        collect_id: Optional[str] = None,
         local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
         include: Union[List[str], str] = None,
         exclude: Union[List[str], str] = None,
         override: bool = False,
         threaded: bool = False,
         show_progress: bool = False,
-        flat: bool = True,
+        separate_dirs: bool = True,
     ) -> Dict[str, Dict[str, Path]]:
         """
         download all assets of multiple products
@@ -457,8 +473,16 @@ class CapellaConsoleClient:
         Args:
             assets_presigned: mapping of presigned assets of multiple products, see :py:meth:`get_presigned_assets`
             order_id: optionally provide `order_id` instead of `assets_presigned`, see :py:meth:`submit_order`
+            tasking_request_id: tasking request UUID of the task request you wish to download all associated products for
+            collect_id: collect UUID you wish to download all associated products for
 
-                      NOTE: assets_presigned takes precedence if both order_id and assets_presigned are provided
+                    NOTE: Precedence order (high to low)
+                      1. assets_presigned
+                      2. order_id
+                      3. tasking_request_id
+                      4. collect_id
+
+                    Meaning e.g. assets_presigned takes precedence over order_id, ...
 
             local_dir: local directory where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
@@ -473,11 +497,14 @@ class CapellaConsoleClient:
             override: override already existing
             threaded: download assets of product in multiple threads
             show_progress: show download status progressbar
-            flat: all downloaded assets are downloaded directly to `local_dir` by default
-                  set `flat` to False in order to save the respective product assets in separate directory, named after the STAC id, e.g.
-                    /tmp/<stac_id_1>/<stac_id_1>.tif
-                    /tmp/<stac_id_2>/<stac_id_2>.tif
-                    ...
+            separate_dirs: set to True in order to save the respective product assets into products directories, i.e.
+                                /tmp/<stac_id_1>/<stac_id_1>.tif
+                                /tmp/<stac_id_2>/<stac_id_2>.tif
+                                ...
+                            set to False in order to the respective product assets directly into the provided `local_dir`, i.e.
+                               /tmp/<stac_id_1>.tif
+                               /tmp/<stac_id_2>.tif
+                               ...
 
         Returns:
             Dict[str, Dict[str, Path]]: Local paths of downloaded files keyed by STAC id and asset type, e.g.
@@ -494,29 +521,33 @@ class CapellaConsoleClient:
         """
         local_dir = Path(local_dir)
 
-        if not assets_presigned and not order_id:
-            raise ValueError("please provide either assets_presigned or order_id")
+        one_of_equired = (assets_presigned, order_id, tasking_request_id, collect_id)
+
+        if not any(map(bool, one_of_equired)):
+            raise ValueError(
+                "please provide one of assets_presigned, order_id, tasking_request_id or collect_id"
+            )
 
         if not assets_presigned:
-            _validate_uuid(order_id)
-            assets_presigned = self.get_presigned_assets(order_id)  # type: ignore
+            assets_presigned = self._resolve_assets_presigned(
+                order_id, tasking_request_id, collect_id
+            )
 
-        suffix = "s" if len(assets_presigned) > 1 else ""
-        logger.info(f"downloading {len(assets_presigned)} product{suffix}")
+        len_assets_presigned = len(assets_presigned)
+        suffix = "s" if len_assets_presigned > 1 else ""
+        logger.info(f"downloading {len_assets_presigned} product{suffix}")
 
         download_requests = []
         by_stac_id = {}
 
-        # gather
+        # gather download requests
         for cur_assets in assets_presigned:
             cur_download_requests = _gather_download_requests(
-                cur_assets, local_dir, include, exclude, flat
+                cur_assets, local_dir, include, exclude, separate_dirs
             )
-
             by_stac_id[cur_download_requests[0].stac_id] = {
                 cur.asset_key: cur.local_path for cur in cur_download_requests
             }
-
             download_requests.extend(cur_download_requests)
 
         # download
@@ -527,8 +558,47 @@ class CapellaConsoleClient:
             verbose=self.verbose,
             show_progress=show_progress,
         )
-
         return by_stac_id  # type: ignore
+
+    def _resolve_assets_presigned(
+        self,
+        order_id: Optional[str] = None,
+        tasking_request_id: Optional[str] = None,
+        collect_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+
+        # 1 - resolve assets_presigned from order_id
+        if order_id:
+            _validate_uuid(order_id)
+        else:
+            # 2 - submit order for tasking_request_id
+            if tasking_request_id:
+                _validate_uuid(tasking_request_id)
+                order_id = self._order_products_for_task(tasking_request_id)  # type: ignore
+            # 3 - submit order for collect_id
+            else:
+                _validate_uuid(collect_id)
+                order_id = self._order_products_for_collect_ids(collect_ids=[collect_id])  # type: ignore
+
+        return self.get_presigned_assets(order_id)  # type: ignore
+
+    def _order_products_for_task(self, tasking_request_id: str) -> str:
+        """
+        order all products associated with a tasking request
+
+        Args:
+            tasking_request_id: tasking request UUID you wish to order all associated products for
+        """
+        # gather up all collect IDs associated of this task
+        collect_ids = [
+            coll["collectId"] for coll in self.get_collects_for_task(tasking_request_id)
+        ]
+        return self._order_products_for_collect_ids(collect_ids)
+
+    def _order_products_for_collect_ids(self, collect_ids: List[str]) -> str:
+        stac_items = self.search(collect_id__in=collect_ids)
+        order_id = self.submit_order(items=stac_items, omit_search=True)
+        return order_id
 
     def download_product(
         self,
@@ -548,7 +618,9 @@ class CapellaConsoleClient:
             assets_presigned: mapping of presigned assets of multiple products, see :py:meth:`get_presigned_assets`
             order_id: optionally provide `order_id` instead of `assets_presigned`, see :py:meth:`submit_order`
 
-                      NOTE: assets_presigned takes precedence if both order_id and assets_presigned are provided
+                NOTE: Precedence order (high to low)
+                  1. assets_presigned
+                  2. order_id
 
             local_dir: local directory where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset

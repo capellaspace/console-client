@@ -31,6 +31,10 @@ class TaskNotCompleteError(CapellaConsoleClientError):
     pass
 
 
+class InsufficientFundsError(CapellaConsoleClientError):
+    pass
+
+
 class OrderRejectedError(CapellaConsoleClientError):
     pass
 

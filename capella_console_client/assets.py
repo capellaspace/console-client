@@ -44,14 +44,14 @@ def _gather_download_requests(
     local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
     include: Union[List[str], str] = None,
     exclude: Union[List[str], str] = None,
-    flat: bool = True,
+    separate_dirs: bool = True,
 ) -> List[DownloadRequest]:
     local_dir = Path(local_dir)
     assert local_dir.exists(), f"{local_dir} does not exist"
 
     stac_id = _derive_stac_id(assets_presigned)
 
-    if flat:
+    if separate_dirs:
         local_dir /= stac_id
         local_dir.mkdir(exist_ok=True)
 

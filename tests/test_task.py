@@ -32,8 +32,7 @@ def test_get_collects_for_task(test_client, authed_tasking_request_mock):
         json=get_mock_responses("/collects/list/abc"),
     )
 
-    task = test_client.get_task("abc")
-    collects = test_client.get_collects_for_task(task)
+    collects = test_client.get_collects_for_task("abc")
 
     assert collects == get_mock_responses("/collects/list/abc")
 
@@ -45,7 +44,5 @@ def test_get_collects_for_task_not_completed(test_client, auth_httpx_mock):
     )
 
     # we should get task 'def', see that it's not completed, and throw an exception
-    task = test_client.get_task("def")
-
     with pytest.raises(TaskNotCompleteError):
-        test_client.get_collects_for_task(task)
+        test_client.get_collects_for_task("def")

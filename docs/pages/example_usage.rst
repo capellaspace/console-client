@@ -336,7 +336,6 @@ order products
                                    check_active_orders=True)
 
 
-
 download multiple products
 ##########################
 
@@ -381,8 +380,44 @@ Output
     CAPELLA_C03_SP_GEO_HH_20210619045726_20210619045747.tif             ╸━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.7%   • 9.8/359.0 MB     • 1.8 MB/s    • 0:03:18
 
 
+
+download all products of a tasking request
+##########################################
+
+Requirement: you have issued a tasking request that was completed in the meantime
+
+.. code:: python3
+
+    task_request_id = '27a71826-7819-48cc-b8f2-0ad10bee0f97'  # provide valid tasking_request_id
+    
+    product_paths = client.download_products(
+        tasking_request_id=tasking_request_id,
+        local_dir='/tmp',
+        threaded=True,
+        show_progress=True,
+    )
+
+
+
+download all products of a collect
+##################################
+
+.. code:: python3
+
+    collect_id = '27a71826-7819-48cc-b8f2-0ad10bee0f97'  # provide valid collect_id
+    
+    product_paths = client.download_products(
+        collect_id=collect_id,
+        local_dir='/tmp',
+        threaded=True,
+        show_progress=True,
+    )
+
+
 presigned asset hrefs
 #####################
+
+.. code:: python3
 
     # get pressigned asset urls of that order
     assets_presigned = client.get_presigned_assets(order_id)
@@ -390,6 +425,7 @@ presigned asset hrefs
     # alternatively presigned assets can also be filtered - e.g. give me the presigned assets of 3 stac items within the order
     assets_presigned = client.get_presigned_assets(order_id,
                                                    stac_ids=first_two_ids)
+
 
 download single product
 #######################
