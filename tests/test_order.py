@@ -9,6 +9,7 @@ from capella_console_client import client as capella_client_module
 from capella_console_client.exceptions import (
     NoValidStacIdsError,
     OrderRejectedError,
+    InsufficientFundsError,
 )
 from .test_data import (
     post_mock_responses,
@@ -55,17 +56,30 @@ def test_list_active_orders(non_expired_order_mock):
     assert active_orders == [non_expired_order]
 
 
+def test_review_order(order_client, httpx_mock):
+    httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/catalog/search",
+        json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
+    )
+    order_client.review_order(stac_ids=["MOCK_STAC_ID"])
+
+
+def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx_mock):
+    httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/catalog/search",
+        json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
+    )
+
+    with pytest.raises(InsufficientFundsError):
+        review_client_insufficient_funds.review_order(stac_ids=["MOCK_STAC_ID"])
+
+
 def test_submit_order_not_previously_ordered_check_active_orders(
     order_client, httpx_mock
 ):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
-    )
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders",
-        method="POST",
-        json=post_mock_responses("/submitOrder"),
     )
 
     order_id = order_client.submit_order(
@@ -82,18 +96,13 @@ def test_submit_order_not_previously_ordered_check_active_orders(
 
 
 def test_submit_order_not_previously_ordered_no_check_active_orders(
-    test_client, httpx_mock
+    order_client, httpx_mock, assert_all_responses_were_requested
 ):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
     )
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders",
-        method="POST",
-        json=post_mock_responses("/submitOrder"),
-    )
-    order_id = test_client.submit_order(
+    order_id = order_client.submit_order(
         stac_ids=["MOCK_STAC_ID"], check_active_orders=False
     )
 
@@ -131,12 +140,8 @@ def test_submit_order_invalid_stac_id(test_client, httpx_mock):
         test_client.submit_order(stac_ids=["DOES_NOT_EXISTS"])
 
 
-def test_submit_order_rejected(test_client, httpx_mock):
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders",
-        method="POST",
-        json=get_mock_responses("/orders_rejected"),
-    )
+def test_submit_order_rejected(order_client_unsuccessful, httpx_mock):
+
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         method="POST",
@@ -151,21 +156,16 @@ def test_submit_order_rejected(test_client, httpx_mock):
     )
 
     with pytest.raises(OrderRejectedError):
-        test_client.submit_order(stac_ids=["DOES_NOT_EXISTS"])
+        order_client_unsuccessful.submit_order(stac_ids=["DOES_NOT_EXISTS"])
 
 
-def test_submit_order_items(test_client, httpx_mock):
+def test_submit_order_items(order_client, httpx_mock):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
     )
 
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders",
-        method="POST",
-        json=post_mock_responses("/submitOrder"),
-    )
-    order_id = test_client.submit_order(
+    order_id = order_client.submit_order(
         items=[{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
         check_active_orders=False,
     )
@@ -179,13 +179,8 @@ def test_submit_order_items(test_client, httpx_mock):
     }
 
 
-def test_submit_order_items_omit_search(test_client, httpx_mock):
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders",
-        method="POST",
-        json=post_mock_responses("/submitOrder"),
-    )
-    order_id = test_client.submit_order(
+def test_submit_order_items_omit_search(order_client, httpx_mock):
+    order_id = order_client.submit_order(
         items=[{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
         check_active_orders=False,
         omit_search=True,

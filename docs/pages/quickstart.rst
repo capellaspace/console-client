@@ -22,7 +22,7 @@ Execute this snippet to authenticate with Capella's Console API and **search, or
       verbose=True
   )
 
-  # search 
+  # search for 2 open-data products
   stac_items = client.search(
       instrument_mode="spotlight",
       product_type__in=["SLC", "GEO"],

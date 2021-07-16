@@ -126,4 +126,4 @@ History
 * moving download_products_for_task into download_products(tasking_request_id="")
 * extending download_products(collect_id="")
 * adding `separate_dirs` flag to download_products in order to create one dir per product
-* review_order
+* review order

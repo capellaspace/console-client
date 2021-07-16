@@ -133,6 +133,31 @@ def test_product_download_dir_exists(download_client):
             assert p.relative_to(temp_dir)
 
 
+def test_product_download_dir_exists_from_order(
+    download_client, monkeypatch, disable_validate_uuid
+):
+    monkeypatch.setattr(
+        CapellaConsoleClient,
+        "get_presigned_assets",
+        lambda x, y: [i["assets"] for i in get_mock_responses("/orders/1/download")],
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = Path(temp_dir)
+        assert temp_dir.exists()
+        paths_by_key = download_client.download_product(
+            order_id="1", local_dir=temp_dir
+        )
+        paths = list(paths_by_key.values())
+
+        assert all([p.exists() for p in paths])
+        assert all([p.read_text() == "MOCK_CONTENT" for p in paths])
+
+        # within temp_dir
+        for p in paths:
+            assert p.relative_to(temp_dir)
+
+
 def test_product_download_threaded_within_dir(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
@@ -257,7 +282,12 @@ def test_product_download_exclude_overrides_include(test_client):
         assert len(paths_by_key) == 0
 
 
-def test_download_products_for_tasking_request(auth_httpx_mock, disable_validate_uuid):
+def test_download_products_for_tasking_request(
+    verbose_download_multiple_client,
+    auth_httpx_mock,
+    disable_validate_uuid,
+    assert_all_responses_were_requested,
+):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/task/abc",
         json=get_mock_responses("/task/abc"),
@@ -266,29 +296,12 @@ def test_download_products_for_tasking_request(auth_httpx_mock, disable_validate
         url=f"{CONSOLE_API_URL}/collects/list/abc",
         json=get_mock_responses("/collects/list/abc"),
     )
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids(),
-    )
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders",
-        json=post_mock_responses("/submitOrder"),
-    )
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders/1/download",
-        json=get_mock_responses("/orders/1/download"),
-    )
-    auth_httpx_mock.add_response(
-        url=MOCK_ASSET_HREF, data="MOCK_CONTENT", headers={"Content-Length": "127"}
-    )
-
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
 
-        paths_by_stac_id_and_key = client.download_products(
+        paths_by_stac_id_and_key = verbose_download_multiple_client.download_products(
             tasking_request_id="abc", local_dir=temp_dir, include=["HH"]
         )
 
@@ -306,30 +319,15 @@ def test_download_products_for_tasking_request(auth_httpx_mock, disable_validate
             assert "thumb.png" not in str(paths[0])
 
 
-def test_download_products_for_collect_id(auth_httpx_mock, disable_validate_uuid):
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids(),
-    )
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders",
-        json=post_mock_responses("/submitOrder"),
-    )
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders/1/download",
-        json=get_mock_responses("/orders/1/download"),
-    )
-    auth_httpx_mock.add_response(
-        url=MOCK_ASSET_HREF, data="MOCK_CONTENT", headers={"Content-Length": "127"}
-    )
-
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+def test_download_products_for_collect_id(
+    verbose_download_multiple_client, auth_httpx_mock, disable_validate_uuid
+):
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
 
-        paths_by_stac_id_and_key = client.download_products(
+        paths_by_stac_id_and_key = verbose_download_multiple_client.download_products(
             collect_id="abc", local_dir=temp_dir, include=["HH"]
         )
 

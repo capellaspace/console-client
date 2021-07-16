@@ -13,7 +13,14 @@ from capella_console_client import client
 from .test_data import (
     post_mock_responses,
     get_mock_responses,
+    search_catalog_get_stac_ids,
+    MOCK_ASSET_HREF,
 )
+
+
+@pytest.fixture
+def assert_all_responses_were_requested() -> bool:
+    return False
 
 
 @pytest.fixture
@@ -52,10 +59,51 @@ def search_client(test_client, monkeypatch):
 
 
 @pytest.fixture
+def review_client_insufficient_funds(test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
+        json=get_mock_responses("/orders"),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders/review",
+        json=get_mock_responses("/orders/review_insufficient_funds"),
+    )
+    yield test_client
+
+
+@pytest.fixture
 def order_client(test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
         json=get_mock_responses("/orders"),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders",
+        method="POST",
+        json=post_mock_responses("/submitOrder"),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders/review",
+        json=get_mock_responses("/orders/review_success"),
+    )
+
+    yield test_client
+
+
+@pytest.fixture
+def order_client_unsuccessful(test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
+        json=get_mock_responses("/orders"),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders/review",
+        json=get_mock_responses("/orders/review_success"),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders",
+        method="POST",
+        json=post_mock_responses("/orders_rejected"),
     )
     yield test_client
 
@@ -101,4 +149,28 @@ def big_download_client(test_client, auth_httpx_mock):
 @pytest.fixture
 def verbose_download_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
+    yield verbose_test_client
+
+
+@pytest.fixture
+def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/catalog/search",
+        json=search_catalog_get_stac_ids(),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders/review",
+        json=get_mock_responses("/orders/review_success"),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders",
+        json=post_mock_responses("/submitOrder"),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders/1/download",
+        json=get_mock_responses("/orders/1/download"),
+    )
+    auth_httpx_mock.add_response(
+        url=MOCK_ASSET_HREF, data="MOCK_CONTENT", headers={"Content-Length": "127"}
+    )
     yield verbose_test_client

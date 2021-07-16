@@ -38,11 +38,15 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
                 ],
             }
         ],
-        "/orders_rejected": {
-            "orderId": "1",
-            "userId": "MOCK_ID",
-            "organizationId": "MOCK_ORG_ID1",
-            "orderStatus": "rejected",
+        "/orders/review_success": {
+            "authorized": True,
+        },
+        "/orders/review_insufficient_funds": {
+            "authorized": False,
+            "authorizationDenialReason": {
+                "message": "This order will exceed your active contract period's value commitment. Order cost: $1,000.00; Available Commitment: $0.00}",
+                "code": "AUTHORIZATION_INSUFFICIENT_FUNDS",
+            },
         },
         "/orders/1/download": [{"assets": MOCK_ASSETS_PRESIGNED}],
         "/orders/2/download": [
@@ -345,6 +349,12 @@ def post_mock_responses(endpoint: str) -> Dict[str, Any]:
                     "collectionDate": "2020-11-27T02:06:41.304Z",
                 }
             ],
+        },
+        "/orders_rejected": {
+            "orderId": "1",
+            "userId": "MOCK_ID",
+            "organizationId": "MOCK_ORG_ID1",
+            "orderStatus": "rejected",
         },
     }[endpoint]
 

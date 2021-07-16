@@ -29,11 +29,14 @@ from capella_console_client.assets import (
     _derive_stac_id,
 )
 from capella_console_client.search import _build_search_payload, _paginated_search
-from capella_console_client.validate import _validate_uuid
+from capella_console_client.validate import (
+    _validate_uuid,
+    _validate_stac_id_or_stac_items,
+)
 
 
 class AuthMethod(Enum):
-    BASIC = 1  # email/ password -> JWT token
+    BASIC = 1  # email/ password
     TOKEN = 2  # JWT token
 
 
@@ -70,10 +73,9 @@ class CapellaConsoleClient:
     ):
 
         self.verbose = verbose
+        logger.setLevel(logging.WARNING)
         if verbose:
             logger.setLevel(logging.INFO)
-        else:
-            logger.setLevel(logging.WARNING)
 
         self.base_url = base_url
         self._sesh = CapellaConsoleSession(base_url=base_url, verbose=verbose)
@@ -246,24 +248,19 @@ class CapellaConsoleClient:
         stac_ids: Optional[List[str]] = None,
         items: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
-        if not stac_ids and not items:
-            raise ValueError("Please provide stac_ids or items")
-
-        if not stac_ids:
-            stac_ids = [f["id"] for f in items]  # type: ignore
+        stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
 
         logger.info(f"reviewing order for {', '.join(stac_ids)}")
-        if stac_ids and not items:
-            stac_records = self.search(ids=stac_ids)
-        else:
-            stac_records = items  # type: ignore
 
-        if not stac_records:
+        stac_items = items  # type: ignore
+        if not items:
+            stac_items = self.search(ids=stac_ids)
+
+        if not stac_items:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
 
-        order_payload = self._construct_order_payload(stac_records)
-
         # review order
+        order_payload = self._construct_order_payload(stac_items)
         with self._sesh as session:
             review_order_response = session.post(
                 "/orders/review", json=order_payload
@@ -298,11 +295,7 @@ class CapellaConsoleClient:
             Returns:
                 str: order UUID
         """
-        if not stac_ids and not items:
-            raise ValueError("Please provide stac_ids or items")
-
-        if not stac_ids:
-            stac_ids = [f["id"] for f in items]  # type: ignore
+        stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
 
         if check_active_orders:
             order_id = self._find_active_order(stac_ids)
@@ -312,18 +305,20 @@ class CapellaConsoleClient:
 
         logger.info(f"submitting order for {', '.join(stac_ids)}")
         if stac_ids and not omit_search:
-            stac_records = self.search(ids=stac_ids)
+            stac_items = self.search(ids=stac_ids)
         else:
             if omit_search and not items:
                 logger.warning(
                     "setting omit_search=True only works in combination providing items instead of stac_ids"
                 )
-            stac_records = items  # type: ignore
+            stac_items = items  # type: ignore
 
-        if not stac_records:
+        if not stac_items:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
 
-        order_payload = self._construct_order_payload(stac_records)
+        self.review_order(items=stac_items)
+
+        order_payload = self._construct_order_payload(stac_items)
 
         # perform actual order
         with self._sesh as session:
@@ -671,8 +666,8 @@ class CapellaConsoleClient:
             logger.warning(
                 f"order {order_id} contains {len(assets_presigned)} products - using first one ({_derive_stac_id(assets_presigned)})"
             )
-            assets_presigned = assets_presigned[0]
-        return assets_presigned
+
+        return assets_presigned[0]
 
     # SEARCH
     def search(self, **kwargs) -> List[Dict[str, Any]]:
