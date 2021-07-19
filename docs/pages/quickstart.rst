@@ -30,7 +30,6 @@ Execute the following snippet to authenticate with Capella's Console API and **s
   product_paths = client.download_products(
       order_id=order_id, 
       local_dir='/tmp',
-      threaded=True,
       show_progress=True
   )
 
