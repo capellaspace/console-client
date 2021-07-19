@@ -3,9 +3,7 @@
 import pytest
 
 
-from .test_data import (
-    get_search_test_cases,
-)
+from .test_data import get_search_test_cases
 from capella_console_client import client
 from capella_console_client.validate import _validate_uuid
 

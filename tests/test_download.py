@@ -240,7 +240,10 @@ def test_product_download_exclude(test_client):
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
         paths_by_key = test_client.download_product(
-            MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, exclude=["HH", "thumbnail"], threaded=False
+            MOCK_ASSETS_PRESIGNED,
+            local_dir=temp_dir,
+            exclude=["HH", "thumbnail"],
+            threaded=False,
         )
         assert "HH" not in paths_by_key
         assert "thumbnail" not in paths_by_key

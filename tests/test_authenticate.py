@@ -6,9 +6,7 @@ from pytest_httpx import HTTPXMock
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
-from capella_console_client.exceptions import (
-    AuthenticationError,
-)
+from capella_console_client.exceptions import AuthenticationError
 import capella_console_client.session
 from .test_data import (
     post_mock_responses,

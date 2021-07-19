@@ -504,7 +504,8 @@ If you would like to review the cost of an order before you submit, issue:
 
 .. code:: python
 
-    client.review_order(items=capella_spotlight_olympic_NP_geo)
+    order_details = client.review_order(items=capella_spotlight_olympic_NP_geo)
+    order_details['orderDetails']['summary']
 
 .. _presigned asset hrefs:
 

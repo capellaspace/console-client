@@ -198,7 +198,7 @@ class CapellaConsoleClient:
         self,
         stac_ids: Optional[List[str]] = None,
         items: Optional[List[Dict[str, Any]]] = None,
-    ) -> None:
+    ) -> Dict[str, Any]:
         stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
 
         logger.info(f"reviewing order for {', '.join(stac_ids)}")
@@ -221,6 +221,7 @@ class CapellaConsoleClient:
             raise InsufficientFundsError(
                 review_order_response["authorizationDenialReason"]["message"]
             )
+        return review_order_response
 
     def submit_order(
         self,
@@ -497,9 +498,9 @@ class CapellaConsoleClient:
             download_requests.extend(cur_download_requests)
 
         if not download_requests:
-            logger.warning('Nothing to download')
-            return by_stac_id
-        
+            logger.warning("Nothing to download")
+            return by_stac_id  # type: ignore
+
         # download
         _perform_download(
             download_requests=download_requests,
@@ -607,9 +608,9 @@ class CapellaConsoleClient:
         download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)  # type: ignore
 
         if not download_requests:
-            logger.warning('Nothing to download')
+            logger.warning("Nothing to download")
             return {}
-        
+
         return _perform_download(
             download_requests=download_requests,
             override=override,
