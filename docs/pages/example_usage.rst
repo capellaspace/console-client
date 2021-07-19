@@ -372,7 +372,6 @@ Download assets of previously ordered products to local disk.
     product_paths = client.download_products(
         order_id=order_id,
         local_dir="/tmp",
-        threaded=True,
         show_progress=True,
     )
 
@@ -381,7 +380,6 @@ Download assets of previously ordered products to local disk.
     local_thumb_path = client.download_products(
         order_id=order_id,
         local_dir="/tmp",
-        threaded=True,
         show_progress=True,
         override=True
     )
@@ -432,35 +430,30 @@ download products by asset type
     # download only thumbnails
     product_paths = client.download_products(
        order_id=order_id,
-       threaded=True,
        include=["thumbnail"]
     )
 
     # 'include' / 'exclude' can also be a string if only one provided
     product_paths = client.download_products(
        order_id=order_id, 
-       threaded=True,
        include="thumbnail"
     )
 
     # download only raster (VV or HH)
     product_paths = client.download_products(
        order_id=order_id,
-       threaded=True,
        include="raster"
     )
 
     # download all assets except raster
     product_paths = client.download_products(
        order_id=order_id,
-       threaded=True,
        exclude="raster"
     )
 
     # explicit DENY overrides explicit ALLOW --> the following would only fetch all thumbnails
     product_paths = client.download_products(
        order_id=order_id,
-       threaded=True,
        include=["raster", "thumbnail"]
        exclude="raster"
     )
@@ -477,7 +470,6 @@ Requirement: you have previously issued a tasking request that was completed in 
     product_paths = client.download_products(
         tasking_request_id=tasking_request_id,
         local_dir="/tmp",
-        threaded=True,
         show_progress=True,
     )
 
@@ -493,7 +485,6 @@ download all products of a collect
     product_paths = client.download_products(
         collect_id=collect_id,
         local_dir="/tmp",
-        threaded=True,
         show_progress=True,
     )
 

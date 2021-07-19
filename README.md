@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/pypi/v/capella-console-client.svg)](https://pypi.org/project/capella-console-client/)
 [![License](https://img.shields.io/pypi/l/capella-console-client.svg)](#)
 [![CI](https://github.com/capellaspace/console-client/workflows/CI/badge.svg)](#)
-[![Coverage](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)
+[![Coverage](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)](https://coveralls.io/github/capellaspace/console-client)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/capella-console-client.svg)](https://pypi.org/project/capella-console-client/)
 [![Documentation](https://readthedocs.org/projects/capella-console-client/badge/?version=main)](https://capella-console-client.readthedocs.io)
 
@@ -47,7 +47,6 @@ order_id = client.submit_order(items=stac_items, omit_search=True)
 product_paths = client.download_products(
     order_id=order_id, 
     local_dir='/tmp',
-    threaded=True,
     show_progress=True
 )
 ```
