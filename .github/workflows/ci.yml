@@ -1,4 +1,4 @@
-name: Continuous Integration for capella-console-client
+name: CI
 
 on:
   push:

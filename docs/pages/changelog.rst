@@ -131,3 +131,9 @@ History
 * extending download_products(collect_id="")
 * adding `separate_dirs` flag to download_products in order to create one dir per product
 * review order
+
+
+0.7.2 (2021-07-19)
+------------------
+* prompt for user credentials if not provided
+* defaulting threaded=True in download_product[s]

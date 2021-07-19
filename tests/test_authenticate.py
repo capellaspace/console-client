@@ -1,15 +1,13 @@
-#!/usr/bin/env python
-
 import base64
+from unittest.mock import MagicMock
 
 import pytest
 from pytest_httpx import HTTPXMock
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
-from capella_console_client.exceptions import (
-    AuthenticationError,
-)
+from capella_console_client.exceptions import AuthenticationError
+import capella_console_client.session
 from .test_data import (
     post_mock_responses,
     get_mock_responses,
@@ -92,17 +90,39 @@ def test_token_auth_no_check(httpx_mock: HTTPXMock):
 
 
 @pytest.mark.parametrize(
-    "email,pw,token",
+    "email,pw,token,prompt_count_email,prompt_count_pw",
     [
-        (None, None, None),
-        ("", "", ""),
-        (None, "MOCK_PW", None),
-        ("MOCK_EMAIL", None, None),
+        (None, None, None, 1, 1),
+        ("", "", "", 1, 1),
+        (None, "MOCK_PW", None, 1, 0),
+        ("MOCK_EMAIL", None, None, 0, 1),
     ],
 )
-def test_authenticate_missing_data(email, pw, token):
+def test_authenticate_missing_data_prompts(
+    email,
+    pw,
+    token,
+    prompt_count_email,
+    prompt_count_pw,
+    auth_httpx_mock: HTTPXMock,
+    monkeypatch,
+):
+    email_mock = MagicMock()
+    pw_mock = MagicMock()
+    monkeypatch.setattr("builtins.input", email_mock)
+    monkeypatch.setattr(capella_console_client.session, "getpass", pw_mock)
+
+    CapellaConsoleClient(email=email, password=pw, token=token)
+    assert email_mock.call_count == prompt_count_email
+    assert pw_mock.call_count == prompt_count_pw
+
+
+def test_authenticate_missing_data_prompts_empty(monkeypatch):
+    monkeypatch.setattr("builtins.input", lambda x: "")
+    monkeypatch.setattr(capella_console_client.session, "getpass", lambda x: "")
+
     with pytest.raises(ValueError):
-        CapellaConsoleClient(email=email, password=pw, token=token)
+        CapellaConsoleClient()
 
 
 def test_whoami(auth_httpx_mock):

@@ -118,7 +118,6 @@ def _perform_download(
     local_paths_by_key = {}
 
     with progress_bar as progress:
-
         _flush_progress_bar(progress)
 
         # serially

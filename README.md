@@ -2,10 +2,10 @@
 
 [![Version](https://img.shields.io/pypi/v/capella-console-client.svg)](https://pypi.org/project/capella-console-client/)
 [![License](https://img.shields.io/pypi/l/capella-console-client.svg)](#)
-[![CI](https://github.com/capellaspace/console-client/workflows/ci.yml/badge.svg)](#)
+[![CI](https://github.com/capellaspace/console-client/workflows/CI/badge.svg)](#)
 [![Coverage](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)](https://coveralls.io/repos/github/capellaspace/console-client/badge.svg?branch=main)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/capella-console-client.svg)](https://pypi.org/project/capella-console-client/)
-[![Documentation](https://readthedocs.org/projects/capella-console-client/badge/?version=latest)](https://capella-console-client.readthedocs.io)
+[![Documentation](https://readthedocs.org/projects/capella-console-client/badge/?version=main)](https://capella-console-client.readthedocs.io)
 
 Python SDK for api.capellaspace.com (search, order, download)
 
@@ -26,16 +26,9 @@ pip install capella-console-client
 
 ```python
 from capella_console_client import CapellaConsoleClient
-from getpass import getpass
 
-# user credentials on console.capellaspace.com
-email = input('console user (user@email.com): ').strip() 
-pw = getpass('console password: ').strip()  
-
-# authenticate
+# you will be prompted for console user (user@email.com)/ password before authenticating
 client = CapellaConsoleClient(
-    email=email, 
-    password=pw,
     verbose=True
 )
 
@@ -60,7 +53,6 @@ product_paths = client.download_products(
 ```
 
 
-
 ## Documentation
 
 The documentation for `capella_console_client` can be found [here](https://capella-console-client.readthedocs.io).
@@ -74,7 +66,7 @@ would be very helpful.
 
 ## Contributing
 
-Contributions are very much welcomed and appreciated. See [how to contribute](https://capella-console-client.readthedocs.io/en/stable/pages/contributors.html) for more information.
+Contributions are very much welcomed and appreciated. See [how to contribute](https://capella-console-client.readthedocs.io/en/main/pages/contributors.html) for more information.
 
 
 ## License

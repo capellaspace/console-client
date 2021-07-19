@@ -4,12 +4,8 @@ import pytest
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
-from capella_console_client.exceptions import (
-    TaskNotCompleteError,
-)
-from .test_data import (
-    get_mock_responses,
-)
+from capella_console_client.exceptions import TaskNotCompleteError
+from .test_data import get_mock_responses
 
 
 def test_get_task(test_client, authed_tasking_request_mock):
