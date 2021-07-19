@@ -9,14 +9,14 @@ authenticate
 
 .. code:: python3
 
-    from getpass import getpass
     from capella_console_client import CapellaConsoleClient
-
+    from getpass import getpass
+    
     # user credentials on console.capellaspace.com
     email = input("your email on console.capellaspace.com:").strip()
     pw = getpass("your password on console.capellaspace.com:").strip()
 
-    # authenticate
+    # authenticate with user and password
     client = CapellaConsoleClient(email=email, password=pw)
 
     # chatty client
@@ -25,6 +25,9 @@ authenticate
 authentication options
 
 .. code:: python3
+
+    # you will be prompted for console user (user@email.com)/ password before authenticating
+    client = CapellaConsoleClient()
 
     # already have a valid JWT token? no problem
     token_client = CapellaConsoleClient(token="<token>", verbose=True)
@@ -358,11 +361,11 @@ Download assets of previously ordered products to local disk.
         local_dir="/tmp",
     )
 
-    # 🕒 don't like waiting? 🕒 - set threaded = True in order to fetch the product assets in parallel
+    # 🕒 don't like parallel downloads? 🕒 - set threaded = False in order to fetch the product assets serially
     product_paths = client.download_products(
         order_id=order_id,
         local_dir="/tmp",
-        threaded=True
+        threaded=False
     )
 
     # ⌛ like to watch progress bars? ⌛ - set show_progress = True in order to get feedback on download status (time remaining, transfer stats, ...)

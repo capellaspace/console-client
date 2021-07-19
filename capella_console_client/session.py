@@ -1,7 +1,8 @@
 import base64
 from enum import Enum
+from getpass import getpass
 
-from typing import Optional
+from typing import Optional, Tuple
 
 import httpx
 
@@ -48,6 +49,10 @@ class CapellaConsoleSession(httpx.Client):
         no_token_check: bool = False,
     ) -> None:
         try:
+            basic_auth_provided = bool(email) and bool(password)
+            if not basic_auth_provided and not bool(token):
+                email, password = self._prompt_user_creds(email, password)  # type: ignore
+
             auth_method = self._get_auth_method(email, password, token)
             if auth_method == AuthMethod.BASIC:
                 self._basic_auth(email, password)  # type: ignore
@@ -63,6 +68,14 @@ class CapellaConsoleSession(httpx.Client):
             logger.info(f"successfully authenticated {suffix}")
         else:
             logger.info(f"successfully authenticated as {self.email} {suffix}")
+
+    def _prompt_user_creds(self, email: str, password: str) -> Tuple[str, str]:
+        """user credentials on console.capellaspace.com"""
+        if not email:
+            email = input("user on console.capellaspace.com (user@email.com): ").strip()
+        if not password:
+            password = getpass("password: ").strip()
+        return (email, password)
 
     def _get_auth_method(
         self, email: Optional[str], password: Optional[str], token: Optional[str]

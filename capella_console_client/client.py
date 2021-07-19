@@ -49,7 +49,8 @@ class CapellaConsoleClient:
 
     Note:
 
-    * provide either email and password or a valid jwt token for authentication
+    * not providing either email and password or a jwt token for authentication
+      will prompt you for email and password, which is not what you want in a script
 
     NOTE: Precedence order (high to low)
         1. email and password
@@ -65,7 +66,6 @@ class CapellaConsoleClient:
         no_token_check: bool = False,
         base_url: Optional[str] = CONSOLE_API_URL,
     ):
-
         self.verbose = verbose
         logger.setLevel(logging.WARNING)
         if verbose:
@@ -409,7 +409,7 @@ class CapellaConsoleClient:
         include: Union[List[str], str] = None,
         exclude: Union[List[str], str] = None,
         override: bool = False,
-        threaded: bool = False,
+        threaded: bool = True,
         show_progress: bool = False,
         separate_dirs: bool = True,
     ) -> Dict[str, Dict[str, Path]]:
@@ -496,6 +496,10 @@ class CapellaConsoleClient:
             }
             download_requests.extend(cur_download_requests)
 
+        if not download_requests:
+            logger.warning('Nothing to download')
+            return by_stac_id
+        
         # download
         _perform_download(
             download_requests=download_requests,
@@ -554,7 +558,7 @@ class CapellaConsoleClient:
         include: Union[List[str], str] = None,
         exclude: Union[List[str], str] = None,
         override: bool = False,
-        threaded: bool = False,
+        threaded: bool = True,
         show_progress: bool = False,
     ) -> Dict[str, Path]:
         """
@@ -602,6 +606,10 @@ class CapellaConsoleClient:
 
         download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)  # type: ignore
 
+        if not download_requests:
+            logger.warning('Nothing to download')
+            return {}
+        
         return _perform_download(
             download_requests=download_requests,
             override=override,

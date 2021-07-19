@@ -8,17 +8,10 @@ Execute the following snippet to authenticate with Capella's Console API and **s
 
 .. code:: python3
 
-  from capella_console_client import CapellaConsoleClient
-  from getpass import getpass
+  from capella_console_client import CapellaConsoleClient 
 
-  # user credentials on console.capellaspace.com
-  email = input('console user (user@email.com): ').strip() 
-  pw = getpass('console password: ').strip()  
-
-  # authenticate
+  # you will be prompted for console user (user@email.com)/ password before authenticating
   client = CapellaConsoleClient(
-      email=email, 
-      password=pw,
       verbose=True
   )
 
