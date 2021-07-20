@@ -36,6 +36,8 @@ Requirements
 Usage
 =====
 
+.. image:: images/quickstart.gif
+
 Check out the :ref:`quickstart`, the many examples in :ref:`example_usage` and the :ref:`api-reference`.
 
 License

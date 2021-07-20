@@ -24,6 +24,8 @@ pip install capella-console-client
 
 ## Usage
 
+![Quickstart](docs/images/quickstart.gif)
+
 ```python
 from capella_console_client import CapellaConsoleClient
 
