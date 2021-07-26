@@ -137,3 +137,8 @@ History
 ------------------
 * prompt for user credentials if not provided
 * defaulting threaded=True in download_product[s]
+
+
+0.7.3 (2021-07-26)
+------------------
+* omit review call within submit_order

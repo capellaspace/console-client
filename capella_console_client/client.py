@@ -228,6 +228,7 @@ class CapellaConsoleClient:
         items: Optional[List[Dict[str, Any]]] = None,
         check_active_orders: bool = False,
         omit_search: bool = False,
+        omit_review: bool = False,
     ) -> str:
         """
         submit an order by `stac_ids` or `items`.
@@ -243,6 +244,7 @@ class CapellaConsoleClient:
                 if True: returns that order ID
                 if False: submits a new order and returns new order ID
             omit_search: omit search to ensure provided STAC IDs are valid - only works if `items` are provided
+            omit_review: omit review stage
             Returns:
                 str: order UUID
         """
@@ -266,9 +268,10 @@ class CapellaConsoleClient:
         if not stac_items:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
 
-        self.review_order(items=stac_items)
-        logger.info(f"submitting order for {', '.join(stac_ids)}")
+        if not omit_review:
+            self.review_order(items=stac_items)
 
+        logger.info(f"submitting order for {', '.join(stac_ids)}")
         order_payload = self._construct_order_payload(stac_items)
 
         # perform actual order
