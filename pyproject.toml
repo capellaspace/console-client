@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "capella-console-client"
-version = "0.7.2"
+version = "0.7.3"
 description = "Python SDK for api.capellaspace.com (search, order, download)"
 authors = ["Thomas Beyer <thomas.beyer@capellaspace.com>"]
 repository = "https://github.com/capellaspace/console-client"
