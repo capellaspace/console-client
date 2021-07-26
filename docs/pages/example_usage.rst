@@ -4,12 +4,28 @@
 Example Usage
 **************
 
-authenticate
-############
-
 .. code:: python3
 
     from capella_console_client import CapellaConsoleClient
+
+authenticate
+############
+
+interactive prompt
+
+.. code:: python3
+
+    # you will be prompted for console user (user@email.com)/ password before authenticating
+    client = CapellaConsoleClient()
+
+    # chatty client
+    client = CapellaConsoleClient(verbose=True)
+
+
+provide user credentials
+
+.. code:: python3
+
     from getpass import getpass
     
     # user credentials on console.capellaspace.com
@@ -19,15 +35,10 @@ authenticate
     # authenticate with user and password
     client = CapellaConsoleClient(email=email, password=pw)
 
-    # chatty client
-    client = CapellaConsoleClient(email=email, password=pw, verbose=True)
 
-authentication options
+JWT
 
 .. code:: python3
-
-    # you will be prompted for console user (user@email.com)/ password before authenticating
-    client = CapellaConsoleClient()
 
     # already have a valid JWT token? no problem
     token_client = CapellaConsoleClient(token="<token>", verbose=True)
@@ -39,14 +50,14 @@ authentication options
 search
 ######
 
-Search operations are performed against CapellaSpace's `STAC catalog <https://stacspec.org/>`_
+searches are run against Capella Space's Catalog and a List of `STAC items <https://stacspec.org/>`_ matching the search criteria is returned. 
 
 .. code:: python3
 
-    # random capella product
+    # random
     random_product = client.search(constellation="capella", limit=1)[0]
 
-    # stack of products of same bounding box
+    # intersecting same bounding box
     stack_by_bbox = client.search(
         bbox=random_product["bbox"]
     )
@@ -58,7 +69,7 @@ Search operations are performed against CapellaSpace's `STAC catalog <https://st
         limit=1
     )[0]
 
-    # capella spotlight GEO product over Olympic National Park, Washington State
+    # capella spotlight GEO over Olympic National Park, Washington State
     olympic_NP_bbox = [-122.4, 46.9, -124.9, 48.5]
 
     capella_spotlight_olympic_NP_geo = client.search(
@@ -69,18 +80,17 @@ Search operations are performed against CapellaSpace's `STAC catalog <https://st
     )
 
 
-By default up to **500** STAC items are returned. This can be increased by providing a custom ``limit``:
+By default **up to 500** STAC items are returned. This can be increased by providing a custom ``limit``:
 
 .. code:: python3
 
-    # random capella product
     many_products = client.search(constellation="capella", limit=1000)
 
 
 search fields
 ##############
 
-.. list-table:: Supported search fields
+.. list-table:: supported fields for search
     :widths: 30 40 20 20
     :header-rows: 1
 
@@ -215,21 +225,21 @@ advanced search
 
 .. code:: python3
 
-    # sorted search descending by datetime, collected on capella-5 with HH polarization
-    vvs = client.search(
+    # sorted descending by datetime, collected on capella-5 with HH polarization
+    capella_5 = client.search(
         polarizations="HH",
         platform="capella-5",
         sortby="-datetime"
     )
 
-    # sorted search desc by datetime and 2nd ascending by (STAC) id
+    # sorted desc by datetime and 2nd ascending by STAC id, collected on capella-2 with VV polarization
     vvs = client.search(
         polarizations="VV",
         platform="capella-2",
         sortby=["-datetime", "+id"]
     ) 
 
-    # get up to 10 SLC stripmap products collected in June of 2021 
+    # get up to 10 SLC stripmap collected in 06/2021 
     capella_sm_01_2021 = client.search(
         instrument_mode="stripmap",
         datetime__gt="2021-06-01T00:00:00Z",
@@ -238,14 +248,14 @@ advanced search
         limit=10, 
     )
 
-    # get up to 10 GEO stripmap or spotlight products 
+    # get up to 10 GEO stripmap OR spotlight 
     capella_sm_or_sp = client.search(
-        instrument_mode__in=["stripmap", "spotlight"],
+        instrument_mode=["stripmap", "spotlight"],
         product_type="GEO",
         limit=10, 
     )
 
-    # get up to 10 products with azimuth resolution <= 0.5 AND range resolution between 0.3 and 0.5
+    # get up to 10 items with azimuth resolution <= 0.5 AND range resolution between 0.3 and 0.5
     capella_sm_or_sp_hq = client.search(
         resolution_azimuth__lte=0.5,
         resolution_range__gte=0.3,
@@ -253,7 +263,7 @@ advanced search
         limit=10, 
     )
 
-    # get up to 10 GEO sliding spotlight products with look angle > 35
+    # get up to 10 GEO sliding spotlight with look angle > 35
     plus35_lookangle_sliding_spotlight = client.search(
         look_angle__gt=35,
         product_type="GEO",
@@ -261,8 +271,13 @@ advanced search
         limit=10
     )
 
-    # take it to the max 
-    # get GEO spotlight products over San Francisco's downtown with many filters sorted by datetime
+    # get items derived from particular collect
+    collect_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # NOTE: provide valid collect_id
+    collect_id_items = client.search(
+        collect_id=collect_id
+    )
+
+    # take it to the max - get GEO spotlight items over SF downtown with many filters sorted by datetime
 
     sanfran_dt_bbox = [-122.4, 37.8, -122.3, 37.7]
     hefty_query_SF_sorted = client.search(
@@ -286,9 +301,11 @@ advanced search
         collections=["capella-geo"]
     )
 
+
+
 ``capella-console-client`` supports the following search operators:
 
-.. list-table:: Supported search operators
+.. list-table:: supported search operators
    :widths: 20 20 60
    :header-rows: 1
 
@@ -304,7 +321,7 @@ advanced search
      - contains
      - .. code:: python3
      
-         product_type__in=["SLC", "GEO", "GEC"]
+         product_type__in=["SLC", "GEO", "GEC"] ( == product_type=["SLC", "GEO", "GEC"])
    * - ``gt``
      - greater than
      - .. code:: python3
@@ -332,18 +349,19 @@ The API for advanced filtering operations was inspired by `Django's ORM <https:/
 order products
 ##############
 
-Submit an order to the system by providing STAC items or STAC ids.
+Issue the following snippets to submit a (purchasing) order by providing STAC items or STAC ids.
 
 .. code:: python3
 
-    # submit order of previously searched stac items
+    # submit order with stac items
     order_id = client.submit_order(items=capella_spotlight_olympic_NP_geo)
 
     # alternatively order by STAC ids
     first_two_ids = [item["id"] for item in capella_spotlight_olympic_NP_geo[:2]]
     order_id = client.submit_order(stac_ids=first_two_ids)
 
-    # alternatively check prior to ordering if an active order already exists
+    # since orders expire you can alternatively check prior if an active order already exists
+    # instead of creating a new order - charges won't be applied twice anyways
     order_id = client.submit_order(items=capella_spotlight_olympic_NP_geo,
                                    check_active_orders=True)
 
@@ -355,7 +373,7 @@ Download assets of previously ordered products to local disk.
 
 .. code:: python3
 
-    # download all products of order to /tmp
+    # download all products of an order to /tmp
     product_paths = client.download_products(
         order_id=order_id,
         local_dir="/tmp",
@@ -412,7 +430,7 @@ By default the respective product assets are saved into separate product directo
   /tmp/<stac_id_2>/<stac_id_2>.tif
   ...
 
-If you prefer a flat hierarchy set ``separate_dirs`` to False:
+If you prefer a flat hierarchy set ``separate_dirs`` to ``False``:
 
 .. code:: python3
 
@@ -451,21 +469,22 @@ download products by asset type
        exclude="raster"
     )
 
-    # explicit DENY overrides explicit ALLOW --> the following would only fetch all thumbnails
+    # explicit DENY overrides explicit ALLOW --> the following would only fetch thumbnails
     product_paths = client.download_products(
        order_id=order_id,
        include=["raster", "thumbnail"]
        exclude="raster"
     )
 
-download all products of a tasking request
-##########################################
+
+order and download all products of a tasking request
+####################################################
 
 Requirement: you have previously issued a tasking request that was completed in the meantime
 
 .. code:: python3
 
-    task_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # NOTE: provide valid tasking_request_id
+    tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # NOTE: provide valid tasking_request_id
     
     product_paths = client.download_products(
         tasking_request_id=tasking_request_id,
@@ -474,9 +493,8 @@ Requirement: you have previously issued a tasking request that was completed in 
     )
 
 
-
-download all products of a collect
-##################################
+order and download all products of a collect
+############################################
 
 .. code:: python3
 
@@ -488,23 +506,23 @@ download all products of a collect
         show_progress=True,
     )
 
+
 review order
 ############
 
-If you would like to review the cost of an order before you submit, issue:
+If you would like to review the cost of an order before you submission, issue:
 
 .. code:: python
 
     order_details = client.review_order(items=capella_spotlight_olympic_NP_geo)
-    order_details['orderDetails']['summary']
+    print(order_details['orderDetails']['summary'])
 
 .. _presigned asset hrefs:
 
 presigned asset hrefs
 #####################
 
-In order to directly load assets (imagery/ metadata) into memory you need to request signed S3 URLs. 
-See `read imagery`_  or `read metadata`_ for more information.
+In order to directly load assets (imagery or metadata) into memory you need to request signed S3 URLs first.
 
 .. code:: python3
 
@@ -514,6 +532,8 @@ See `read imagery`_  or `read metadata`_ for more information.
     first_two_ids = [item["id"] for item in capella_spotlight_olympic_NP_geo[:2]]
     assets_presigned = client.get_presigned_assets(order_id,
                                                    stac_ids=first_two_ids)
+
+See `read imagery`_  or `read metadata`_ for more information.
 
 
 download single product
@@ -529,7 +549,7 @@ download single product
 download single asset
 #####################
 
-you can also download single assets if desired to specific paths (basically renaming them)
+single assets can be downloaded to gven paths
 
 .. code:: python3
     
@@ -551,6 +571,10 @@ you can also download single assets if desired to specific paths (basically rena
 list orders
 ##############
 
+Issue the following snippet to view the ordering history
+
+.. code:: python3
+
     # list all orders
     all_orders = client.list_orders()
 
@@ -565,33 +589,34 @@ list orders
 tasking requests
 ################
 
+Issue the following snippet to get tasking request information
+
 .. code:: python3
 
-    task_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid tasking_request_id
+    tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid tasking_request_id
 
     # get task info
-    task = client.get_task(task_request_id)
+    task = client.get_task(tasking_request_id)
 
-    # was it completed
+    # was it completed?
     client.is_task_completed(task)
 
-    # given that task request id, download all associated products
-    client.download_products_for_task(task_request_id, local_dir="/tmp", threaded=True)
 
 .. _read imagery:
+
 
 read imagery
 ############
 
 Given a presigned asset href (see `presigned asset hrefs`_) load imagery into memory
 
-requires `rasterio <https://pypi.org/project/rasterio/>`_ (not part of this package)
+NOTE: requires `rasterio <https://pypi.org/project/rasterio/>`_ (not part of this package)
 
 .. code:: python3
 
     import rasterio
 
-    # read metadata of raster
+    # raster profile
     raster_presigned_href = assets_presigned[0]["HH"]["href"]
     with rasterio.open(raster_presigned_href) as ds:
         print(ds.profile)

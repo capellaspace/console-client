@@ -47,10 +47,9 @@ class CapellaConsoleClient:
         verbose: flag to enable verbose logging
         no_token_check: does not check if provided JWT token is valid
 
-    Note:
-
-    * not providing either email and password or a jwt token for authentication
-      will prompt you for email and password, which is not what you want in a script
+    NOTE:
+        not providing either email and password or a jwt token for authentication
+        will prompt you for email and password, which is not what you want in a script
 
     NOTE: Precedence order (high to low)
         1. email and password
@@ -255,7 +254,6 @@ class CapellaConsoleClient:
                 logger.info(f"found active order {order_id}")
                 return order_id
 
-        logger.info(f"submitting order for {', '.join(stac_ids)}")
         if stac_ids and not omit_search:
             stac_items = self.search(ids=stac_ids)
         else:
@@ -269,6 +267,7 @@ class CapellaConsoleClient:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
 
         self.review_order(items=stac_items)
+        logger.info(f"submitting order for {', '.join(stac_ids)}")
 
         order_payload = self._construct_order_payload(stac_items)
 
