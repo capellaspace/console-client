@@ -327,6 +327,12 @@ def search_catalog_get_stac_ids() -> Dict[str, Any]:
     }
 
 
+def search_catalog_get_stac_ids_multi_page() -> Dict[str, Any]:
+    con = search_catalog_get_stac_ids()
+    con["links"] = [{"rel": "next", "href": "next_href"}]
+    return con
+
+
 def post_mock_responses(endpoint: str) -> Dict[str, Any]:
     return {
         "/token": {

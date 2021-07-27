@@ -126,6 +126,10 @@ def _paginated_search(
     else:
         multiple_suffix = "s" if len_feat > 1 else ""
         logger.info(f"found {len(features)} STAC item{multiple_suffix}")
+
+    # truncate to limit
+    if len(features) > payload["limit"]:
+        features = features[: payload["limit"]]
     return features
 
 
