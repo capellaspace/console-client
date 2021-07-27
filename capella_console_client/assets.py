@@ -13,6 +13,12 @@ from capella_console_client.logconf import logger
 from capella_console_client.exceptions import ConnectError
 
 
+STAC_ID_REGEX = re.compile("^.*(CAPELLA_C\\d{2}_\\w+_\\w+_\\d{14}_\\d{14}).*$")
+PRODUCT_TYPE_REGEX = re.compile(
+    "^.*CAPELLA_C\\d{2}_\\w+_(\\w+)_\\w+_\\d{14}_\\d{14}.*$"
+)
+
+
 @dataclass
 class DownloadRequest:
     url: str
@@ -56,6 +62,7 @@ def _gather_download_requests(
         local_dir.mkdir(exist_ok=True)
 
     logger.info(f"downloading product {stac_id} to {local_dir}")
+
     if include:
         include = _prep_include_exclude(include)
         logger.info(f"Only including assets {', '.join(include)}")
@@ -67,11 +74,11 @@ def _gather_download_requests(
     # gather up paths
     download_requests = []
     for key, asset in assets_presigned.items():
-        # white-listing
+        # white-listing asset
         if include and key not in include:
             continue
 
-        # black-listing
+        # black-listing asset
         if exclude and key in exclude:
             continue
 
@@ -87,13 +94,42 @@ def _gather_download_requests(
     return download_requests
 
 
-def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
+def _get_raster_href(assets_presigned: Dict[str, Any]) -> str:
     raster_asset = assets_presigned.get("HH")
     if raster_asset is None:
         raster_asset = assets_presigned["VV"]
+    return raster_asset["href"]
 
-    STAC_ID_REGEX = re.compile("^.*(CAPELLA_C\\d{2}_\\w+_\\w+_\\d{14}_\\d{14}).*$")
-    return STAC_ID_REGEX.findall(raster_asset["href"])[0]
+
+def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
+    raster_asset_href = _get_raster_href(assets_presigned)
+    try:
+        stac_id = STAC_ID_REGEX.findall(raster_asset_href)[0]
+    except IndexError:
+        raise ValueError(f"Could not derive STAC ID from {raster_asset_href}")
+    return stac_id
+
+
+def _derive_product_type(assets_presigned: Dict[str, Any]) -> str:
+    raster_asset_href = _get_raster_href(assets_presigned)
+    try:
+        product_type = PRODUCT_TYPE_REGEX.findall(raster_asset_href)[0]
+    except IndexError:
+        raise ValueError(f"Could not derive product type from {raster_asset_href}")
+    return product_type
+
+
+def _filter_assets_by_product_types(
+    assets_presigned: List[Dict[str, Any]], product_types: List[str]
+) -> List[Dict[str, Any]]:
+    logger.info(f'filtering by product_types: {", ".join(product_types)}')
+    filtered_assets = []
+    for cur_assets in assets_presigned:
+        cur_product_type = _derive_product_type(cur_assets)
+        if cur_product_type in product_types:
+            filtered_assets.append(cur_assets)
+
+    return filtered_assets
 
 
 def _prep_include_exclude(filter_stmnt: Union[str, List[str]]) -> List[str]:
