@@ -275,7 +275,6 @@ def test_product_download_exclude_overrides_include(test_client):
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
-        assert temp_dir.exists()
         paths_by_key = test_client.download_product(
             MOCK_ASSETS_PRESIGNED,
             local_dir=temp_dir,
@@ -302,7 +301,6 @@ def test_download_products_for_tasking_request(
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
-        assert temp_dir.exists()
 
         paths_by_stac_id_and_key = verbose_download_multiple_client.download_products(
             tasking_request_id="abc", local_dir=temp_dir, include=["HH"]
@@ -328,7 +326,6 @@ def test_download_products_for_collect_id(
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
-        assert temp_dir.exists()
 
         paths_by_stac_id_and_key = verbose_download_multiple_client.download_products(
             collect_id="abc", local_dir=temp_dir, include=["HH"]
@@ -346,3 +343,34 @@ def test_download_products_for_collect_id(
 
             assert len(paths) == 1
             assert "thumb.png" not in str(paths[0])
+
+
+def test_download_products_with_product_types_filter(download_client):
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = Path(temp_dir)
+        assets_presigned = [MOCK_ASSETS_PRESIGNED, MOCK_ASSETS_PRESIGNED]
+
+        paths_by_stac_id_and_key = download_client.download_products(
+            assets_presigned, local_dir=temp_dir, product_types=["GEO"]
+        )
+        for stac_id in paths_by_stac_id_and_key:
+            paths = list(paths_by_stac_id_and_key[stac_id].values())
+
+            assert all([p.exists() for p in paths])
+            assert all([p.read_text() == "MOCK_CONTENT" for p in paths])
+
+            # within temp_dir
+            for p in paths:
+                assert p.relative_to(temp_dir)
+
+
+def test_download_products_with_product_types_filter_all_exclude(download_client):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = Path(temp_dir)
+        assets_presigned = [MOCK_ASSETS_PRESIGNED, MOCK_ASSETS_PRESIGNED]
+
+        paths_by_stac_id_and_key = download_client.download_products(
+            assets_presigned, local_dir=temp_dir, product_types=["SIDD"]
+        )
+        assert paths_by_stac_id_and_key == {}

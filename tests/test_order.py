@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import json
 
 import pytest
@@ -72,6 +70,15 @@ def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx
 
     with pytest.raises(InsufficientFundsError):
         review_client_insufficient_funds.review_order(stac_ids=["MOCK_STAC_ID"])
+
+
+def test_review_order_no_match(order_client, httpx_mock):
+    httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/catalog/search",
+        json={"features": []},
+    )
+    with pytest.raises(NoValidStacIdsError):
+        order_client.review_order(stac_ids=["MOCK_STAC_ID"])
 
 
 def test_submit_order_not_previously_ordered_check_active_orders(

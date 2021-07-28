@@ -26,6 +26,7 @@ from capella_console_client.assets import (
     _gather_download_requests,
     _get_asset_bytesize,
     _derive_stac_id,
+    _filter_assets_by_product_types,
 )
 from capella_console_client.search import _build_search_payload, _paginated_search
 from capella_console_client.validate import (
@@ -263,7 +264,9 @@ class CapellaConsoleClient:
                 logger.warning(
                     "setting omit_search=True only works in combination providing items instead of stac_ids"
                 )
-            stac_items = items  # type: ignore
+                stac_items = self.search(ids=stac_ids)
+            else:
+                stac_items = items  # type: ignore
 
         if not stac_items:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
@@ -415,6 +418,7 @@ class CapellaConsoleClient:
         threaded: bool = True,
         show_progress: bool = False,
         separate_dirs: bool = True,
+        product_types: List[str] = None,
     ) -> Dict[str, Dict[str, Path]]:
         """
         download all assets of multiple products
@@ -454,6 +458,7 @@ class CapellaConsoleClient:
                                /tmp/<stac_id_1>.tif
                                /tmp/<stac_id_2>.tif
                                ...
+            product_types: filter by product type, e.g. ["SLC", "GEO"]
 
         Returns:
             Dict[str, Dict[str, Path]]: Local paths of downloaded files keyed by STAC id and asset type, e.g.
@@ -488,6 +493,12 @@ class CapellaConsoleClient:
 
         download_requests = []
         by_stac_id = {}
+
+        # filter product_type
+        if product_types:
+            assets_presigned = _filter_assets_by_product_types(
+                assets_presigned, product_types
+            )
 
         # gather download requests
         for cur_assets in assets_presigned:

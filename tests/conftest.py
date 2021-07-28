@@ -14,6 +14,7 @@ from .test_data import (
     post_mock_responses,
     get_mock_responses,
     search_catalog_get_stac_ids,
+    search_catalog_get_stac_ids_multi_page,
     MOCK_ASSET_HREF,
 )
 
@@ -172,5 +173,27 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
     )
     auth_httpx_mock.add_response(
         url=MOCK_ASSET_HREF, data="MOCK_CONTENT", headers={"Content-Length": "127"}
+    )
+    yield verbose_test_client
+
+
+@pytest.fixture
+def single_page_search_client(verbose_test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/catalog/search",
+        json=search_catalog_get_stac_ids(),
+    )
+    yield verbose_test_client
+
+
+@pytest.fixture
+def multi_page_search_client(verbose_test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/catalog/search",
+        json=search_catalog_get_stac_ids_multi_page(),
+    )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/next_href",
+        json=search_catalog_get_stac_ids_multi_page(),
     )
     yield verbose_test_client
