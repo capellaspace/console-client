@@ -15,8 +15,11 @@ from .test_data import (
     get_mock_responses,
     search_catalog_get_stac_ids,
     search_catalog_get_stac_ids_multi_page,
-    MOCK_ASSET_HREF,
+    create_mock_asset_hrefs,
 )
+
+
+MOCK_ASSET_HREF = create_mock_asset_hrefs()["HH"]["href"]
 
 
 @pytest.fixture

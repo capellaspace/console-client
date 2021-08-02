@@ -12,10 +12,13 @@ from capella_console_client import CapellaConsoleClient
 from .test_data import (
     post_mock_responses,
     get_mock_responses,
-    MOCK_ASSET_HREF,
-    MOCK_ASSETS_PRESIGNED,
     search_catalog_get_stac_ids,
+    create_mock_asset_hrefs,
+    DUMMY_STAC_IDS,
 )
+
+MOCK_ASSETS_PRESIGNED = create_mock_asset_hrefs()
+MOCK_ASSET_HREF = MOCK_ASSETS_PRESIGNED["HH"]["href"]
 
 
 def test_get_presigned_assets(auth_httpx_mock, disable_validate_uuid):
@@ -35,11 +38,15 @@ def test_get_presigned_assets_filtered(auth_httpx_mock, disable_validate_uuid):
         json=get_mock_responses("/orders/2/download"),
     )
     client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
-    presigned_assets = client.get_presigned_assets(order_id="2", stac_ids=["2"])
+    presigned_assets = client.get_presigned_assets(
+        order_id="2", stac_ids=[DUMMY_STAC_IDS[0]]
+    )
     assert len(presigned_assets) == 1
 
     mock_response = get_mock_responses("/orders/2/download")
-    order_2_assets = [m["assets"] for m in mock_response if m["id"] == "2"][0]
+    order_2_assets = [
+        m["assets"] for m in mock_response if m["id"] == DUMMY_STAC_IDS[0]
+    ][0]
     assert presigned_assets[0] == order_2_assets
 
 
@@ -298,6 +305,10 @@ def test_download_products_for_tasking_request(
         url=f"{CONSOLE_API_URL}/collects/list/abc",
         json=get_mock_responses("/collects/list/abc"),
     )
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
+        json=get_mock_responses("/orders"),
+    )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
@@ -323,6 +334,10 @@ def test_download_products_for_tasking_request(
 def test_download_products_for_collect_id(
     verbose_download_multiple_client, auth_httpx_mock, disable_validate_uuid
 ):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
+        json=get_mock_responses("/orders"),
+    )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)

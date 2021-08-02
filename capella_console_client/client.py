@@ -1,7 +1,7 @@
 import logging
 
 from datetime import datetime
-from typing import List, Dict, Any, Union, Optional, no_type_check
+from typing import List, Dict, Any, Union, Optional, no_type_check, Tuple
 from collections import defaultdict
 from pathlib import Path
 import tempfile
@@ -32,6 +32,7 @@ from capella_console_client.search import _build_search_payload, _paginated_sear
 from capella_console_client.validate import (
     _validate_uuid,
     _validate_stac_id_or_stac_items,
+    _validate_and_filter_product_types,
 )
 
 
@@ -65,6 +66,7 @@ class CapellaConsoleClient:
         verbose: bool = False,
         no_token_check: bool = False,
         base_url: Optional[str] = CONSOLE_API_URL,
+        no_auth: bool = False,
     ):
         self.verbose = verbose
         logger.setLevel(logging.WARNING)
@@ -72,7 +74,9 @@ class CapellaConsoleClient:
             logger.setLevel(logging.INFO)
 
         self._sesh = CapellaConsoleSession(base_url=base_url, verbose=verbose)
-        self._sesh.authenticate(email, password, token, no_token_check)
+
+        if not no_auth:
+            self._sesh.authenticate(email, password, token, no_token_check)
 
     # USER
     def whoami(self) -> Dict[str, Any]:
@@ -322,12 +326,8 @@ class CapellaConsoleClient:
 
         for ord in active_orders:
             granules = set([i["granuleId"] for i in ord["items"]])
-
             if granules.issuperset(stac_ids):
                 order_id = ord["orderId"]
-                logger.info(
-                    f'all stac ids ({", ".join(stac_ids)}) found in active order {order_id}'
-                )
                 break
         return order_id
 
@@ -369,7 +369,11 @@ class CapellaConsoleClient:
             return [item["assets"] for item in resp]
 
         stac_ids_set = set(stac_ids)
-        return [item["assets"] for item in resp if item["id"] in stac_ids_set]
+        return [
+            item["assets"]
+            for item in resp
+            if _derive_stac_id(item["assets"]) in stac_ids_set
+        ]
 
     def get_asset_bytesize(self, pre_signed_url: str) -> int:
         """get size in bytes of `pre_signed_url`"""
@@ -475,16 +479,19 @@ class CapellaConsoleClient:
         """
         local_dir = Path(local_dir)
 
-        one_of_equired = (assets_presigned, order_id, tasking_request_id, collect_id)
+        one_of_required = (assets_presigned, order_id, tasking_request_id, collect_id)
 
-        if not any(map(bool, one_of_equired)):
+        if not any(map(bool, one_of_required)):
             raise ValueError(
                 "please provide one of assets_presigned, order_id, tasking_request_id or collect_id"
             )
 
+        if product_types:
+            product_types = _validate_and_filter_product_types(product_types)
+
         if not assets_presigned:
             assets_presigned = self._resolve_assets_presigned(
-                order_id, tasking_request_id, collect_id
+                order_id, tasking_request_id, collect_id, product_types
             )
 
         len_assets_presigned = len(assets_presigned)
@@ -529,7 +536,10 @@ class CapellaConsoleClient:
         order_id: Optional[str] = None,
         tasking_request_id: Optional[str] = None,
         collect_id: Optional[str] = None,
+        product_types: List[str] = None,
     ) -> List[Dict[str, Any]]:
+
+        stac_ids = None
 
         # 1 - resolve assets_presigned from order_id
         if order_id:
@@ -538,15 +548,21 @@ class CapellaConsoleClient:
             # 2 - submit order for tasking_request_id
             if tasking_request_id:
                 _validate_uuid(tasking_request_id)
-                order_id = self._order_products_for_task(tasking_request_id)  # type: ignore
+                order_id, stac_ids = self._order_products_for_task(
+                    tasking_request_id, product_types
+                )  # type: ignore
             # 3 - submit order for collect_id
             else:
                 _validate_uuid(collect_id)
-                order_id = self._order_products_for_collect_ids(collect_ids=[collect_id])  # type: ignore
+                order_id, stac_ids = self._order_products_for_collect_ids(
+                    collect_ids=[collect_id], product_types=product_types  # type: ignore
+                )
 
-        return self.get_presigned_assets(order_id)  # type: ignore
+        return self.get_presigned_assets(order_id, stac_ids)  # type: ignore
 
-    def _order_products_for_task(self, tasking_request_id: str) -> str:
+    def _order_products_for_task(
+        self, tasking_request_id: str, product_types: List[str] = None
+    ) -> Tuple[str, List[str]]:
         """
         order all products associated with a tasking request
 
@@ -557,12 +573,24 @@ class CapellaConsoleClient:
         collect_ids = [
             coll["collectId"] for coll in self.get_collects_for_task(tasking_request_id)
         ]
-        return self._order_products_for_collect_ids(collect_ids)
+        return self._order_products_for_collect_ids(collect_ids, product_types)
 
-    def _order_products_for_collect_ids(self, collect_ids: List[str]) -> str:
-        stac_items = self.search(collect_id__in=collect_ids)
-        order_id = self.submit_order(items=stac_items, omit_search=True)
-        return order_id
+    def _order_products_for_collect_ids(
+        self, collect_ids: List[str], product_types: List[str] = None
+    ) -> Tuple[str, List[str]]:
+        search_kwargs = dict(
+            collect_id__in=collect_ids,
+        )
+
+        if product_types:
+            search_kwargs["product_type__in"] = product_types
+
+        stac_items = self.search(**search_kwargs)
+        order_id = self.submit_order(
+            items=stac_items, omit_search=True, check_active_orders=True
+        )
+        stac_ids = [i["id"] for i in stac_items]
+        return order_id, stac_ids
 
     def download_product(
         self,
