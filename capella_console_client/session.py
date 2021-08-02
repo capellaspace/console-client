@@ -43,9 +43,9 @@ class CapellaConsoleSession(httpx.Client):
 
     def authenticate(
         self,
-        email: Optional[str],
-        password: Optional[str],
-        token: Optional[str],
+        email: Optional[str] = None,
+        password: Optional[str] = None,
+        token: Optional[str] = None,
         no_token_check: bool = False,
     ) -> None:
         try:
@@ -64,7 +64,7 @@ class CapellaConsoleSession(httpx.Client):
             ) from None
 
         suffix = f"({self.base_url})" if self.base_url != CONSOLE_API_URL else ""
-        if no_token_check:
+        if auth_method == AuthMethod.TOKEN and no_token_check:
             logger.info(f"successfully authenticated {suffix}")
         else:
             logger.info(f"successfully authenticated as {self.email} {suffix}")

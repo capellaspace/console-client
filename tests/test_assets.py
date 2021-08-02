@@ -7,7 +7,9 @@ from capella_console_client.assets import (
     _derive_stac_id,
     _derive_product_type,
 )
-from .test_data import MOCK_ASSET_HREF
+from .test_data import create_mock_asset_hrefs
+
+MOCK_ASSET_HREF = create_mock_asset_hrefs()["HH"]["href"]
 
 
 def test_get_asset_bytesize(httpx_mock: HTTPXMock):

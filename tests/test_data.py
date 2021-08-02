@@ -1,14 +1,22 @@
 from typing import Dict, Any
+from copy import deepcopy
 
 import pytest
 
 
-MOCK_ASSET_HREF = "https://test-data.capellaspace.com/capella-test/2021/1/19/CAPELLA_C02_SM_GEO_HH_20210119154529_20210119154533/CAPELLA_C02_SM_GEO_HH_20210119154529_20210119154533.png?AWSAccessKeyId=********&Expires=*****&Signature=******&x-amz-security-token=****"
+DUMMY_STAC_IDS = [
+    "CAPELLA_C02_SM_GEO_HH_20210119154519_20210119154523",
+    "CAPELLA_C02_SM_GEO_HH_20210119154529_20210119154533",
+    "CAPELLA_C02_SM_GEO_HH_20210119154539_20210119154543",
+    "CAPELLA_C02_SM_GEO_HH_20210119154549_20210119154553",
+]
 
-MOCK_ASSETS_PRESIGNED = {
-    "HH": {"href": MOCK_ASSET_HREF},
-    "thumbnail": {"href": MOCK_ASSET_HREF.replace(".png", "_thumb.png")},
-}
+
+def create_mock_asset_hrefs(stac_id: str = DUMMY_STAC_IDS[0], polarization: str = "HH"):
+    raster_href = f"https://test-data.capellaspace.com/capella-test/2021/1/19/{stac_id}/{stac_id}.png?AWSAccessKeyId=********&Expires=*****&Signature=******&x-amz-security-token=****"
+    thumb_href = raster_href.replace(".png", "_thumb.png")
+    return {polarization: {"href": raster_href}, "thumbnail": {"href": thumb_href}}
+
 
 # GET
 def get_mock_responses(endpoint: str) -> Dict[str, Any]:
@@ -48,10 +56,16 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
                 "code": "AUTHORIZATION_INSUFFICIENT_FUNDS",
             },
         },
-        "/orders/1/download": [{"assets": MOCK_ASSETS_PRESIGNED}],
+        "/orders/1/download": [{"assets": create_mock_asset_hrefs()}],
         "/orders/2/download": [
-            {"assets": {"HH": "MOCK1", "thumbnail": "MOCK1"}, "id": "1"},
-            {"assets": {"HH": "MOCK2", "thumbnail": "MOCK2"}, "id": "2"},
+            {
+                "assets": create_mock_asset_hrefs(DUMMY_STAC_IDS[0]),
+                "id": DUMMY_STAC_IDS[0],
+            },
+            {
+                "assets": create_mock_asset_hrefs(DUMMY_STAC_IDS[1]),
+                "id": DUMMY_STAC_IDS[1],
+            },
         ],
         "/task/abc": {
             "type": "Feature",
