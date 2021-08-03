@@ -440,8 +440,26 @@ If you prefer a flat hierarchy set ``separate_dirs`` to ``False``:
     )
 
 
-download products by asset type
-###############################
+download products filtered by product type
+##########################################
+
+.. code:: python3
+
+    # download only GEO product
+    product_paths = client.download_products(
+       order_id=order_id,
+       product_types=["GEO"]
+    )
+
+    # download only SLC and GEO product
+    product_paths = client.download_products(
+       order_id=order_id,
+       product_types=["SLC", "GEO"]
+    )
+
+
+download products filtered by asset type
+########################################
 
 .. code:: python3
 
@@ -477,33 +495,43 @@ download products by asset type
     )
 
 
-order and download all products of a tasking request
-####################################################
+order and download products of a tasking request
+################################################
 
-Requirement: you have previously issued a tasking request that was completed in the meantime
+Requirement: you have previously issued a tasking request that is in 'completed' state
 
 .. code:: python3
 
     tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # NOTE: provide valid tasking_request_id
     
+    # download ALL products
     product_paths = client.download_products(
         tasking_request_id=tasking_request_id,
-        local_dir="/tmp",
-        show_progress=True,
+    )
+
+    # download only GEO product
+    product_paths = client.download_products(
+        tasking_request_id=tasking_request_id,
+        product_types=["GEO"]
     )
 
 
-order and download all products of a collect
-############################################
+order and download products of a collect
+########################################
 
 .. code:: python3
 
     collect_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # NOTE: provide valid collect_id
     
+    # download ALL products
     product_paths = client.download_products(
         collect_id=collect_id,
-        local_dir="/tmp",
-        show_progress=True,
+    )
+
+    # download only GEC product
+    product_paths = client.download_products(
+        collect_id=collect_id,
+        product_types=["GEC"],
     )
 
 
@@ -512,7 +540,7 @@ review order
 
 If you would like to review the cost of an order before you submission, issue:
 
-.. code:: python
+.. code:: python3
 
     order_details = client.review_order(items=capella_spotlight_olympic_NP_geo)
     print(order_details['orderDetails']['summary'])
