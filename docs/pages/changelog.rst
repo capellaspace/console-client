@@ -142,3 +142,8 @@ History
 0.7.3 (2021-07-26)
 ------------------
 * omit review call within submit_order
+
+
+0.7.4 (2021-08-03)
+------------------
+* download products - filter by product type(s)
