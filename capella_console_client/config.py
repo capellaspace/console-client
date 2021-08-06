@@ -9,7 +9,6 @@ SUPPORTED_SEARCH_FIELDS = {
     "intersects",
     "collections",
     "ids",
-    "sortby",
     "limit",
 }
 
@@ -83,4 +82,9 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "look_angle": "view:look_angle",
     "orbital_plane": "capella:orbital_plane",
     "billable_area": "capella:billable_area",
+}
+
+
+TYPE_BY_FIELD_NAME = {
+    "limit": int,
 }
