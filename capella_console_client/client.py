@@ -91,6 +91,59 @@ class CapellaConsoleClient:
         return resp.json()
 
     # TASKING
+    def list_tasking_requests(
+        self,
+        *tasking_request_ids: Optional[str],
+        for_org: Optional[bool] = False,
+        status: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        list tasking requests
+
+        Args:
+            tasking_request_ids: list only specific tasking_request_ids (variadic, specify multiple)
+            for_org: list all tasking requests of your organization (instead of only yours) - **requires** organization index/ admin permission
+            status: list only tasking requests that are in this/ have passed this status, e.g. completed
+
+        Returns:
+            List[Dict[str, Any]]: metadata of tasking requests
+        """
+        tasking_request_meta = []
+
+        if tasking_request_ids:
+            for t_req_id in tasking_request_ids:
+                _validate_uuid(t_req_id)
+
+        # get selected
+        if tasking_request_ids:
+            tasking_request_meta = [
+                self.get_task(t_req_id) for t_req_id in tasking_request_ids  # type: ignore
+            ]
+            if status:
+                tasking_request_meta = [
+                    t_meta
+                    for t_meta in tasking_request_meta
+                    if self._task_contains_status(t_meta, status)
+                ]
+            return tasking_request_meta
+
+        if for_org:
+            params = {"organizationId": self._sesh.organization_id}
+        else:
+            params = {"customerId": self._sesh.customer_id}
+
+        with self._sesh as session:
+            resp = session.get("/tasks", params=params)
+        tasking_request_meta = resp.json()
+
+        if status:
+            tasking_request_meta = [
+                t_meta
+                for t_meta in tasking_request_meta
+                if self._task_contains_status(t_meta, status)
+            ]
+        return tasking_request_meta
+
     def get_task(self, tasking_request_id: str) -> Dict[str, Any]:
         """
         fetch task for the specified `tasking_request_id`
@@ -106,12 +159,16 @@ class CapellaConsoleClient:
 
         return task_response.json()
 
+    def _task_contains_status(self, task: Dict[str, Any], status_name: str) -> bool:
+        return status_name.lower() in (
+            s["code"] for s in task["properties"]["statusHistory"]
+        )
+
     def is_task_completed(self, task: Dict[str, Any]) -> bool:
         """
         check if a task has completed
         """
-        all_statuses = (s["code"] for s in task["properties"]["statusHistory"])
-        return "completed" in all_statuses
+        return self._task_contains_status(task, "completed")
 
     def get_collects_for_task(self, tasking_request_id: str) -> List[Dict[str, Any]]:
         """

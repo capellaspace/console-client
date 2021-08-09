@@ -8,6 +8,70 @@ from capella_console_client.exceptions import TaskNotCompleteError
 from .test_data import get_mock_responses
 
 
+def test_list_all_tasking_requests(test_client, authed_tasking_request_mock):
+    tasking_requests = test_client.list_tasking_requests()
+    assert tasking_requests == get_mock_responses("/tasks?customerId=MOCK_ID")
+
+
+def test_list_all_tasking_requests_for_org(test_client, authed_tasking_request_mock):
+    tasking_requests = test_client.list_tasking_requests(for_org=True)
+    assert tasking_requests == get_mock_responses("/tasks?organizationId=MOCK_ORG_ID")
+
+
+def test_list_tasking_with_id_single(
+    test_client, authed_tasking_request_mock, disable_validate_uuid
+):
+    tasking_requests = test_client.list_tasking_requests("abc")
+    assert len(tasking_requests) == 1
+    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+
+
+def test_list_tasking_with_id_multiple(
+    test_client, authed_tasking_request_mock, disable_validate_uuid
+):
+    tasking_requests = test_client.list_tasking_requests("abc", "def")
+    assert len(tasking_requests) == 2
+
+    found_ids = [t["properties"]["taskingrequestId"] for t in tasking_requests]
+    assert "abc" in found_ids
+    assert "def" in found_ids
+
+
+def test_list_tasking_with_id_single_status(
+    test_client, authed_tasking_request_mock, disable_validate_uuid
+):
+    tasking_requests = test_client.list_tasking_requests(status="completed")
+    assert len(tasking_requests) == 1
+    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+
+
+def test_list_tasking_with_id_single_status_case_insensitive(
+    test_client, authed_tasking_request_mock, disable_validate_uuid
+):
+    tasking_requests = test_client.list_tasking_requests(status="cOmPlEtEd")
+    assert len(tasking_requests) == 1
+    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+
+
+def test_list_tasking_with_id_single_status_with_ids(
+    test_client, authed_tasking_request_mock, disable_validate_uuid
+):
+    tasking_requests = test_client.list_tasking_requests(
+        "abc", "def", status="completed"
+    )
+    assert len(tasking_requests) == 1
+    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+
+
+def test_list_tasking_with_id_single_status_nonexistent(
+    test_client, authed_tasking_request_mock, disable_validate_uuid
+):
+    tasking_requests = test_client.list_tasking_requests(
+        "abc", "def", status="doesnotexist-status"
+    )
+    assert tasking_requests == []
+
+
 def test_get_task(test_client, authed_tasking_request_mock):
     task = test_client.get_task("abc")
 
