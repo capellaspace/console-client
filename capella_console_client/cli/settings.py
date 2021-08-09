@@ -9,7 +9,6 @@ from capella_console_client.cli.config import (
 )
 
 
-# TODO: disable global callback
 app = typer.Typer(callback=None)
 
 

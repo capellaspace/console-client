@@ -11,6 +11,7 @@ from capella_console_client.config import (
     STAC_PREFIXED_BY_QUERY_FIELDS,
     SUPPORTED_SEARCH_FIELDS,
 )
+from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.validate import get_validator
 from capella_console_client.cli.cache import CLICachePaths
 from capella_console_client.cli.config import (
@@ -19,6 +20,16 @@ from capella_console_client.cli.config import (
     CURRENT_SETTINGS,
     PROMPT_OPERATORS,
 )
+
+app = typer.Typer(callback=None)
+
+
+# TODO: autocomplete option
+@app.command()
+def interactive():
+    search_kwargs = prompt_search_filter()
+    stac_items = CLIENT.search(**search_kwargs)
+    show_tabulated(stac_items)
 
 
 def prompt_search_operator(field):
@@ -40,7 +51,7 @@ def prompt_search_operator(field):
 
 def prompt_search_filter() -> Dict[str, Any]:
     search_filter_names = questionary.checkbox(
-        "Which filters?", choices=CLI_SUPPORTED_SEARCH_FILTERS
+        "What are you looking for today?", choices=CLI_SUPPORTED_SEARCH_FILTERS
     ).ask()
 
     search_kwargs = {"limit": CURRENT_SETTINGS["limit"]}

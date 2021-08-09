@@ -2,26 +2,31 @@
 cccc => CapellaConsoleClientCLI
 """
 
+import sys
 from pathlib import Path
 import tempfile
 from typing import Union, List
+from uuid import UUID
+import json
 
 import typer
 import questionary
 
-from capella_console_client import CapellaConsoleClient
 from capella_console_client.exceptions import AuthenticationError
+from capella_console_client.enumerations import ProductType, AssetType
 
+from capella_console_client.cli.client_singleton import CLIENT
 import capella_console_client.cli.settings
+import capella_console_client.cli.search
 from capella_console_client.cli.cache import CLICachePaths
-from capella_console_client.cli.search import prompt_search_filter, show_tabulated
-
-
-# CLIENT SINGLETON
-CLIENT = CapellaConsoleClient(no_auth=True, verbose=True)
+from capella_console_client.cli.sanitize import convert_to_uuid_str
 
 
 def auto_auth_callback(ctx: typer.Context):
+    # don't show on --help
+    if "--help" in sys.argv:
+        return
+
     if ctx.invoked_subcommand in ("settings", None):
         return
     try:
@@ -35,36 +40,41 @@ def auto_auth_callback(ctx: typer.Context):
 
 app = typer.Typer(callback=auto_auth_callback)
 app.add_typer(capella_console_client.cli.settings.app, name="settings")
-
-
-# TODO: autocomplete option
-@app.command()
-def search():
-    search_kwargs = prompt_search_filter()
-    stac_items = CLIENT.search(**search_kwargs)
-    show_tabulated(stac_items)
+app.add_typer(capella_console_client.cli.search.app, name="search")
 
 
 @app.command()
 def download(
-    order_id: str = None,
-    tasking_request_id: str = None,
-    collect_id: str = None,
-    local_dir: Path = Path(tempfile.gettempdir()),
-    include: List[str] = None,
-    exclude: List[str] = None,
-    override: bool = False,
-    threaded: bool = True,
-    show_progress: bool = True,
-    separate_dirs: bool = True,
-    product_types: List[str] = None,
+    order_id: UUID = None,
+    tasking_request_id: UUID = None,
+    collect_id: UUID = None,
+    local_dir: Path = typer.Option(
+        Path(tempfile.gettempdir()),
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        readable=True,
+    ),
+    include: List[AssetType] = None,
+    exclude: List[AssetType] = None,
+    override: bool = typer.Option(False, "--override"),
+    threaded: bool = typer.Option(True, "--no-threaded"),
+    show_progress: bool = typer.Option(False, "--progress"),
+    separate_dirs: bool = typer.Option(True, "--separate-dirs"),
+    product_types: List[ProductType] = None,
 ):
-    CLIENT.download_products(**locals())
+    cur_locals = locals()
 
+    # core works with uuid_str hence converting here
+    cur_locals = convert_to_uuid_str(
+        cur_locals, uuid_arg_names=("order_id", "collect_id", "tasking_request_id")
+    )
+    paths = CLIENT.download_products(**cur_locals)
+    import ipdb
 
-# @app.command()
-# def task(item: str):
-#     typer.echo(f"Selling item: {item}")
+    ipdb.set_trace()
+    print(124)
 
 
 def main():

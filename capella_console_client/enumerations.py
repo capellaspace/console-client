@@ -21,3 +21,15 @@ class ProductType(str, BaseEnum):
     GEC = "GEC"
     SIDD = "SIDD"
     CPHD = "CPHD"
+
+
+class AssetType(str, BaseEnum):
+    HH = "HH"
+    VV = "VV"
+    raster = "raster"
+    metadata = "metadata"
+    thumbnail = "thumbnail"
+    log = "log"
+    profile = "profile"
+    stats = "stats"
+    stats_plots = "stats_plots"
