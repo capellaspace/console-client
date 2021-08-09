@@ -36,32 +36,3 @@ def _validate_and_filter_asset_types(asset_types: List[str]) -> List[str]:
         return None
     return [a for a in asset_types if a in AssetType]
 
-
-def _must_be_int(val):
-    try:
-        int(val.strip())
-    except Exception:
-        return "Not an integer"
-    return True
-
-
-def _validate_bbox(val):
-    err_msg = "Please specify as bbox list, e.g. [10, 10, 40, 40]"
-    try:
-        parsed = json.loads(val)
-    except:
-        return err_msg
-
-    if not isinstance(parsed, list):
-        return err_msg
-
-    if not len(parsed) == 4:
-        return err_msg
-    return True
-
-
-def get_validator(field_descriptor):
-    return {
-        int: _must_be_int,
-        "bbox": _validate_bbox,
-    }.get(field_descriptor)

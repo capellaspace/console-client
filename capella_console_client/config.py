@@ -83,8 +83,3 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "orbital_plane": "capella:orbital_plane",
     "billable_area": "capella:billable_area",
 }
-
-
-TYPE_BY_FIELD_NAME = {
-    "limit": int,
-}

@@ -1,7 +1,7 @@
 import typer
 import questionary
 
-from capella_console_client.validate import _must_be_int
+from capella_console_client.cli.validate import _must_be_type
 from capella_console_client.cli.cache import CLICachePaths
 from capella_console_client.cli.config import (
     CLI_SUPPORTED_SEARCH_FILTERS,
@@ -23,12 +23,12 @@ def set_search_result_fields(help="set fields to be displayed in search results 
 
 
 @app.command()
-def set_default_limit(help="set default limit to be used in search"):
+def set_default_limit(help="set default limit to be used in searches"):
     cur_limit = CURRENT_SETTINGS["limit"]
     limit = questionary.text(
-        "Specify your default search limit",
+        "Specify your default search limit (can be overridden):",
         default=str(cur_limit),
-        validate=_must_be_int,
+        validate=_must_be_type(int),
     ).ask()
 
     CLICachePaths.write_user_settings("limit", int(limit))

@@ -71,9 +71,6 @@ def download(
         cur_locals, uuid_arg_names=("order_id", "collect_id", "tasking_request_id")
     )
     paths = CLIENT.download_products(**cur_locals)
-    import ipdb
-
-    ipdb.set_trace()
     print(124)
 
 
