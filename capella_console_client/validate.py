@@ -35,4 +35,3 @@ def _validate_and_filter_asset_types(asset_types: List[str]) -> List[str]:
     if not asset_types:
         return None
     return [a for a in asset_types if a in AssetType]
-

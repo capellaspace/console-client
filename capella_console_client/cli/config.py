@@ -1,7 +1,13 @@
+from copy import deepcopy
+from pathlib import Path
+
 from capella_console_client.cli.cache import CLICachePaths
 from capella_console_client.config import ALL_SUPPORTED_FIELDS
 
 CLI_SUPPORTED_SEARCH_FILTERS = sorted(ALL_SUPPORTED_FIELDS)
+
+CLI_SUPPORTED_RESULT_FIELDS = deepcopy(CLI_SUPPORTED_SEARCH_FILTERS)
+CLI_SUPPORTED_RESULT_FIELDS[CLI_SUPPORTED_RESULT_FIELDS.index('ids')] = 'id'
 
 DEFAULT_SEARCH_RESULT_FIELDS = [
     "id",
@@ -12,7 +18,11 @@ DEFAULT_SEARCH_RESULT_FIELDS = [
     "incidence_angle",
 ]
 
-DEFAULT_SETTINGS = {"limit": 50, "search_fields": DEFAULT_SEARCH_RESULT_FIELDS}
+DEFAULT_SETTINGS = {
+    "limit": 50, 
+    "search_fields": DEFAULT_SEARCH_RESULT_FIELDS,
+    "out_path": str(Path.home())
+}
 
 
 USER_SETTINGS = CLICachePaths.safe_load_user_settings()
