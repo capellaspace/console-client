@@ -18,6 +18,168 @@ def create_mock_asset_hrefs(stac_id: str = DUMMY_STAC_IDS[0], polarization: str 
     return {polarization: {"href": raster_href}, "thumbnail": {"href": thumb_href}}
 
 
+TASK_1 = {
+    "type": "Feature",
+    "geometry": {"type": "Point", "coordinates": [-100.0000, 40.0000]},
+    "properties": {
+        "submissionTime": "2021-04-21T21:20:54.385Z",
+        "taskingrequestId": "abc",
+        "taskingrequestName": "TASKING_REQUEST_NAME",
+        "taskingrequestDescription": "TASKING_REQUEST_DESCRIPTION",
+        "userId": "MOCK_ID",
+        "repeatrequestId": None,
+        "windowOpen": "2021-01-21T22:18:57.936Z",
+        "windowDuration": 604800,
+        "windowClose": "2021-01-28T22:18:57.936Z",
+        "collectionTier": "7_day",
+        "archiveHoldback": "none",
+        "statusHistory": [
+            {
+                "time": "2021-02-03T13:03:21.532Z",
+                "code": "completed",
+                "message": "Tasking request has been completed.",
+            },
+            {
+                "time": "2021-01-25T15:30:08.756Z",
+                "code": "accepted",
+                "message": "Request can be completely satisfied during validity window.",
+            },
+            {
+                "time": "2021-01-25T15:25:32.213Z",
+                "code": "submitted",
+                "message": "Request approved and submitted for scheduling",
+            },
+            {
+                "time": "2021-01-22T03:06:55.485Z",
+                "code": "completed",
+                "message": "Tasking request has been completed.",
+            },
+            {
+                "time": "2021-01-21T23:25:08.190Z",
+                "code": "accepted",
+                "message": "Request can be completely satisfied during validity window.",
+            },
+            {
+                "time": "2021-01-21T23:21:26.214Z",
+                "code": "submitted",
+                "message": "Request submitted through automatic approval",
+            },
+            {
+                "time": "2021-01-21T23:21:24.491Z",
+                "code": "review",
+                "message": "Tasking request ready for review.",
+            },
+            {
+                "time": "2021-01-21T23:20:54.385Z",
+                "code": "received",
+                "message": "Request created",
+            },
+        ],
+        "collectConstraints": {
+            "lookDirection": "either",
+            "ascDsc": "either",
+            "orbitalPlanes": [],
+            "localTime": [[0, 86400]],
+            "offNadirMin": 25,
+            "offNadirMax": 40,
+            "collectMode": "spotlight",
+            "imageLength": 5000,
+            "grrMin": 0.5,
+            "grrMax": 0.7,
+            "azrMin": 0.5,
+            "azrMax": 0.5,
+            "neszMax": -10,
+            "numLooks": 9,
+        },
+        "type": "spotlight",
+        "preApproval": True,
+        "transactionStatus": "in-progress",
+        "sandbox": False,
+        "order": {
+            "summary": {"total": "$20.00", "subtotal": "$20.00"},
+            "lineItems": [
+                {
+                    "taskId": "abc",
+                    "accountingSize": {"unit": "sqkm", "value": 25},
+                }
+            ],
+            "archiveHoldback": "none",
+            "managedOrganizationIds": ["*"],
+        },
+    },
+}
+
+TASK_2 = {
+    "type": "Feature",
+    "geometry": {"type": "Point", "coordinates": [-100.0000, 40.0000]},
+    "properties": {
+        "submissionTime": "2021-04-21T21:20:54.385Z",
+        "taskingrequestId": "def",
+        "taskingrequestName": "TASKING_REQUEST_NAME",
+        "taskingrequestDescription": "TASKING_REQUEST_DESCRIPTION",
+        "userId": "MOCK_ID",
+        "repeatrequestId": None,
+        "windowOpen": "2021-01-21T22:18:57.936Z",
+        "windowDuration": 604800,
+        "windowClose": "2021-01-28T22:18:57.936Z",
+        "collectionTier": "7_day",
+        "archiveHoldback": "none",
+        "statusHistory": [
+            {
+                "time": "2021-01-21T23:25:08.190Z",
+                "code": "accepted",
+                "message": "Request can be completely satisfied during validity window.",
+            },
+            {
+                "time": "2021-01-21T23:21:26.214Z",
+                "code": "submitted",
+                "message": "Request submitted through automatic approval",
+            },
+            {
+                "time": "2021-01-21T23:21:24.491Z",
+                "code": "review",
+                "message": "Tasking request ready for review.",
+            },
+            {
+                "time": "2021-01-21T23:20:54.385Z",
+                "code": "received",
+                "message": "Request created",
+            },
+        ],
+        "collectConstraints": {
+            "lookDirection": "either",
+            "ascDsc": "either",
+            "orbitalPlanes": [],
+            "localTime": [[0, 86400]],
+            "offNadirMin": 25,
+            "offNadirMax": 40,
+            "collectMode": "spotlight",
+            "imageLength": 5000,
+            "grrMin": 0.5,
+            "grrMax": 0.7,
+            "azrMin": 0.5,
+            "azrMax": 0.5,
+            "neszMax": -10,
+            "numLooks": 9,
+        },
+        "type": "spotlight",
+        "preApproval": True,
+        "transactionStatus": "in-progress",
+        "sandbox": False,
+        "order": {
+            "summary": {"total": "$20.00", "subtotal": "$20.00"},
+            "lineItems": [
+                {
+                    "taskId": "abc",
+                    "accountingSize": {"unit": "sqkm", "value": 25},
+                }
+            ],
+            "archiveHoldback": "none",
+            "managedOrganizationIds": ["*"],
+        },
+    },
+}
+
 # GET
 def get_mock_responses(endpoint: str) -> Dict[str, Any]:
     return {
@@ -67,166 +229,10 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
                 "id": DUMMY_STAC_IDS[1],
             },
         ],
-        "/task/abc": {
-            "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [-100.0000, 40.0000]},
-            "properties": {
-                "submissionTime": "2021-04-21T21:20:54.385Z",
-                "taskingrequestId": "abc",
-                "taskingrequestName": "TASKING_REQUEST_NAME",
-                "taskingrequestDescription": "TASKING_REQUEST_DESCRIPTION",
-                "userId": "MOCK_ID",
-                "repeatrequestId": None,
-                "windowOpen": "2021-01-21T22:18:57.936Z",
-                "windowDuration": 604800,
-                "windowClose": "2021-01-28T22:18:57.936Z",
-                "collectionTier": "7_day",
-                "archiveHoldback": "none",
-                "statusHistory": [
-                    {
-                        "time": "2021-02-03T13:03:21.532Z",
-                        "code": "completed",
-                        "message": "Tasking request has been completed.",
-                    },
-                    {
-                        "time": "2021-01-25T15:30:08.756Z",
-                        "code": "accepted",
-                        "message": "Request can be completely satisfied during validity window.",
-                    },
-                    {
-                        "time": "2021-01-25T15:25:32.213Z",
-                        "code": "submitted",
-                        "message": "Request approved and submitted for scheduling",
-                    },
-                    {
-                        "time": "2021-01-22T03:06:55.485Z",
-                        "code": "completed",
-                        "message": "Tasking request has been completed.",
-                    },
-                    {
-                        "time": "2021-01-21T23:25:08.190Z",
-                        "code": "accepted",
-                        "message": "Request can be completely satisfied during validity window.",
-                    },
-                    {
-                        "time": "2021-01-21T23:21:26.214Z",
-                        "code": "submitted",
-                        "message": "Request submitted through automatic approval",
-                    },
-                    {
-                        "time": "2021-01-21T23:21:24.491Z",
-                        "code": "review",
-                        "message": "Tasking request ready for review.",
-                    },
-                    {
-                        "time": "2021-01-21T23:20:54.385Z",
-                        "code": "received",
-                        "message": "Request created",
-                    },
-                ],
-                "collectConstraints": {
-                    "lookDirection": "either",
-                    "ascDsc": "either",
-                    "orbitalPlanes": [],
-                    "localTime": [[0, 86400]],
-                    "offNadirMin": 25,
-                    "offNadirMax": 40,
-                    "collectMode": "spotlight",
-                    "imageLength": 5000,
-                    "grrMin": 0.5,
-                    "grrMax": 0.7,
-                    "azrMin": 0.5,
-                    "azrMax": 0.5,
-                    "neszMax": -10,
-                    "numLooks": 9,
-                },
-                "type": "spotlight",
-                "preApproval": True,
-                "transactionStatus": "in-progress",
-                "sandbox": False,
-                "order": {
-                    "summary": {"total": "$20.00", "subtotal": "$20.00"},
-                    "lineItems": [
-                        {
-                            "taskId": "abc",
-                            "accountingSize": {"unit": "sqkm", "value": 25},
-                        }
-                    ],
-                    "archiveHoldback": "none",
-                    "managedOrganizationIds": ["*"],
-                },
-            },
-        },
-        "/task/def": {
-            "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [-100.0000, 40.0000]},
-            "properties": {
-                "submissionTime": "2021-04-21T21:20:54.385Z",
-                "taskingrequestId": "def",
-                "taskingrequestName": "TASKING_REQUEST_NAME",
-                "taskingrequestDescription": "TASKING_REQUEST_DESCRIPTION",
-                "userId": "MOCK_ID",
-                "repeatrequestId": None,
-                "windowOpen": "2021-01-21T22:18:57.936Z",
-                "windowDuration": 604800,
-                "windowClose": "2021-01-28T22:18:57.936Z",
-                "collectionTier": "7_day",
-                "archiveHoldback": "none",
-                "statusHistory": [
-                    {
-                        "time": "2021-01-21T23:25:08.190Z",
-                        "code": "accepted",
-                        "message": "Request can be completely satisfied during validity window.",
-                    },
-                    {
-                        "time": "2021-01-21T23:21:26.214Z",
-                        "code": "submitted",
-                        "message": "Request submitted through automatic approval",
-                    },
-                    {
-                        "time": "2021-01-21T23:21:24.491Z",
-                        "code": "review",
-                        "message": "Tasking request ready for review.",
-                    },
-                    {
-                        "time": "2021-01-21T23:20:54.385Z",
-                        "code": "received",
-                        "message": "Request created",
-                    },
-                ],
-                "collectConstraints": {
-                    "lookDirection": "either",
-                    "ascDsc": "either",
-                    "orbitalPlanes": [],
-                    "localTime": [[0, 86400]],
-                    "offNadirMin": 25,
-                    "offNadirMax": 40,
-                    "collectMode": "spotlight",
-                    "imageLength": 5000,
-                    "grrMin": 0.5,
-                    "grrMax": 0.7,
-                    "azrMin": 0.5,
-                    "azrMax": 0.5,
-                    "neszMax": -10,
-                    "numLooks": 9,
-                },
-                "type": "spotlight",
-                "preApproval": True,
-                "transactionStatus": "in-progress",
-                "sandbox": False,
-                "order": {
-                    "summary": {"total": "$20.00", "subtotal": "$20.00"},
-                    "lineItems": [
-                        {
-                            "taskId": "abc",
-                            "accountingSize": {"unit": "sqkm", "value": 25},
-                        }
-                    ],
-                    "archiveHoldback": "none",
-                    "managedOrganizationIds": ["*"],
-                },
-            },
-        },
+        "/tasks?customerId=MOCK_ID": [TASK_1, TASK_2],
+        "/tasks?organizationId=MOCK_ORG_ID": [TASK_1, TASK_2],
+        "/task/abc": TASK_1,
+        "/task/def": TASK_2,
         "/collects/list/abc": [
             {
                 "center": [-100.0000, 40.0000, 400.0000],
