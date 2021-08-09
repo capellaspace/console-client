@@ -129,10 +129,19 @@ def non_expired_order_mock(test_client, auth_httpx_mock):
 
 @pytest.fixture
 def authed_tasking_request_mock(auth_httpx_mock):
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/task/abc",
-        json=get_mock_responses("/task/abc"),
+
+    MOCK_IDENTIFIER_LIST = (
+        "/task/abc",
+        "/task/def",
+        "/tasks?customerId=MOCK_ID",
+        "/tasks?organizationId=MOCK_ORG_ID",
     )
+    for mock_id in MOCK_IDENTIFIER_LIST:
+        auth_httpx_mock.add_response(
+            url=f"{CONSOLE_API_URL}{mock_id}",
+            json=get_mock_responses(mock_id),
+        )
+
     yield auth_httpx_mock
 
 
