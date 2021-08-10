@@ -1,7 +1,7 @@
 from copy import deepcopy
 from pathlib import Path
 
-from capella_console_client.cli.cache import CLICachePaths
+from capella_console_client.cli.cache import CLICache
 from capella_console_client.config import ALL_SUPPORTED_FIELDS
 
 CLI_SUPPORTED_SEARCH_FILTERS = sorted(ALL_SUPPORTED_FIELDS)
@@ -25,7 +25,7 @@ DEFAULT_SETTINGS = {
 }
 
 
-USER_SETTINGS = CLICachePaths.safe_load_user_settings()
+USER_SETTINGS = CLICache.load_user_settings()
 
 CURRENT_SETTINGS = {**DEFAULT_SETTINGS, **USER_SETTINGS}
 

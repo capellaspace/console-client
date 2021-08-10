@@ -1,15 +1,14 @@
+import os
 from collections import defaultdict
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+import json
 
 import typer
 import questionary
 from tabulate import tabulate
 
 from capella_console_client.enumerations import BaseEnum
-
-
-
 from capella_console_client.config import (
     STAC_PREFIXED_BY_QUERY_FIELDS,
     SUPPORTED_SEARCH_FIELDS,
@@ -23,8 +22,8 @@ from capella_console_client.enumerations import (
     ProductType,
 )
 from capella_console_client.cli.client_singleton import CLIENT
-from capella_console_client.cli.validate import get_validator, get_caster
-from capella_console_client.cli.cache import CLICachePaths
+from capella_console_client.cli.validate import get_validator, get_caster, _validate_out_path
+from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.config import (
     DEFAULT_SEARCH_RESULT_FIELDS,
     CLI_SUPPORTED_SEARCH_FILTERS,
@@ -32,21 +31,24 @@ from capella_console_client.cli.config import (
     PROMPT_OPERATORS,
 )
 
-app = typer.Typer(callback=None)
+app = typer.Typer(help='search STAC items')
 
 
 # TODO: autocomplete option
 @app.command()
 def interactive():
-    search_kwargs = prompt_search_filter()
+    """
+    interactive search with prompts
+    """
+    search_kwargs = _prompt_search_filter()
     stac_items = CLIENT.search(**search_kwargs)
 
     if stac_items:
         show_tabulated(stac_items)
-        prompt_post_search_actions(stac_items)
+        _prompt_post_search_actions(stac_items)
 
 
-def prompt_search_operator(field: str) -> Dict[str, str]:
+def _prompt_search_operator(field: str) -> Dict[str, str]:
     if field not in PROMPT_OPERATORS:
         return [None]
 
@@ -84,13 +86,13 @@ def prompt_enum_choices(field: str) -> Optional[Dict[str, Any]]:
     return {f"{field}__in": choices}
 
 
-def prompt_search_filter() -> Dict[str, Any]:
+def _prompt_search_filter() -> Dict[str, Any]:
     search_filter_names = questionary.checkbox(
         "What are you looking for today?", choices=CLI_SUPPORTED_SEARCH_FILTERS
     ).ask()
 
     if not search_filter_names:
-        typer.echo("Please provide at least one filter")
+        typer.echo("Please provide at least one search condition")
         raise typer.Exit()
 
     search_kwargs = {"limit": CURRENT_SETTINGS["limit"]}
@@ -103,7 +105,7 @@ def prompt_search_filter() -> Dict[str, Any]:
             search_kwargs.update(cur_search_payload)
             continue
 
-        search_ops = prompt_search_operator(field)
+        search_ops = _prompt_search_operator(field)
 
         for search_op in search_ops:
             suffix = f"[{search_op}]" if search_op is not None else ""
@@ -145,9 +147,14 @@ def show_tabulated(stac_items: List[Dict[str, Any]]):
 class PostSearchActions(str, BaseEnum):
     save_my_searches = "save into 'my-searches'",
     export_json = "export as .json"
+    
 
+def _get_default_search_results_name():
+    dt_format = "%Y%m%dT%H%M%S"
+    ts = datetime.strftime(datetime.utcnow(), dt_format) 
+    return f"search_results_{ts}"
 
-def prompt_post_search_actions(stac_items: List[Dict[str, Any]]):
+def _prompt_post_search_actions(stac_items: List[Dict[str, Any]]):
 
     action_selection = questionary.checkbox(
         f"Anything you'd like to do with these {len(stac_items)} STAC items?", 
@@ -155,22 +162,32 @@ def prompt_post_search_actions(stac_items: List[Dict[str, Any]]):
     ).ask()
 
     if PostSearchActions.save_my_searches in action_selection:
-        dt_format = "%Y%m%dT%H%M%S"
-        ts = datetime.strftime(datetime.utcnow(), dt_format) 
-        
         identifier = questionary.text(
             message="Please provide an identifier for your search",
-            default=f"search_results_{ts}",
+            default=_get_default_search_results_name(),
             validate=lambda x: x is not None and len(x) > 0
         ).ask()
-        typer.echo(f"Saving '{identifier}' into mysearches")
+        typer.echo(f"Adding '{identifier}' to my-searches")
+        stac_ids = [i['id'] for i in stac_items]
+        CLICache.update_my_searches(identifier, stac_ids)
 
     
-    # if PostSearchActions.export_json in action_selection:
-    #     path = questionary.path(
-    #         message="Please provide path and filename where you want to save the stac items .json",
-    #         default
-    #     ).ask()
+    if PostSearchActions.export_json in action_selection:
+        default = CURRENT_SETTINGS['out_path']
+        if default[-1] != os.sep:
+            default += os.sep
+        default += f'{_get_default_search_results_name()}.json'
+        
+        path = questionary.path(
+            message="Please provide path and filename where you want to save the stac items .json",
+            default=default,
+            validate=_validate_out_path
+        ).ask()
 
-    #     import ipdb; ipdb.set_trace()
-    #     typer.echo(f"Saving '{identifier}' into mysearches")
+        if path:
+            with open(path, 'w') as fp:
+                json.dump(stac_items, fp)
+            typer.echo(f"Saved {len(stac_items)} STAC items to {path}")
+        
+            if questionary.confirm("Would you like to open it?").ask():
+                os.system(f'open {path}')

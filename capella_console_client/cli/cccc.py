@@ -18,32 +18,37 @@ from capella_console_client.enumerations import ProductType, AssetType
 from capella_console_client.cli.client_singleton import CLIENT
 import capella_console_client.cli.settings
 import capella_console_client.cli.search
-from capella_console_client.cli.cache import CLICachePaths
+import capella_console_client.cli.my_searches
+from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.sanitize import convert_to_uuid_str
 
 
 def auto_auth_callback(ctx: typer.Context):
-    # don't show on --help
-    if "--help" in sys.argv:
+    # TODO: how to do this properly
+    RETURN_EARLY_ON = (
+        '--help',
+    )
+    if any(ret in sys.argv for ret in RETURN_EARLY_ON):
         return
 
-    if ctx.invoked_subcommand in ("settings", None):
+    if ctx.invoked_subcommand in ("settings", "my-searches", None):
         return
     try:
-        CLIENT._sesh.authenticate(token=CLICachePaths.load_jwt(), no_token_check=False)
+        CLIENT._sesh.authenticate(token=CLICache.load_jwt(), no_token_check=False)
     # first time or expired token
     except (FileNotFoundError, AuthenticationError):
         CLIENT._sesh.authenticate()
         jwt = CLIENT._sesh.headers["authorization"]
-        CLICachePaths.write_jwt(jwt)
+        CLICache.write_jwt(jwt)
 
 
 app = typer.Typer(callback=auto_auth_callback)
 app.add_typer(capella_console_client.cli.settings.app, name="settings")
 app.add_typer(capella_console_client.cli.search.app, name="search")
+app.add_typer(capella_console_client.cli.my_searches.app, name="my-searches")
 
 
-@app.command()
+@app.command(help='order and download products')
 def download(
     order_id: UUID = None,
     tasking_request_id: UUID = None,
