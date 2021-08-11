@@ -16,18 +16,18 @@ from capella_console_client.exceptions import AuthenticationError
 from capella_console_client.enumerations import ProductType, AssetType
 
 from capella_console_client.cli.client_singleton import CLIENT
+from capella_console_client.cli.config import CURRENT_SETTINGS
 import capella_console_client.cli.settings
 import capella_console_client.cli.search
 import capella_console_client.cli.my_searches
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.sanitize import convert_to_uuid_str
+from capella_console_client.cli.my_searches import _load_and_prompt
 
 
 def auto_auth_callback(ctx: typer.Context):
     # TODO: how to do this properly
-    RETURN_EARLY_ON = (
-        '--help',
-    )
+    RETURN_EARLY_ON = ("--help",)
     if any(ret in sys.argv for ret in RETURN_EARLY_ON):
         return
 
@@ -37,7 +37,11 @@ def auto_auth_callback(ctx: typer.Context):
         CLIENT._sesh.authenticate(token=CLICache.load_jwt(), no_token_check=False)
     # first time or expired token
     except (FileNotFoundError, AuthenticationError):
-        CLIENT._sesh.authenticate()
+        auth_kwargs = {}
+        if "console_user" in CURRENT_SETTINGS:
+            auth_kwargs["email"] = CURRENT_SETTINGS["console_user"]
+            typer.echo(f"authenticating as {auth_kwargs['email']}")
+        CLIENT._sesh.authenticate(**auth_kwargs)
         jwt = CLIENT._sesh.headers["authorization"]
         CLICache.write_jwt(jwt)
 
@@ -48,7 +52,7 @@ app.add_typer(capella_console_client.cli.search.app, name="search")
 app.add_typer(capella_console_client.cli.my_searches.app, name="my-searches")
 
 
-@app.command(help='order and download products')
+@app.command(help="order and download products")
 def download(
     order_id: UUID = None,
     tasking_request_id: UUID = None,
@@ -68,6 +72,7 @@ def download(
     show_progress: bool = typer.Option(False, "--progress"),
     separate_dirs: bool = typer.Option(True, "--separate-dirs"),
     product_types: List[ProductType] = None,
+    from_saved: bool = typer.Option(False, "--from-saved", help="123"),
 ):
     cur_locals = locals()
 
@@ -75,8 +80,22 @@ def download(
     cur_locals = convert_to_uuid_str(
         cur_locals, uuid_arg_names=("order_id", "collect_id", "tasking_request_id")
     )
-    paths = CLIENT.download_products(**cur_locals)
-    print(124)
+    cur_locals.pop("from_saved", None)
+    if from_saved:
+        paths = _download_from_search(**cur_locals)
+    else:
+        paths = CLIENT.download_products(**cur_locals)
+
+
+def _download_from_search(**kwargs):
+    my_searches, selection = _load_and_prompt(
+        "Which saved search would you like to use?", multiple=False
+    )
+    order_id = CLIENT.submit_order(
+        stac_ids=my_searches[selection], check_active_orders=True
+    )
+    kwargs.pop("order_id", None)
+    paths = CLIENT.download_products(order_id=order_id, **kwargs)
 
 
 def main():

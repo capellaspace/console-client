@@ -12,6 +12,7 @@ def _safe_load_json(file_path: Path) -> Dict[str, Any]:
         content = {}
     return content
 
+
 class CLICache:
     ROOT = Path.home() / ".capella-console-client"
     JWT = ROOT / "jwt.cache"
@@ -42,7 +43,7 @@ class CLICache:
     @classmethod
     def write_my_searches(cls, my_searches: Dict[str, Any]):
         cls.MY_SEARCHES.write_text(json.dumps(my_searches))
-    
+
     @classmethod
     def update_my_searches(cls, search_identifier: str, stac_ids: List[str]) -> str:
         cls.MY_SEARCHES.parent.mkdir(exist_ok=True)
@@ -53,4 +54,3 @@ class CLICache:
     @classmethod
     def load_my_searches(cls) -> str:
         return _safe_load_json(cls.MY_SEARCHES)
-

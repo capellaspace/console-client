@@ -4,8 +4,12 @@ CLI / interactive (questionary) specific validation
 
 import json
 from pathlib import Path
+import re
 
 from capella_console_client.validate import _validate_uuid as _validate_core_uuid
+
+
+EMAIL_REGEX = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 
 
 def _must_be_type(type):
@@ -45,6 +49,7 @@ def _validate_uuid(val):
 
 
 def _validate_dir_exists(path_str: str) -> bool:
+    err_msg = "please specify a valid uuid (e.g. aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)"
     p = Path(path_str).resolve()
     return p.exists() and p.is_dir()
 
@@ -52,6 +57,13 @@ def _validate_dir_exists(path_str: str) -> bool:
 def _validate_out_path(path_str: str) -> bool:
     p = Path(path_str).resolve()
     return p.is_absolute() and p.parent.exists() and not p.is_dir()
+
+
+def _validate_email(email: str):
+    err_msg = "please specify a valid email"
+    if EMAIL_REGEX.fullmatch(email):
+        return True
+    return err_msg
 
 
 def get_validator(field: str):
