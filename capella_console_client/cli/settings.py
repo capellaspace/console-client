@@ -4,6 +4,8 @@ import typer
 import questionary
 from pathlib import Path
 
+from tabulate import tabulate
+
 from capella_console_client.cli.validate import (
     _must_be_type,
     _validate_dir_exists,
@@ -39,6 +41,14 @@ def _prompt_search_result_headers() -> List[str]:
 
     return search_result_fields
 
+@app.command()
+def show():
+    """
+    show current settings
+    """
+    typer.secho("Current settings:\n", underline=True)
+    table_data = list(CURRENT_SETTINGS.items())
+    typer.echo(tabulate(table_data, tablefmt="fancy_grid", headers=['setting', 'value']))
 
 @app.command()
 def result_table():
