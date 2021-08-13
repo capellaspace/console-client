@@ -6,6 +6,7 @@ import questionary
 
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.client_singleton import CLIENT
+from capella_console_client.cli.validate import _no_selection_bye
 
 app = typer.Typer(help="manage saved searches")
 
@@ -38,13 +39,11 @@ def _load_and_prompt(
     question: str, multiple: bool = True
 ) -> Tuple[Dict[str, Any], List[str]]:
     my_searches = _list_impl()
-
     typer.echo("\n\n")
+
     question_cls = questionary.checkbox if multiple else questionary.select
     selection = question_cls(message=question, choices=my_searches).ask()
-    if not selection:
-        typer.echo("Nothing selected ... bye")
-        raise typer.Exit(code=1)
+    _no_selection_bye(selection)
     return (my_searches, selection)
 
 

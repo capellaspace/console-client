@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 import re
 
+import typer
+
 from capella_console_client.validate import _validate_uuid as _validate_core_uuid
 
 
@@ -102,3 +104,19 @@ def get_caster(field: str):
         "resolution_range": float,
         "squint_angle": float,
     }.get(field)
+
+
+def _no_selection_bye(selection, info_msg=None):
+    if not info_msg:
+        info_msg = "nothing selected ... bye"
+
+    if selection in (None, []):
+        typer.echo(info_msg)
+        raise typer.Exit(code=1)
+
+
+def _at_least_one_selected(val):
+    err_msg = "Please select at least one option"
+    if len(val) < 1:
+        return err_msg
+    return True

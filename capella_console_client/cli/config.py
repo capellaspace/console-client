@@ -24,6 +24,7 @@ DEFAULT_SETTINGS = {
     "limit": 50,
     "search_headers": DEFAULT_SEARCH_RESULT_HEADERS,
     "out_path": str(Path.home()),
+    "order_list_limit": 50,
 }
 
 

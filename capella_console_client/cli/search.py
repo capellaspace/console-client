@@ -24,6 +24,8 @@ from capella_console_client.cli.validate import (
     get_validator,
     get_caster,
     _validate_out_path,
+    _no_selection_bye,
+    _at_least_one_selected,
 )
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.config import (
@@ -60,10 +62,7 @@ def _prompt_search_operator(field: str) -> Dict[str, str]:
     operators = questionary.checkbox(
         f"{field}:", choices=["=", ">", ">=", "<", "<=", "in"]
     ).ask()
-
-    if not operators:
-        typer.echo("Please select at least one search operator")
-        raise typer.Exit(code=1)
+    _no_selection_bye(operators, "Please select at least one search operator")
 
     ops_map = {
         "=": "eq",
@@ -92,17 +91,19 @@ def prompt_enum_choices(field: str) -> Optional[Dict[str, Any]]:
     choices = questionary.checkbox(
         f"{field}:", choices=[e.value for e in enum_cls]
     ).ask()
+    _no_selection_bye(choices)
     return {f"{field}__in": choices}
 
 
 def _prompt_search_filter() -> Dict[str, Any]:
     search_filter_names = questionary.checkbox(
-        "What are you looking for today?", choices=CLI_SUPPORTED_SEARCH_FILTERS
+        "What are you looking for today?",
+        choices=CLI_SUPPORTED_SEARCH_FILTERS,
+        validate=_at_least_one_selected,
     ).ask()
-
-    if not search_filter_names:
-        typer.echo("Please select at least one search condition")
-        raise typer.Exit(code=1)
+    _no_selection_bye(
+        search_filter_names, "Please select at least one search condition"
+    )
 
     search_kwargs = {"limit": CURRENT_SETTINGS["limit"]}
 
@@ -163,8 +164,7 @@ class PostSearchActions(str, BaseEnum):
             default=default,
             validate=_validate_out_path,
         ).ask()
-        if not path:
-            raise typer.Exit()
+        _no_selection_bye(path, "Please provide a path")
 
         with open(path, "w") as fp:
             json.dump(stac_items, fp)
@@ -189,10 +189,7 @@ def _prompt_post_search_actions(stac_items: List[Dict[str, Any]], no_save=False)
             "Anything you'd like to do now?",
             choices=choices,
         ).ask()
-
-        if not action_selection:
-            typer.echo("nothing selected ... bye")
-            raise typer.Exit(code=1)
+        _no_selection_bye(action_selection)
 
         if action_selection == PostSearchActions.adjust_headers:
             search_headers = _prompt_search_result_headers()

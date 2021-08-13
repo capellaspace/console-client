@@ -70,15 +70,17 @@ class CapellaConsoleClient:
         base_url: Optional[str] = CONSOLE_API_URL,
         no_auth: bool = False,
     ):
-        self.verbose = verbose
-        logger.setLevel(logging.WARNING)
-        if verbose:
-            logger.setLevel(logging.INFO)
-
+        self._set_verbosity(verbose)
         self._sesh = CapellaConsoleSession(base_url=base_url, verbose=verbose)
 
         if not no_auth:
             self._sesh.authenticate(email, password, token, no_token_check)
+
+    def _set_verbosity(self, verbose: bool = False):
+        self.verbose = verbose
+        logger.setLevel(logging.WARNING)
+        if verbose:
+            logger.setLevel(logging.INFO)
 
     # USER
     def whoami(self) -> Dict[str, Any]:

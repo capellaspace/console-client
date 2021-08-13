@@ -4,7 +4,6 @@ cccc => CapellaConsoleClientCLI
 
 import sys
 from pathlib import Path
-import tempfile
 from typing import Union, List
 from uuid import UUID
 import json
@@ -20,6 +19,7 @@ from capella_console_client.cli.config import CURRENT_SETTINGS
 import capella_console_client.cli.settings
 import capella_console_client.cli.search
 import capella_console_client.cli.my_searches
+import capella_console_client.cli.orders
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.sanitize import convert_to_uuid_str
 from capella_console_client.cli.my_searches import _load_and_prompt
@@ -50,29 +50,49 @@ app = typer.Typer(callback=auto_auth_callback)
 app.add_typer(capella_console_client.cli.settings.app, name="settings")
 app.add_typer(capella_console_client.cli.search.app, name="search")
 app.add_typer(capella_console_client.cli.my_searches.app, name="my-searches")
+app.add_typer(capella_console_client.cli.orders.app, name="orders")
 
 
 @app.command(help="order and download products")
 def download(
-    order_id: UUID = None,
-    tasking_request_id: UUID = None,
-    collect_id: UUID = None,
+    order_id: UUID = typer.Option(
+        None, help="order id you wish to download all associated products for"
+    ),
+    tasking_request_id: UUID = typer.Option(
+        None,
+        help="tasking request id of the task request you wish to download all associated products for",
+    ),
+    collect_id: UUID = typer.Option(
+        None, help="collect id you wish to download all associated products for"
+    ),
     local_dir: Path = typer.Option(
-        Path(tempfile.gettempdir()),
+        Path(CURRENT_SETTINGS["out_path"]),
         exists=True,
         file_okay=False,
         dir_okay=True,
         writable=True,
         readable=True,
+        help="local directory where assets are saved to",
     ),
-    include: List[AssetType] = None,
-    exclude: List[AssetType] = None,
-    override: bool = typer.Option(False, "--override"),
-    threaded: bool = typer.Option(True, "--no-threaded"),
-    show_progress: bool = typer.Option(False, "--progress"),
-    separate_dirs: bool = typer.Option(True, "--separate-dirs"),
-    product_types: List[ProductType] = None,
-    from_saved: bool = typer.Option(False, "--from-saved", help="123"),
+    include: List[AssetType] = typer.Option(
+        None, help="which assets should be downloaded (whitelist)"
+    ),
+    exclude: List[AssetType] = typer.Option(
+        None, help="which assets should excluded from download (blacklist)"
+    ),
+    override: bool = typer.Option(False, "--override", help="override existing assets"),
+    threaded: bool = typer.Option(
+        True, "--no-threaded", help="disable parallel downloads"
+    ),
+    show_progress: bool = typer.Option(
+        False, "--progress", help="show download status progressbar"
+    ),
+    product_types: List[ProductType] = typer.Option(
+        None, help="filter by product type(s)"
+    ),
+    from_saved: bool = typer.Option(
+        False, "--from-saved", help="select from 'my-searches'"
+    ),
 ):
     cur_locals = locals()
 
@@ -80,11 +100,17 @@ def download(
     cur_locals = convert_to_uuid_str(
         cur_locals, uuid_arg_names=("order_id", "collect_id", "tasking_request_id")
     )
-    cur_locals.pop("from_saved", None)
+
+    for field in ("from_saved", "interactive"):
+        cur_locals.pop(field, None)
+
     if from_saved:
         paths = _download_from_search(**cur_locals)
     else:
         paths = CLIENT.download_products(**cur_locals)
+
+    if questionary.confirm(f"would you like to open {local_dir}").ask():
+        typer.launch(str(local_dir), locate=True)
 
 
 def _download_from_search(**kwargs):
