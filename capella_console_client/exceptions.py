@@ -15,9 +15,6 @@ class CapellaConsoleClientError(Exception):
         if data:
             self.data = data
 
-    def __str__(self):
-        return self.message
-
 
 class AuthenticationError(CapellaConsoleClientError):
     pass

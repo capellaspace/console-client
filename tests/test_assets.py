@@ -12,13 +12,6 @@ from .test_data import create_mock_asset_hrefs
 MOCK_ASSET_HREF = create_mock_asset_hrefs()["HH"]["href"]
 
 
-def test_get_asset_bytesize(httpx_mock: HTTPXMock):
-    httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
-
-    bytesize = _get_asset_bytesize(MOCK_ASSET_HREF)
-    assert bytesize == 127
-
-
 @pytest.mark.parametrize("key", ["HH", "VV"])
 def test_get_raster_href(key):
     assert (

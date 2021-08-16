@@ -376,10 +376,6 @@ class CapellaConsoleClient:
         Args:
             stac_ids: STAC IDs that active order should include
         """
-
-        if not stac_ids:
-            raise ValueError("Please provide at least one stac_id")
-
         order_id = None
         active_orders = _get_non_expired_orders(session=self._sesh)
         if not active_orders:
@@ -710,6 +706,8 @@ class CapellaConsoleClient:
             _validate_uuid(order_id)
             assets_presigned = self._get_first_presigned_from_order(order_id)
 
+        include = _validate_and_filter_asset_types(include)
+        exclude = _validate_and_filter_asset_types(exclude)
         download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)  # type: ignore
 
         if not download_requests:
