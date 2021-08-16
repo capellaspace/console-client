@@ -1,6 +1,6 @@
 import uuid
 
-from typing import no_type_check, Optional, List, Dict, Any
+from typing import no_type_check, Optional, List, Dict, Any, Union
 
 from capella_console_client.enumerations import ProductType, AssetType
 
@@ -25,13 +25,19 @@ def _validate_stac_id_or_stac_items(
     return stac_ids
 
 
-def _validate_and_filter_product_types(product_types: List[str]) -> List[str]:
+def _validate_and_filter_product_types(
+    product_types: Optional[List[str]],
+) -> Optional[List[str]]:
     if not product_types:
         return None
     return [p.upper() for p in product_types if p.upper() in ProductType]
 
 
-def _validate_and_filter_asset_types(asset_types: List[str]) -> List[str]:
+def _validate_and_filter_asset_types(
+    asset_types: Union[List[str], str, None],
+) -> Optional[List[str]]:
     if not asset_types:
         return None
+    if isinstance(asset_types, str):
+        return [a for a in [asset_types] if a in AssetType]
     return [a for a in asset_types if a in AssetType]

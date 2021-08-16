@@ -1,7 +1,7 @@
 import json
 from uuid import UUID
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Iterable
 
 
 class SafeEncoder(json.JSONEncoder):
@@ -13,7 +13,7 @@ class SafeEncoder(json.JSONEncoder):
 
 
 def convert_to_uuid_str(
-    dict_args: Dict[str, Any], uuid_arg_names: List[str]
+    dict_args: Dict[str, Any], uuid_arg_names: Iterable[str]
 ) -> Dict[str, Any]:
     for conv in uuid_arg_names:
         if dict_args.get(conv):

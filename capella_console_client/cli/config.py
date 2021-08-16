@@ -1,5 +1,6 @@
 from copy import deepcopy
 from pathlib import Path
+from typing import Dict, Any
 
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.config import ALL_SUPPORTED_FIELDS
@@ -30,7 +31,7 @@ DEFAULT_SETTINGS = {
 
 USER_SETTINGS = CLICache.load_user_settings()
 
-CURRENT_SETTINGS = {**DEFAULT_SETTINGS, **USER_SETTINGS}
+CURRENT_SETTINGS: Dict[str, Any] = {**DEFAULT_SETTINGS, **USER_SETTINGS}
 
 PROMPT_OPERATORS = {
     "billable_area",

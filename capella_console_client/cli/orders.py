@@ -17,7 +17,7 @@ from capella_console_client.cli.visualize import (
     show_order_review_tabulated,
 )
 from capella_console_client.cli.validate import _no_selection_bye
-from capella_console_client.cli.my_searches import _load_and_prompt
+from capella_console_client.cli.user_searches.core import _load_and_prompt
 
 app = typer.Typer(help="explore order history")
 
@@ -99,4 +99,4 @@ def reorder(order_id: UUID):
     """
     order = CLIENT.list_orders(str(order_id))[0]
     stac_ids = [item["granuleId"] for item in order["items"]]
-    order_id = CLIENT.submit_order(stac_ids=stac_ids)
+    CLIENT.submit_order(stac_ids=stac_ids)

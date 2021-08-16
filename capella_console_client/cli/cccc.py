@@ -18,11 +18,12 @@ from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.cli.config import CURRENT_SETTINGS
 import capella_console_client.cli.settings
 import capella_console_client.cli.search
-import capella_console_client.cli.my_searches
+import capella_console_client.cli.user_searches.my_search_results
+import capella_console_client.cli.user_searches.my_search_queries
 import capella_console_client.cli.orders
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.sanitize import convert_to_uuid_str
-from capella_console_client.cli.my_searches import _load_and_prompt
+from capella_console_client.cli.user_searches.core import _load_and_prompt
 
 
 def auto_auth_callback(ctx: typer.Context):
@@ -31,7 +32,12 @@ def auto_auth_callback(ctx: typer.Context):
     if any(ret in sys.argv for ret in RETURN_EARLY_ON):
         return
 
-    if ctx.invoked_subcommand in ("settings", "my-searches", None):
+    if ctx.invoked_subcommand in (
+        "settings",
+        "my-search-results",
+        "my-search-queries",
+        None,
+    ):
         return
     try:
         CLIENT._sesh.authenticate(token=CLICache.load_jwt(), no_token_check=False)
@@ -41,7 +47,7 @@ def auto_auth_callback(ctx: typer.Context):
         if "console_user" in CURRENT_SETTINGS:
             auth_kwargs["email"] = CURRENT_SETTINGS["console_user"]
             typer.echo(f"authenticating as {auth_kwargs['email']}")
-        CLIENT._sesh.authenticate(**auth_kwargs)
+        CLIENT._sesh.authenticate(**auth_kwargs)  # type: ignore
         jwt = CLIENT._sesh.headers["authorization"]
         CLICache.write_jwt(jwt)
 
@@ -49,7 +55,14 @@ def auto_auth_callback(ctx: typer.Context):
 app = typer.Typer(callback=auto_auth_callback)
 app.add_typer(capella_console_client.cli.settings.app, name="settings")
 app.add_typer(capella_console_client.cli.search.app, name="search")
-app.add_typer(capella_console_client.cli.my_searches.app, name="my-searches")
+app.add_typer(
+    capella_console_client.cli.user_searches.my_search_results.app,
+    name="my-search-results",
+)
+app.add_typer(
+    capella_console_client.cli.user_searches.my_search_queries.app,
+    name="my-search-queries",
+)
 app.add_typer(capella_console_client.cli.orders.app, name="orders")
 
 
@@ -91,7 +104,7 @@ def download(
         None, help="filter by product type(s)"
     ),
     from_saved: bool = typer.Option(
-        False, "--from-saved", help="select from 'my-searches'"
+        False, "--from-saved", help="from previously saved search result"
     ),
 ):
     cur_locals = locals()

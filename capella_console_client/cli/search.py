@@ -1,6 +1,5 @@
 import os
 from typing import List, Dict, Any, Optional
-from datetime import datetime
 import json
 
 import typer
@@ -33,7 +32,7 @@ from capella_console_client.cli.config import (
     CURRENT_SETTINGS,
     PROMPT_OPERATORS,
 )
-from capella_console_client.cli.my_searches import _load_and_prompt
+from capella_console_client.cli.user_searches.my_search_results import _load_and_prompt
 from capella_console_client.cli.visualize import show_tabulated
 from capella_console_client.cli.settings import _prompt_search_result_headers
 
@@ -52,12 +51,23 @@ def interactive():
 
     if stac_items:
         show_tabulated(stac_items)
-        _prompt_post_search_actions(stac_items)
+        _prompt_post_search_actions(stac_items, search_kwargs)
+
+
+class STACSearchQuery(dict):
+    def __str__(self):
+        _filters = []
+        for k, v in self.items():
+            if isinstance(v, list):
+                cur = f"{k}{'|'.join(v)}"
+            else:
+                cur = f"{k}{v}"
+            _filters.append(cur)
+
+        return "-".join(_filters)
 
 
 def _prompt_search_operator(field: str) -> Dict[str, str]:
-    if field not in PROMPT_OPERATORS:
-        return [None]
 
     operators = questionary.checkbox(
         f"{field}:", choices=["=", ">", ">=", "<", "<=", "in"]
@@ -89,13 +99,29 @@ def prompt_enum_choices(field: str) -> Optional[Dict[str, Any]]:
         return None
 
     choices = questionary.checkbox(
-        f"{field}:", choices=[e.value for e in enum_cls]
+        f"{field}:", choices=[e.value for e in enum_cls]  # type: ignore
     ).ask()
     _no_selection_bye(choices)
-    return {f"{field}__in": choices}
+    return {field: choices}
 
 
-def _prompt_search_filter() -> Dict[str, Any]:
+def _prompt_operator_value(field: str, search_op: str, operator_map: Dict[str, str]):
+    suffix = f"[{search_op}]" if search_op is not None else ""
+    str_val = questionary.text(
+        message=f"{field} {suffix}:",
+        validate=get_validator(field),
+    ).ask()
+
+    # optional cast from str
+    cast_fct = get_caster(field)
+    field_desc = f"{field}__{operator_map[search_op]}" if search_op else field
+
+    if cast_fct:
+        return {field_desc: cast_fct(str_val)}
+    return {field_desc: str_val}
+
+
+def _prompt_search_filter() -> STACSearchQuery:
     search_filter_names = questionary.checkbox(
         "What are you looking for today?",
         choices=CLI_SUPPORTED_SEARCH_FILTERS,
@@ -105,7 +131,7 @@ def _prompt_search_filter() -> Dict[str, Any]:
         search_filter_names, "Please select at least one search condition"
     )
 
-    search_kwargs = {"limit": CURRENT_SETTINGS["limit"]}
+    search_kwargs = STACSearchQuery()
 
     for field in search_filter_names:
         cur_search_payload = prompt_enum_choices(field)
@@ -115,49 +141,61 @@ def _prompt_search_filter() -> Dict[str, Any]:
             search_kwargs.update(cur_search_payload)
             continue
 
-        search_ops = _prompt_search_operator(field)
+        if field in PROMPT_OPERATORS:
+            operator_map = _prompt_search_operator(field)
+        else:
+            operator_map = {"": ""}
 
-        for search_op in search_ops:
-            suffix = f"[{search_op}]" if search_op is not None else ""
-            str_val = questionary.text(
-                message=f"{field} {suffix}:",
-                validate=get_validator(field),
-            ).ask()
+        for search_op in operator_map:
+            cur_query = _prompt_operator_value(field, search_op, operator_map)
+            search_kwargs.update(cur_query)
 
-            # optional cast from str
-            cast_fct = get_caster(field)
-            field_desc = f"{field}__{search_ops[search_op]}" if search_op else field
-            if cast_fct:
-                search_kwargs[field_desc] = cast_fct(str_val)
-            else:
-                search_kwargs[field_desc] = str_val
-
+    if "limit" not in search_kwargs:
+        search_kwargs["limit"] = CURRENT_SETTINGS["limit"]
     return search_kwargs
 
 
 class PostSearchActions(str, BaseEnum):
-    adjust_headers = "adjust result table headers and re-print"
-    save_my_searches = ("save into 'my-searches'",)
-    export_json = "export as .json"
+    adjust_headers = "change result table headers"
+    save_current_search = ("save search query and result for reuse",)
+    export_json = "export search result as .json"
     quit = "quit"
 
     @classmethod
-    def save_search(cls, stac_items: Dict[str, Any]):
+    def save_search(
+        cls, stac_items: List[Dict[str, Any]], search_kwargs: STACSearchQuery
+    ):
         identifier = questionary.text(
             message="Please provide an identifier for your search",
-            default=_get_default_search_results_name(),
+            default=str(search_kwargs),
             validate=lambda x: x is not None and len(x) > 0,
         ).ask()
-        typer.echo(f"Adding '{identifier}' to my-searches")
         stac_ids = [i["id"] for i in stac_items]
-        CLICache.update_my_searches(identifier, stac_ids)
+        CLICache.update_my_search_results(identifier, stac_ids)
+        CLICache.update_my_search_queries(identifier, search_kwargs)  # type: ignore
+
+        txt = f"""Added '{identifier}' to my-search-results and my-search-queries"
+Issue
+
+\tcapella-console-wizard my-search-results list
+
+    or
+
+\tcapella-console-wizard my-search-queries list
+
+in order to list your saved search results or queries.
+"""
+
+        typer.echo(txt)
 
     @classmethod
-    def export_search(cls, stac_items: Dict[str, Any]) -> str:
+    def export_search(
+        cls, stac_items: List[Dict[str, Any]], search_kwargs: STACSearchQuery
+    ) -> str:
         default = CURRENT_SETTINGS["out_path"]
         if default[-1] != os.sep:
             default += os.sep
-        default += f"{_get_default_search_results_name()}.json"
+        default += f"{search_kwargs}.json"
 
         path = questionary.path(
             message="Please provide path and filename where you want to save the stac items .json",
@@ -172,16 +210,12 @@ class PostSearchActions(str, BaseEnum):
         return path
 
 
-def _get_default_search_results_name():
-    dt_format = "%Y%m%dT%H%M%S"
-    ts = datetime.strftime(datetime.utcnow(), dt_format)
-    return f"search_results_{ts}"
-
-
-def _prompt_post_search_actions(stac_items: List[Dict[str, Any]], no_save=False):
+def _prompt_post_search_actions(
+    stac_items: List[Dict[str, Any]], search_kwargs: STACSearchQuery, no_save=False
+):
     choices = list(PostSearchActions)
     if no_save:
-        del choices[choices.index(PostSearchActions.save_my_searches)]
+        del choices[choices.index(PostSearchActions.save_current_search)]
 
     action_selection = None
     while action_selection != PostSearchActions.quit:
@@ -196,11 +230,12 @@ def _prompt_post_search_actions(stac_items: List[Dict[str, Any]], no_save=False)
             CURRENT_SETTINGS["search_headers"] = search_headers
             show_tabulated(stac_items, search_headers)
 
-        if action_selection == PostSearchActions.save_my_searches:
-            PostSearchActions.save_search(stac_items)
+        if action_selection == PostSearchActions.save_current_search:
+            PostSearchActions.save_search(stac_items, search_kwargs)
+            del choices[choices.index(PostSearchActions.save_current_search)]
 
         if action_selection == PostSearchActions.export_json:
-            path = PostSearchActions.export_search(stac_items)
+            path = PostSearchActions.export_search(stac_items, search_kwargs)
             if questionary.confirm("Would you like to open it?").ask():
                 os.system(f"open {path}")
 
@@ -210,11 +245,11 @@ def from_saved():
     """
     select and show STAC items of saved search
     """
-    my_searches, selection = _load_and_prompt(
+    saved_search_results, selection = _load_and_prompt(
         "Which saved search would you like to use?", multiple=False
     )
-    stac_items = CLIENT.search(ids=my_searches[selection])
+    stac_items = CLIENT.search(ids=saved_search_results[selection])
 
     if stac_items:
         show_tabulated(stac_items)
-        _prompt_post_search_actions(stac_items, no_save=True)
+        _prompt_post_search_actions(stac_items, selection, no_save=True)

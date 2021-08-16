@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from collections import defaultdict
 
 import typer
@@ -13,12 +13,15 @@ from capella_console_client.cli.config import (
 )
 
 
-def show_tabulated(stac_items: List[Dict[str, Any]], search_headers: List[str] = None):
+def show_tabulated(
+    stac_items: List[Dict[str, Any]], search_headers: Optional[List[str]] = None
+):
     if not search_headers:
-        search_headers = CURRENT_SETTINGS["search_headers"]
+        search_headers = CURRENT_SETTINGS["search_headers"]  # type: ignore
 
     table_data = defaultdict(list)
 
+    assert search_headers is not None
     # force id left if specified
     if "id" in search_headers:
         del search_headers[search_headers.index("id")]
@@ -45,7 +48,7 @@ def show_orders_tabulated(orders: List[Dict[str, Any]]):
         cur = [i + 1]
         cur.extend(order[field] for field in fields)
         granules = [o["granuleId"] for o in order["items"]]
-        cur.append("\n".join(granules))
+        cur.append("\n".join(granules))  # type: ignore
         table_data.append(cur)
 
     headers = ["#", *fields, "STAC ids"]
