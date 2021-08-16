@@ -348,7 +348,6 @@ def test_download_products_for_order_id(
         _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir)
 
 
-
 def test_download_products_for_collect_id(
     verbose_download_multiple_client, auth_httpx_mock, disable_validate_uuid
 ):
@@ -402,4 +401,3 @@ def test_get_asset_bytesize(download_client, auth_httpx_mock):
 
     bytesize = download_client.get_asset_bytesize(MOCK_ASSET_HREF)
     assert bytesize == 127
-

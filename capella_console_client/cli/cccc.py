@@ -23,7 +23,9 @@ import capella_console_client.cli.user_searches.my_search_queries
 import capella_console_client.cli.orders
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.sanitize import convert_to_uuid_str
-from capella_console_client.cli.user_searches.core import _load_and_prompt
+from capella_console_client.cli.user_searches.core import _load_and_prompt, SearchEntity
+from capella_console_client.cli.visualize import show_tabulated
+from capella_console_client.cli.search import _prompt_post_search_actions
 
 
 def auto_auth_callback(ctx: typer.Context):
@@ -120,6 +122,14 @@ def download(
     if from_saved:
         paths = _download_from_search(**cur_locals)
     else:
+        one_of_required = ("order_id", "tasking_request_id", "collect_id")
+        if not any(cur_locals[cur] for cur in one_of_required):
+            typer.secho(
+                "please provide one of order_id, tasking_request_id or collect_id",
+                bold=True,
+            )
+            raise typer.Exit(code=1)
+
         paths = CLIENT.download_products(**cur_locals)
 
     if questionary.confirm(f"would you like to open {local_dir}").ask():
@@ -127,12 +137,13 @@ def download(
 
 
 def _download_from_search(**kwargs):
-    my_searches, selection = _load_and_prompt(
-        "Which saved search would you like to use?", multiple=False
+    saved, selection = _load_and_prompt(
+        f"Which saved searcj would you like to use?",
+        search_entity=SearchEntity.result,
+        multiple=False,
     )
-    order_id = CLIENT.submit_order(
-        stac_ids=my_searches[selection], check_active_orders=True
-    )
+
+    order_id = CLIENT.submit_order(stac_ids=saved[selection], check_active_orders=True)
     kwargs.pop("order_id", None)
     paths = CLIENT.download_products(order_id=order_id, **kwargs)
 

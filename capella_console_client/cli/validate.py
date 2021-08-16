@@ -5,10 +5,12 @@ CLI / interactive (questionary) specific validation
 import json
 from pathlib import Path
 import re
+from dateutil.parser import parse, ParserError
 
 import typer
 
 from capella_console_client.validate import _validate_uuid as _validate_core_uuid
+from capella_console_client.assets import STAC_ID_REGEX
 
 
 EMAIL_REGEX = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
@@ -26,7 +28,9 @@ def _must_be_type(type):
 
 
 def _validate_bbox(val):
-    err_msg = "please specify as bbox list, e.g. [10, 10, 40, 40]"
+    err_msg = "please specify as bbox list [<lon upper left>, <lat upper left>, <lon lower right>, <lat lower right>], e.g. [-122.4, 46.9, -124.9, 48.5]"
+    if not val:
+        return err_msg
     try:
         parsed = json.loads(val)
     except:
@@ -68,10 +72,57 @@ def _validate_email(email: str):
     return err_msg
 
 
+def _validate_datetime(dt_str: str):
+    err_msg = (
+        "please specify a valid UTC date(time) (e.g. 2020-08-14 or 2020-08-14 12:00:00)"
+    )
+    if not dt_str or len(dt_str) < 10:
+        return err_msg
+
+    try:
+        parse(dt_str)
+    except ParserError:
+        return err_msg
+    return True
+
+
+def _parse_str_collection(list_str):
+    _cur = list_str.strip()
+    if not _cur.startswith("[") or not _cur.endswith("]"):
+        # raw parse
+        separator = "," if "," in _cur else " "
+        stac_ids = _cur.split(separator)
+    else:
+        stac_ids = json.loads(_cur)
+    return stac_ids
+
+
+def _validate_stac_ids(stac_id_str: str):
+    err_msg = "please specify one or more , or whitespace separated STAC Ids (e.g. CAPELLA_C03_SM_GEO_HH_20210512034455_20210512034459,CAPELLA_C03_SP_GEO_HH_20210511101416_20210511101439)"
+
+    stac_ids = _parse_str_collection(stac_id_str)
+    if all(STAC_ID_REGEX.match(stac_id) for stac_id in stac_ids):
+        return True
+
+    return err_msg
+
+
+def _validate_collections(stac_id_str: str):
+    err_msg = "please specify one or more , or whitespace separated collections (e.g. capella-open-data)"
+
+    stac_ids = _parse_str_collection(stac_id_str)
+    if all(STAC_ID_REGEX.match(stac_id) for stac_id in stac_ids):
+        return True
+
+    return err_msg
+
+
 def get_validator(field: str):
     custom_validator = {
         "bbox": _validate_bbox,
         "collect_id": _validate_uuid,
+        "datetime": _validate_datetime,
+        "ids": _validate_stac_ids,
     }.get(field)
 
     if custom_validator:
@@ -83,6 +134,10 @@ def get_validator(field: str):
         return _must_be_type(type_caster)
 
     return None
+
+
+def _cast_dt(val):
+    return parse(val).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def get_caster(field: str):
@@ -103,6 +158,9 @@ def get_caster(field: str):
         "resolution_ground_range": float,
         "resolution_range": float,
         "squint_angle": float,
+        "datetime": _cast_dt,
+        "ids": _parse_str_collection,
+        "collections": _parse_str_collection,
     }.get(field)
 
 

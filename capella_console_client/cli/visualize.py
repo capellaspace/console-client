@@ -32,7 +32,9 @@ def show_tabulated(
             if field in STAC_PREFIXED_BY_QUERY_FIELDS:
                 value = it["properties"].get(STAC_PREFIXED_BY_QUERY_FIELDS[field])
             else:
-                value = it.get(field, "n/a")
+                value = it["properties"].get(field)
+                if value is None:
+                    value = it.get(field, "n/a")
 
             if value is not None:
                 table_data[field].append(value)

@@ -33,6 +33,7 @@ from capella_console_client.cli.config import (
     PROMPT_OPERATORS,
 )
 from capella_console_client.cli.user_searches.my_search_results import _load_and_prompt
+from capella_console_client.cli.user_searches.core import SearchEntity
 from capella_console_client.cli.visualize import show_tabulated
 from capella_console_client.cli.settings import _prompt_search_result_headers
 
@@ -59,7 +60,7 @@ class STACSearchQuery(dict):
         _filters = []
         for k, v in self.items():
             if isinstance(v, list):
-                cur = f"{k}{'|'.join(v)}"
+                cur = f"{k}{'|'.join(map(str, v))}"
             else:
                 cur = f"{k}{v}"
             _filters.append(cur)
@@ -106,11 +107,12 @@ def prompt_enum_choices(field: str) -> Optional[Dict[str, Any]]:
 
 
 def _prompt_operator_value(field: str, search_op: str, operator_map: Dict[str, str]):
-    suffix = f"[{search_op}]" if search_op is not None else ""
+    suffix = f"[{search_op}]" if search_op else ""
     str_val = questionary.text(
         message=f"{field} {suffix}:",
         validate=get_validator(field),
     ).ask()
+    _no_selection_bye(str_val)
 
     # optional cast from str
     cast_fct = get_caster(field)
@@ -185,7 +187,6 @@ Issue
 
 in order to list your saved search results or queries.
 """
-
         typer.echo(txt)
 
     @classmethod
@@ -228,6 +229,7 @@ def _prompt_post_search_actions(
         if action_selection == PostSearchActions.adjust_headers:
             search_headers = _prompt_search_result_headers()
             CURRENT_SETTINGS["search_headers"] = search_headers
+            CLICache.write_user_settings("search_headers", search_headers)
             show_tabulated(stac_items, search_headers)
 
         if action_selection == PostSearchActions.save_current_search:
@@ -245,11 +247,23 @@ def from_saved():
     """
     select and show STAC items of saved search
     """
-    saved_search_results, selection = _load_and_prompt(
-        "Which saved search would you like to use?", multiple=False
-    )
-    stac_items = CLIENT.search(ids=saved_search_results[selection])
+    entity = questionary.select(
+        "Would you like to use a saved query or a saved result",
+        choices=[SearchEntity.query.name, SearchEntity.result.name],
+    ).ask()
 
+    search_entity = SearchEntity[entity]
+    saved, selection = _load_and_prompt(
+        f"Which saved {entity} would you like to use?",
+        search_entity=search_entity,
+        multiple=False,
+    )
+
+    if search_entity == SearchEntity.result:
+        stac_items = CLIENT.search(ids=saved_search_results[selection])
+    else:
+        search_query = saved[selection]
+        stac_items = CLIENT.search(**search_query)
     if stac_items:
         show_tabulated(stac_items)
-        _prompt_post_search_actions(stac_items, selection, no_save=True)
+        _prompt_post_search_actions(stac_items, search_query, no_save=True)

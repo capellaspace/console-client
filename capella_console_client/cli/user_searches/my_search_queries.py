@@ -55,7 +55,8 @@ def delete():
     delete previously saved search query
     """
     saved_search_queries, selection = _load_and_prompt(
-        "Which saved search queries would you like to delete?"
+        "Which saved search queries would you like to delete?",
+        search_entity=SearchEntity.query,
     )
 
     if not selection:

@@ -6,6 +6,8 @@ from capella_console_client.cli.cache import CLICache
 from capella_console_client.config import ALL_SUPPORTED_FIELDS
 
 CLI_SUPPORTED_SEARCH_FILTERS = sorted(ALL_SUPPORTED_FIELDS)
+# no intersects support currently
+del CLI_SUPPORTED_SEARCH_FILTERS[CLI_SUPPORTED_SEARCH_FILTERS.index("intersects")]
 
 CLI_SUPPORTED_RESULT_HEADERS = deepcopy(CLI_SUPPORTED_SEARCH_FILTERS)
 CLI_SUPPORTED_RESULT_HEADERS[CLI_SUPPORTED_RESULT_HEADERS.index("ids")] = "id"
