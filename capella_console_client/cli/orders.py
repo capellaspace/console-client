@@ -88,7 +88,7 @@ def review():
     my_searches, selection = _load_and_prompt(
         "Which saved search would you like to use?", multiple=False
     )
-    order_review = CLIENT.review_order(stac_ids=my_searches[selection])
+    order_review = CLIENT.review_order(stac_ids=my_searches[selection]["data"])
     show_order_review_tabulated(order_review)
 
 

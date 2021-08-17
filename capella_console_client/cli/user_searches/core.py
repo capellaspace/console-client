@@ -1,4 +1,5 @@
 from typing import Tuple, Dict, Any, List
+from datetime import datetime
 
 import typer
 import questionary
@@ -70,6 +71,7 @@ def rename_search_entity(search_entity: SearchEntity):
         if new_name != selected:
             val = saved[selected]
             saved[new_name] = val
+            saved[new_name]["updated_at"] = str(datetime.now())[:-7]
             del saved[selected]
             change_cnt += 1
 

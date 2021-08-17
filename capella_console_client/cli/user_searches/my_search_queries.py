@@ -29,14 +29,24 @@ def list(
     if not saved_search_queries:
         no_data_info(search_entity=SearchEntity.query)
 
-    table_data = [
-        (k, json.dumps(v, sort_keys=True, indent=4))
-        for k, v in saved_search_queries.items()
-    ]
+    table_data = []
+    for k, v in saved_search_queries.items():
+        data = v["data"]
+        cur = [
+            k,
+            v["created_at"],
+            v["updated_at"],
+            json.dumps(data, sort_keys=True, indent=4),
+        ]
+        table_data.append(cur)
 
-    typer.secho("My search queries\n", bold=True)
+    typer.secho("My saved search queries\n", bold=True)
     typer.echo(
-        tabulate(table_data, tablefmt="fancy_grid", headers=["identifier", "query"])
+        tabulate(
+            table_data,
+            tablefmt="fancy_grid",
+            headers=["identifier", "created at", "updated at", "query"],
+        )
     )
     return saved_search_queries
 

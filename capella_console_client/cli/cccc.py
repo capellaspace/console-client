@@ -143,7 +143,9 @@ def _download_from_search(**kwargs):
         multiple=False,
     )
 
-    order_id = CLIENT.submit_order(stac_ids=saved[selection], check_active_orders=True)
+    order_id = CLIENT.submit_order(
+        stac_ids=saved[selection]["data"], check_active_orders=True
+    )
     kwargs.pop("order_id", None)
     paths = CLIENT.download_products(order_id=order_id, **kwargs)
 

@@ -159,7 +159,7 @@ def _prompt_search_filter() -> STACSearchQuery:
 
 class PostSearchActions(str, BaseEnum):
     adjust_headers = "change result table headers"
-    save_current_search = ("save search query and result for reuse",)
+    save_current_search = "save search query and result for reuse"
     export_json = "export search result as .json"
     quit = "quit"
 
@@ -173,8 +173,8 @@ class PostSearchActions(str, BaseEnum):
             validate=lambda x: x is not None and len(x) > 0,
         ).ask()
         stac_ids = [i["id"] for i in stac_items]
-        CLICache.update_my_search_results(identifier, stac_ids)
-        CLICache.update_my_search_queries(identifier, search_kwargs)  # type: ignore
+        CLICache.update_my_search_results(identifier, stac_ids, is_new=True)
+        CLICache.update_my_search_queries(identifier, search_kwargs, is_new=True)  # type: ignore
 
         txt = f"""Added '{identifier}' to my-search-results and my-search-queries"
 Issue
@@ -251,6 +251,7 @@ def from_saved():
         "Would you like to use a saved query or a saved result",
         choices=[SearchEntity.query.name, SearchEntity.result.name],
     ).ask()
+    _no_selection_bye(entity)
 
     search_entity = SearchEntity[entity]
     saved, selection = _load_and_prompt(
@@ -260,10 +261,11 @@ def from_saved():
     )
 
     if search_entity == SearchEntity.result:
-        stac_items = CLIENT.search(ids=saved_search_results[selection])
+        search_query = dict(ids=saved[selection]["data"])
     else:
-        search_query = saved[selection]
-        stac_items = CLIENT.search(**search_query)
+        search_query = saved[selection]["data"]
+
+    stac_items = CLIENT.search(**search_query)
     if stac_items:
         show_tabulated(stac_items)
         _prompt_post_search_actions(stac_items, search_query, no_save=True)

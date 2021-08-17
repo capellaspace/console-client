@@ -25,19 +25,19 @@ def list(
     list previously saved search results
     """
     saved_search_results = CLICache.load_my_search_results()
-
     if not saved_search_results:
         no_data_info(search_entity=SearchEntity.result)
 
     table_data = []
     for k, v in saved_search_results.items():
-        cur = [k, f"{len(v)} items"]
+        stac_ids = v["data"]
+        cur = [k, v["created_at"], v["updated_at"], f"{len(stac_ids)} items"]
         if detailed:
-            cur.append("\n".join(v))
+            cur.append("\n".join(stac_ids))
         table_data.append(cur)
 
-    headers = ["identifier", "size", "STAC ids"]
-    typer.secho("My search results\n", bold=True)
+    headers = ["identifier", "created", "updated", "size", "STAC ids"]
+    typer.secho("My saved search results\n", bold=True)
     typer.echo(tabulate(table_data, tablefmt="fancy_grid", headers=headers))
     return saved_search_results
 
