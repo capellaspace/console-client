@@ -9,7 +9,6 @@ SUPPORTED_SEARCH_FIELDS = {
     "intersects",
     "collections",
     "ids",
-    "sortby",
     "limit",
 }
 

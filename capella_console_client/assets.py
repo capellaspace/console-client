@@ -13,10 +13,8 @@ from capella_console_client.logconf import logger
 from capella_console_client.exceptions import ConnectError
 
 
-STAC_ID_REGEX = re.compile("^.*(CAPELLA_C\\d{2}_\\w+_\\w+_\\d{14}_\\d{14}).*$")
-PRODUCT_TYPE_REGEX = re.compile(
-    "^.*CAPELLA_C\\d{2}_\\w+_(\\w+)_\\w+_\\d{14}_\\d{14}.*$"
-)
+STAC_ID_REGEX = re.compile("^.*(CAPELLA_\\w+_\\w+_\\w+_\\d{14}_\\d{14}).*$")
+PRODUCT_TYPE_REGEX = re.compile("^.*CAPELLA_\\w+_\\w+_(\\w+)_\\w+_\\d{14}_\\d{14}.*$")
 
 
 @dataclass

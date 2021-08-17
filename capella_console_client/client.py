@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, no_type_check, Tuple
@@ -33,6 +34,7 @@ from capella_console_client.validate import (
     _validate_uuid,
     _validate_stac_id_or_stac_items,
     _validate_and_filter_product_types,
+    _validate_and_filter_asset_types,
 )
 
 
@@ -68,15 +70,17 @@ class CapellaConsoleClient:
         base_url: Optional[str] = CONSOLE_API_URL,
         no_auth: bool = False,
     ):
-        self.verbose = verbose
-        logger.setLevel(logging.WARNING)
-        if verbose:
-            logger.setLevel(logging.INFO)
-
+        self._set_verbosity(verbose)
         self._sesh = CapellaConsoleSession(base_url=base_url, verbose=verbose)
 
         if not no_auth:
             self._sesh.authenticate(email, password, token, no_token_check)
+
+    def _set_verbosity(self, verbose: bool = False):
+        self.verbose = verbose
+        logger.setLevel(logging.WARNING)
+        if verbose:
+            logger.setLevel(logging.INFO)
 
     # USER
     def whoami(self) -> Dict[str, Any]:
@@ -372,10 +376,6 @@ class CapellaConsoleClient:
         Args:
             stac_ids: STAC IDs that active order should include
         """
-
-        if not stac_ids:
-            raise ValueError("Please provide at least one stac_id")
-
         order_id = None
         active_orders = _get_non_expired_orders(session=self._sesh)
         if not active_orders:
@@ -543,8 +543,9 @@ class CapellaConsoleClient:
                 "please provide one of assets_presigned, order_id, tasking_request_id or collect_id"
             )
 
-        if product_types:
-            product_types = _validate_and_filter_product_types(product_types)
+        product_types = _validate_and_filter_product_types(product_types)
+        include = _validate_and_filter_asset_types(include)
+        exclude = _validate_and_filter_asset_types(exclude)
 
         if not assets_presigned:
             assets_presigned = self._resolve_assets_presigned(
@@ -555,9 +556,6 @@ class CapellaConsoleClient:
         suffix = "s" if len_assets_presigned > 1 else ""
         logger.info(f"downloading {len_assets_presigned} product{suffix}")
 
-        download_requests = []
-        by_stac_id = {}
-
         # filter product_type
         if product_types:
             assets_presigned = _filter_assets_by_product_types(
@@ -565,6 +563,8 @@ class CapellaConsoleClient:
             )
 
         # gather download requests
+        download_requests = []
+        by_stac_id = {}
         for cur_assets in assets_presigned:
             cur_download_requests = _gather_download_requests(
                 cur_assets, local_dir, include, exclude, separate_dirs
@@ -638,11 +638,14 @@ class CapellaConsoleClient:
         search_kwargs = dict(
             collect_id__in=collect_ids,
         )
-
         if product_types:
             search_kwargs["product_type__in"] = product_types
 
         stac_items = self.search(**search_kwargs)
+        if not stac_items:
+            logger.warning("No STAC items found ... aborting")
+            sys.exit(0)
+
         order_id = self.submit_order(
             items=stac_items, omit_search=True, check_active_orders=True
         )
@@ -703,6 +706,8 @@ class CapellaConsoleClient:
             _validate_uuid(order_id)
             assets_presigned = self._get_first_presigned_from_order(order_id)
 
+        include = _validate_and_filter_asset_types(include)
+        exclude = _validate_and_filter_asset_types(exclude)
         download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)  # type: ignore
 
         if not download_requests:

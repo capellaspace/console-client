@@ -291,6 +291,21 @@ def test_product_download_exclude_overrides_include(test_client):
         assert len(paths_by_key) == 0
 
 
+def _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir):
+    for stac_id in paths_by_stac_id_and_key:
+        paths = list(paths_by_stac_id_and_key[stac_id].values())
+
+        assert all([p.exists() for p in paths])
+        assert all([p.read_text() == "MOCK_CONTENT" for p in paths])
+
+        # within temp_dir
+        for p in paths:
+            assert p.relative_to(temp_dir)
+
+        assert len(paths) == 1
+        assert "thumb.png" not in str(paths[0])
+
+
 def test_download_products_for_tasking_request(
     verbose_download_multiple_client,
     auth_httpx_mock,
@@ -317,18 +332,20 @@ def test_download_products_for_tasking_request(
             tasking_request_id="abc", local_dir=temp_dir, include=["HH"]
         )
 
-        for stac_id in paths_by_stac_id_and_key:
-            paths = list(paths_by_stac_id_and_key[stac_id].values())
+        _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir)
 
-            assert all([p.exists() for p in paths])
-            assert all([p.read_text() == "MOCK_CONTENT" for p in paths])
 
-            # within temp_dir
-            for p in paths:
-                assert p.relative_to(temp_dir)
+def test_download_products_for_order_id(
+    verbose_download_multiple_client, disable_validate_uuid
+):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = Path(temp_dir)
 
-            assert len(paths) == 1
-            assert "thumb.png" not in str(paths[0])
+        paths_by_stac_id_and_key = verbose_download_multiple_client.download_products(
+            order_id="1", local_dir=temp_dir, include=["HH"]
+        )
+
+        _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir)
 
 
 def test_download_products_for_collect_id(
@@ -345,19 +362,7 @@ def test_download_products_for_collect_id(
         paths_by_stac_id_and_key = verbose_download_multiple_client.download_products(
             collect_id="abc", local_dir=temp_dir, include=["HH"]
         )
-
-        for stac_id in paths_by_stac_id_and_key:
-            paths = list(paths_by_stac_id_and_key[stac_id].values())
-
-            assert all([p.exists() for p in paths])
-            assert all([p.read_text() == "MOCK_CONTENT" for p in paths])
-
-            # within temp_dir
-            for p in paths:
-                assert p.relative_to(temp_dir)
-
-            assert len(paths) == 1
-            assert "thumb.png" not in str(paths[0])
+        _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir)
 
 
 def test_download_products_with_product_types_filter(download_client):
@@ -389,3 +394,10 @@ def test_download_products_with_product_types_filter_all_exclude(download_client
             assets_presigned, local_dir=temp_dir, product_types=["SIDD"]
         )
         assert paths_by_stac_id_and_key == {}
+
+
+def test_get_asset_bytesize(download_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
+
+    bytesize = download_client.get_asset_bytesize(MOCK_ASSET_HREF)
+    assert bytesize == 127
