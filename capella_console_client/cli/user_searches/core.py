@@ -4,9 +4,10 @@ from datetime import datetime
 import typer
 import questionary
 
+from capella_console_client.enumerations import BaseEnum
 from capella_console_client.cli.validate import _no_selection_bye
 from capella_console_client.cli.cache import CLICache
-from capella_console_client.enumerations import BaseEnum
+from capella_console_client.cli.info import no_data_info
 
 
 class SearchEntity(str, BaseEnum):
@@ -26,14 +27,6 @@ def _get_write_fct(search_entity):
         SearchEntity.result: CLICache.write_my_search_results,
         SearchEntity.query: CLICache.write_my_search_queries,
     }[search_entity]
-
-
-def no_data_info(search_entity: SearchEntity):
-    typer.secho(f"No search {search_entity.name} currently saved!\n", bold=True)
-    typer.echo(f"Issue")
-    typer.secho(f"\tcapella-console-wizard search interactive", bold=True)
-    typer.echo(f"\nin order to search and save your first search {search_entity.name}.")
-    raise typer.Exit(code=1)
 
 
 def _load_and_prompt(

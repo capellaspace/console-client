@@ -5,7 +5,7 @@ from tabulate import tabulate
 import questionary
 
 from capella_console_client.cli.cache import CLICache
-from capella_console_client.cli.user_searches.core import no_data_info
+from capella_console_client.cli.info import no_data_info
 from capella_console_client.cli.user_searches.core import (
     rename_search_entity,
     SearchEntity,

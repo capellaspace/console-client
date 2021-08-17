@@ -41,6 +41,10 @@ def auto_auth_callback(ctx: typer.Context):
         None,
     ):
         return
+
+    if ctx.invoked_subcommand == sys.argv[-1]:
+        return
+
     try:
         CLIENT._sesh.authenticate(token=CLICache.load_jwt(), no_token_check=False)
     # first time or expired token

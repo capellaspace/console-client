@@ -36,6 +36,7 @@ from capella_console_client.cli.user_searches.my_search_results import _load_and
 from capella_console_client.cli.user_searches.core import SearchEntity
 from capella_console_client.cli.visualize import show_tabulated
 from capella_console_client.cli.settings import _prompt_search_result_headers
+from capella_console_client.cli.info import my_search_entity_info
 
 
 app = typer.Typer(help="search STAC items")
@@ -175,19 +176,7 @@ class PostSearchActions(str, BaseEnum):
         stac_ids = [i["id"] for i in stac_items]
         CLICache.update_my_search_results(identifier, stac_ids, is_new=True)
         CLICache.update_my_search_queries(identifier, search_kwargs, is_new=True)  # type: ignore
-
-        txt = f"""Added '{identifier}' to my-search-results and my-search-queries"
-Issue
-
-\tcapella-console-wizard my-search-results list
-
-    or
-
-\tcapella-console-wizard my-search-queries list
-
-in order to list your saved search results or queries.
-"""
-        typer.echo(txt)
+        my_search_entity_info(identifier)
 
     @classmethod
     def export_search(
