@@ -1,6 +1,6 @@
 import logging
 
-from .exceptions import handle_error_response
+from .exceptions import handle_error_response, NON_RETRYABLE_ERROR_CODES
 from capella_console_client.exceptions import CapellaConsoleClientError
 
 logger = logging.getLogger()
@@ -24,4 +24,6 @@ def log_on_4xx_5xx(response):
 
 def retry_if_http_status_error(exception):
     """Return upon httpx.HTTPStatusError"""
+    if exception.code in NON_RETRYABLE_ERROR_CODES:
+        return False
     return isinstance(exception, CapellaConsoleClientError)

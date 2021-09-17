@@ -44,28 +44,42 @@ class ConnectError(CapellaConsoleClientError):
     pass
 
 
+class CollectionAccessDeniedError(CapellaConsoleClientError):
+    pass
+
+
 DEFAULT_ERROR_CODE = "GENERAL_API_ERROR"
 INVALID_TOKEN_ERROR_CODE = "INVALID_TOKEN"
 ORDER_EXPIRED_ERROR_CODE = "ORDER_EXPIRED"
+COLLECTION_ACCESS_DENIED_ERROR_CODE = "COLLECTION_ACCESS_DENIED"
 
 ERROR_CODES = {
     INVALID_TOKEN_ERROR_CODE: AuthenticationError,
     ORDER_EXPIRED_ERROR_CODE: OrderExpiredError,
+    COLLECTION_ACCESS_DENIED_ERROR_CODE: CollectionAccessDeniedError,
 }
 
-ERROR_CODES_BY_MESSAGE_SNIP = {"order expired": ORDER_EXPIRED_ERROR_CODE}
+ERROR_CODES_BY_MESSAGE_SNIP = {
+    "order expired": ORDER_EXPIRED_ERROR_CODE,
+    "not permitted to access any of the collection": COLLECTION_ACCESS_DENIED_ERROR_CODE,
+}
+
+NON_RETRYABLE_ERROR_CODES = (
+    INVALID_TOKEN_ERROR_CODE,
+    COLLECTION_ACCESS_DENIED_ERROR_CODE,
+)
 
 
 def handle_error_response(resp):
     error = resp.json()
-    if isinstance(error, dict):
+    try:
         if "error" in error:
             error = error["error"]
 
         message = error.get("message")
         code = error.get("code", DEFAULT_ERROR_CODE)
         data = error.get("data", {})
-    else:
+    except Exception:
         message = error
         code = DEFAULT_ERROR_CODE
         data = {}
