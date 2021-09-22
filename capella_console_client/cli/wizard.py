@@ -1,5 +1,5 @@
 """
-cccc => CapellaConsoleClientCLI
+
 """
 
 import sys
@@ -58,7 +58,10 @@ def auto_auth_callback(ctx: typer.Context):
         CLICache.write_jwt(jwt)
 
 
-app = typer.Typer(callback=auto_auth_callback)
+app = typer.Typer(
+    help="Interactive wizard for api.capellaspace.com",
+    callback=auto_auth_callback,
+)
 app.add_typer(capella_console_client.cli.settings.app, name="settings")
 app.add_typer(capella_console_client.cli.search.app, name="search")
 app.add_typer(

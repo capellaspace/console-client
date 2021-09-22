@@ -40,6 +40,18 @@ Usage
 
 Check out the :ref:`quickstart`, the many examples in :ref:`example_usage` and the :ref:`api-reference`.
 
+🧙‍ capella-console-wizard 🧙‍♂️
+=============================
+starting with `capella-console-client>=0.8.0` the SDK ships with an interactive wizard 
+
+```
+pip install capella-console-client[wizard]
+capella-console-wizard --help
+```
+
+For more detail see :ref:`wizard`
+
+
 License
 =======
 • Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_ • 2021 • Capella Space •
@@ -50,6 +62,7 @@ License
    pages/installation
    pages/quickstart
    pages/example_usage
+   pages/wizard
    pages/api_reference
    pages/support
 
