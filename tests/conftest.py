@@ -6,7 +6,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from capella_console_client import client as capella_client_module
-from capella_console_client.config import CONSOLE_API_URL
+from capella_console_client.config import CONSOLE_API_URL, API_GATEWAY
 from capella_console_client import CapellaConsoleClient
 from capella_console_client import client
 
@@ -168,7 +168,7 @@ def verbose_download_client(verbose_test_client, auth_httpx_mock):
 @pytest.fixture
 def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/catalog/search",
+        url=f"{API_GATEWAY}/search",
         json=search_catalog_get_stac_ids(),
     )
     auth_httpx_mock.add_response(
@@ -192,6 +192,10 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
 @pytest.fixture
 def single_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
+        url=f"{API_GATEWAY}/search",
+        json=search_catalog_get_stac_ids(),
+    )
+    auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json=search_catalog_get_stac_ids(),
     )
@@ -201,7 +205,7 @@ def single_page_search_client(verbose_test_client, auth_httpx_mock):
 @pytest.fixture
 def multi_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/catalog/search",
+        url=f"{API_GATEWAY}/search",
         json=search_catalog_get_stac_ids_multi_page(),
     )
     auth_httpx_mock.add_response(
