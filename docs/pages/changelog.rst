@@ -153,3 +153,7 @@ History
 ------------------
 * improved exception handling and non explicit retryable errors
 * search speedup (directly search agains <API_GATEWAY>, pagesize 999, rightsizing requested custom limit)
+
+0.7.6 (2021-09-22)
+------------------
+* searching against API_GATEWAY directly if allowed (determined by lazy HEAD)

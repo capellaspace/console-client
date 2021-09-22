@@ -1,11 +1,13 @@
 from typing import Any, Dict, Tuple, List, DefaultDict, Optional
 from collections import defaultdict
+from urllib.parse import urlparse
 
 import httpx
 from retrying import retry  # type: ignore
 
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
+from capella_console_client.exceptions import AuthorizationError
 from capella_console_client.config import (
     ALL_SUPPORTED_FIELDS,
     ALL_SUPPORTED_SORTBY,
@@ -16,6 +18,7 @@ from capella_console_client.config import (
     DEFAULT_PAGE_SIZE,
     DEFAULT_MAX_FEATURE_COUNT,
     API_GATEWAY,
+    CONSOLE_API_URL,
 )
 from capella_console_client.hooks import retry_if_http_status_error
 
@@ -157,15 +160,16 @@ def _log_page_query(page_cnt: int, len_feat: int, limit: int):
 def _page_search(
     session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str = None
 ) -> Dict[str, Any]:
-    endpoint = f"{API_GATEWAY}/search" if next_href is None else next_href
 
-    # TODO: better mechanism
-    # fallback in case API gateway endpoint changed, i.e. re-deployment
-    try:
-        resp = session.post(endpoint, json=payload)
-    except httpx.ConnectError as e:
-        logger.warning(f"{endpoint}: {e} - retrying with /catalog/search")
-        resp = session.post("/catalog/search", json=payload)
+    if next_href:
+        # TODO: STAC api to return normalized asset hrefs, not <API_GATEWAY>...
+        if urlparse(next_href).netloc != urlparse(session.search_url).netloc:
+            next_href = next_href.replace(API_GATEWAY, f"{CONSOLE_API_URL}/catalog")
+
+    url = session.search_url if next_href is None else next_href
+
+    with session:
+        resp = session.post(url, json=payload)
 
     data = resp.json()
     return data

@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 import httpx
 
-from capella_console_client.config import DEFAULT_TIMEOUT, CONSOLE_API_URL
+from capella_console_client.config import DEFAULT_TIMEOUT, CONSOLE_API_URL, API_GATEWAY
 from capella_console_client.hooks import log_on_4xx_5xx, translate_error_to_exception
 from capella_console_client.logconf import logger
 from capella_console_client.exceptions import (
@@ -40,6 +40,7 @@ class CapellaConsoleSession(httpx.Client):
         )
         self.customer_id = None
         self.organization_id = None
+        self._search_url = None
 
     def authenticate(
         self,
@@ -134,3 +135,25 @@ class CapellaConsoleSession(httpx.Client):
         self._set_auth_header(token)
         if not no_token_check:
             self._cache_user_info()
+
+    # dedicated search URL for speedup - networking permitting
+    @property
+    def search_url(self):
+        if self._search_url:
+            return self._search_url
+
+        if self._is_api_gateway_reachable():
+            self._search_url = f"{API_GATEWAY}/search"
+            logger.info(f"Using {self._search_url} for searches")
+        else:
+            self._search_url = f"{CONSOLE_API_URL}/catalog/search"
+
+        return self._search_url
+
+    def _is_api_gateway_reachable(self) -> bool:
+        try:
+            with self as session:
+                resp = session.head(API_GATEWAY)
+        except:
+            return False
+        return True
