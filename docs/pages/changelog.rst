@@ -147,3 +147,9 @@ History
 0.7.4 (2021-08-03)
 ------------------
 * download products - filter by product type(s)
+
+
+0.7.5 (2021-09-22)
+------------------
+* improved exception handling and non explicit retryable errors
+* search speedup (directly search agains <API_GATEWAY>, pagesize 999, rightsizing requested custom limit)
