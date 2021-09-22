@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from capella_console_client.config import CONSOLE_API_URL, API_GATEWAY
+from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import client as capella_client_module
 from capella_console_client.exceptions import (
     NoValidStacIdsError,
@@ -56,7 +56,7 @@ def test_list_active_orders(non_expired_order_mock):
 
 def test_review_order(order_client, httpx_mock):
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
     )
     order_client.review_order(stac_ids=["MOCK_STAC_ID"])
@@ -64,7 +64,7 @@ def test_review_order(order_client, httpx_mock):
 
 def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx_mock):
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
     )
 
@@ -74,7 +74,7 @@ def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx
 
 def test_review_order_no_match(order_client, httpx_mock):
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": []},
     )
     with pytest.raises(NoValidStacIdsError):
@@ -85,7 +85,7 @@ def test_submit_order_not_previously_ordered_check_active_orders(
     order_client, httpx_mock
 ):
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
     )
 
@@ -106,7 +106,7 @@ def test_submit_order_not_previously_ordered_no_check_active_orders(
     order_client, httpx_mock, assert_all_responses_were_requested
 ):
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
     )
     order_id = order_client.submit_order(
@@ -138,7 +138,7 @@ def test_submit_order_previously_ordered(non_expired_order_mock, httpx_mock):
 
 def test_submit_order_invalid_stac_id(test_client, httpx_mock):
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         method="POST",
         json={"features": []},
     )
@@ -150,7 +150,7 @@ def test_submit_order_invalid_stac_id(test_client, httpx_mock):
 def test_submit_order_rejected(order_client_unsuccessful, httpx_mock):
 
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         method="POST",
         json={
             "features": [
@@ -168,7 +168,7 @@ def test_submit_order_rejected(order_client_unsuccessful, httpx_mock):
 
 def test_submit_order_items(order_client, httpx_mock):
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
     )
 
@@ -242,7 +242,7 @@ def test_get_stac_items_of_order(
     )
 
     httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json={
             "features": [{"id": "CAPELLA_C02_SM_SLC_HH_20201126192221_20201126192225"}]
         },

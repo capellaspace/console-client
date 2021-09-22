@@ -41,6 +41,11 @@ def auth_httpx_mock(httpx_mock: HTTPXMock):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user")
     )
+    httpx_mock.add_response(
+        url=API_GATEWAY,
+        method="HEAD",
+        status_code=403,
+    )
     yield httpx_mock
 
 
@@ -168,7 +173,7 @@ def verbose_download_client(verbose_test_client, auth_httpx_mock):
 @pytest.fixture
 def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json=search_catalog_get_stac_ids(),
     )
     auth_httpx_mock.add_response(
@@ -205,7 +210,7 @@ def single_page_search_client(verbose_test_client, auth_httpx_mock):
 @pytest.fixture
 def multi_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
+        url=f"{CONSOLE_API_URL}/catalog/search",
         json=search_catalog_get_stac_ids_multi_page(),
     )
     auth_httpx_mock.add_response(

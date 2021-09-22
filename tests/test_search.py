@@ -7,7 +7,8 @@ from unittest.mock import MagicMock
 
 from .test_data import get_search_test_cases, search_catalog_get_stac_ids
 from capella_console_client import client
-from capella_console_client import search
+from capella_console_client import session
+from capella_console_client.config import API_GATEWAY, CONSOLE_API_URL
 from capella_console_client.validate import _validate_uuid
 from capella_console_client.search import _paginated_search, _page_search
 
@@ -35,23 +36,15 @@ def test_paginated_search_multi_page(multi_page_search_client):
 
 
 @pytest.fixture
-def outdated_gateway_endpoint(monkeypatch):
+def gateway_reachable(monkeypatch):
     monkeypatch.setattr(
-        search,
-        "API_GATEWAY",
-        "https://phishphish.execute-api.us-west-2.amazonaws.com/prod",
+        session.CapellaConsoleSession, "_is_api_gateway_reachable", lambda x: True
     )
 
 
-def test_single_page_search_fallback(
-    single_page_search_client, outdated_gateway_endpoint, auth_httpx_mock
-):
-    def raise_connect_error(request, extensions: dict):
-        raise httpx.ConnectError("host unknown", request=request)
+def test_search_url_api_gateway_reachable(test_client, gateway_reachable):
+    assert test_client._sesh.search_url == f"{API_GATEWAY}/search"
 
-    auth_httpx_mock.add_callback(
-        raise_connect_error, url=f"{search.API_GATEWAY}/search"
-    )
 
-    with single_page_search_client._sesh:
-        _page_search(single_page_search_client._sesh, payload={"limit": 1})
+def test_search_url_api_gateway_not_reachable(test_client):
+    assert test_client._sesh.search_url == f"{CONSOLE_API_URL}/catalog/search"
