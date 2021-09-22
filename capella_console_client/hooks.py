@@ -24,6 +24,6 @@ def log_on_4xx_5xx(response):
 
 def retry_if_http_status_error(exception):
     """Return upon httpx.HTTPStatusError"""
-    if exception.code in NON_RETRYABLE_ERROR_CODES:
+    if getattr(exception, "code", None) in NON_RETRYABLE_ERROR_CODES:
         return False
     return isinstance(exception, CapellaConsoleClientError)

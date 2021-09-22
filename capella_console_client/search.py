@@ -1,7 +1,7 @@
-from typing import Any, Dict, Tuple, List, DefaultDict
+from typing import Any, Dict, Tuple, List, DefaultDict, Optional
 from collections import defaultdict
 
-
+import httpx
 from retrying import retry  # type: ignore
 
 from capella_console_client.logconf import logger
@@ -15,6 +15,7 @@ from capella_console_client.config import (
     OPERATOR_SUFFIXES,
     DEFAULT_PAGE_SIZE,
     DEFAULT_MAX_FEATURE_COUNT,
+    API_GATEWAY,
 )
 from capella_console_client.hooks import retry_if_http_status_error
 
@@ -89,37 +90,41 @@ def _split_op(field: str) -> Tuple[str, str]:
 def _paginated_search(
     session: CapellaConsoleSession, payload: Dict[str, Any]
 ) -> List[Dict[str, Any]]:
-    max_cnt = payload.get("limit", DEFAULT_MAX_FEATURE_COUNT)
+    requested_limit = payload.get("limit", DEFAULT_MAX_FEATURE_COUNT)
 
-    # ensure DEFAULT_PAGE_SIZE independently if custom limit > 500
-    if "limit" not in payload or payload["limit"] > DEFAULT_PAGE_SIZE:
-        payload["limit"] = DEFAULT_PAGE_SIZE
+    if "limit" not in payload:
+        payload["limit"] = DEFAULT_MAX_FEATURE_COUNT
 
-    page = 1
-    features = []
+    # ensure DEFAULT_PAGE_SIZE if requested limit > DEFAULT_PAGE_SIZE
+    payload["limit"] = min(DEFAULT_PAGE_SIZE, payload["limit"])
+
+    page_cnt = 1
+    features: List[Dict[str, Any]] = []
     next_href = None
+
     with session:
         while True:
-            con = _page_search(session, payload, next_href)
-            features.extend(con["features"])
-            limit_reached = len(features) >= max_cnt
-            links = con.get("links", [])
+            _log_page_query(page_cnt, len(features), payload["limit"])
+            page_data = _page_search(session, payload, next_href)
+            features.extend(page_data["features"])
 
-            try:
-                next_href = next(filter(lambda c: c["rel"] == "next", links))["href"]
-                has_next_page = True
-            except StopIteration:
-                has_next_page = False
-            if not has_next_page or limit_reached:
+            limit_reached = len(features) >= requested_limit
+            if limit_reached:
                 break
 
-            page += 1
-            logger.info(
-                f"\tpage {page} ({(page-1) * payload['limit']} - {page * payload['limit']})"
-            )
-            payload["page"] = page
+            next_href = _get_next_page_href(page_data)
+            if next_href is None:
+                break
+
+            payload["limit"] = min(requested_limit - len(features), DEFAULT_PAGE_SIZE)
+            page_cnt += 1
+            payload["page"] = page_cnt
 
     len_feat = len(features)
+
+    # truncate to limit
+    if len_feat > requested_limit:
+        features = features[:requested_limit]
 
     if not len_feat:
         logger.info(f"found no STAC items matching your query")
@@ -127,10 +132,21 @@ def _paginated_search(
         multiple_suffix = "s" if len_feat > 1 else ""
         logger.info(f"found {len(features)} STAC item{multiple_suffix}")
 
-    # truncate to limit
-    if len(features) > payload["limit"]:
-        features = features[: payload["limit"]]
     return features
+
+
+def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
+    links = page_data.get("links", [])
+    try:
+        next_href = next(filter(lambda c: c["rel"] == "next", links))["href"]
+    except StopIteration:
+        next_href = None
+
+    return next_href
+
+
+def _log_page_query(page_cnt: int, len_feat: int, limit: int):
+    logger.info(f"\tpage {page_cnt} ({len_feat} - {len_feat + limit})")
 
 
 @retry(
@@ -139,11 +155,17 @@ def _paginated_search(
     stop_max_delay=16000,
 )
 def _page_search(
-    session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str
+    session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str = None
 ) -> Dict[str, Any]:
-    if next_href is None:
+    endpoint = f"{API_GATEWAY}/search" if next_href is None else next_href
+
+    # TODO: better mechanism
+    # fallback in case API gateway endpoint changed, i.e. re-deployment
+    try:
+        resp = session.post(endpoint, json=payload)
+    except httpx.ConnectError as e:
+        logger.warning(f"{endpoint}: {e} - retrying with /catalog/search")
         resp = session.post("/catalog/search", json=payload)
-    else:
-        resp = session.post(next_href, json=payload)
-    body = resp.json()
-    return body
+
+    data = resp.json()
+    return data
