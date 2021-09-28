@@ -93,7 +93,7 @@ def _parse_str_collection(list_str):
         separator = "," if "," in _cur else " "
         stac_ids = _cur.split(separator)
     else:
-        stac_ids = json.loads(_cur)
+        stac_ids = json.loads(_cur.replace("'", '"'))
     return stac_ids
 
 

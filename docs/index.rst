@@ -40,14 +40,15 @@ Usage
 
 Check out the :ref:`quickstart`, the many examples in :ref:`example_usage` and the :ref:`api-reference`.
 
-🧙‍ capella-console-wizard 🧙‍♂️
-=============================
-starting with `capella-console-client>=0.8.0` the SDK ships with an interactive wizard 
+🧙‍capella-console-wizard 🧙‍♂️
+===============================
+starting with ``capella-console-client>=0.8.0`` this package ships with an interactive wizard
 
-```
-pip install capella-console-client[wizard]
-capella-console-wizard --help
-```
+.. code-block:: console
+
+    $ pip install capella-console-client[wizard]
+    $ capella-console-wizard --help
+
 
 For more detail see :ref:`wizard`
 

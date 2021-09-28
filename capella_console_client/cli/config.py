@@ -4,6 +4,14 @@ from typing import Dict, Any
 
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.config import ALL_SUPPORTED_FIELDS
+from capella_console_client.enumerations import (
+    InstrumentMode,
+    ProductClass,
+    ObservationDirection,
+    OrbitState,
+    OrbitalPlane,
+    ProductType,
+)
 
 CLI_SUPPORTED_SEARCH_FILTERS = sorted(ALL_SUPPORTED_FIELDS)
 # no intersects support currently
@@ -50,4 +58,14 @@ PROMPT_OPERATORS = {
     "resolution_ground_range",
     "resolution_range",
     "squint_angle",
+}
+
+
+ENUM_CHOICES_BY_FIELD_NAME = {
+    "instrument_mode": InstrumentMode,
+    "observation_direction": ObservationDirection,
+    "orbital_plane": OrbitalPlane,
+    "orbit_state": OrbitState,
+    "product_category": ProductClass,
+    "product_type": ProductType,
 }
