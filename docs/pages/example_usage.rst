@@ -47,6 +47,34 @@ JWT
     bold_token_client = CapellaConsoleClient(token="<token>", no_token_check=True)
 
 
+token refresh with auto retry
+
+.. code:: python3
+    
+    # issued access tokens have an expiration of 1h
+    client = CapellaConsoleClient(email=email, password=pw, verbose=True)
+
+    # DON'T RUN THIS ;)
+    import time
+    time.sleep(60 * 60)
+    # token expired in the interim
+
+    # capella-console-client will refresh your access token and retry the failed request
+    me = client.whoami()
+    assert me is not None
+    print("All good")
+
+
+Output
+
+.. code:: sh
+
+    2021-10-07 11:00:24,590 - 🛰️  Capella Space 🐐 - INFO - successfully authenticated as user@capellaspace.com 
+    2021-10-07 11:00:24,690 - root - ERROR - Request: GET https://api.capellaspace.com/user - Status 401 - Response: {'error': {'message': 'Invalid token.', 'code': 'INVALID_TOKEN'}}
+    2021-10-07 11:00:24,690 - 🛰️  Capella Space 🐐 - INFO - refreshing access token
+    All good
+
+
 search
 ######
 

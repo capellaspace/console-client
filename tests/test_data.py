@@ -357,6 +357,11 @@ def post_mock_responses(endpoint: str) -> Dict[str, Any]:
     return {
         "/token": {
             "accessToken": "MOCK_TOKEN",
+            "refreshToken": "MOCK_REFRESH_TOKEN",
+        },
+        "/token/refresh": {
+            "accessToken": "REFRESHED_MOCK_TOKEN",
+            "refreshToken": "REFRESHED_MOCK_REFRESH_TOKEN",
         },
         "/submitOrder": {
             "userId": "MOCK_ID",

@@ -52,6 +52,10 @@ class AuthorizationError(CapellaConsoleClientError):
     pass
 
 
+class NoRefreshTokenError(CapellaConsoleClientError):
+    pass
+
+
 DEFAULT_ERROR_CODE = "GENERAL_API_ERROR"
 INVALID_TOKEN_ERROR_CODE = "INVALID_TOKEN"
 ORDER_EXPIRED_ERROR_CODE = "ORDER_EXPIRED"
