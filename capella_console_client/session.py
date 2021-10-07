@@ -12,6 +12,8 @@ from capella_console_client.logconf import logger
 from capella_console_client.exceptions import (
     CapellaConsoleClientError,
     AuthenticationError,
+    INVALID_TOKEN_ERROR_CODE,
+    NoRefreshTokenError,
 )
 from capella_console_client.version import __version__
 
@@ -41,6 +43,7 @@ class CapellaConsoleSession(httpx.Client):
         self.customer_id = None
         self.organization_id = None
         self._search_url = None
+        self._refresh_token = None
 
     def authenticate(
         self,
@@ -60,8 +63,13 @@ class CapellaConsoleSession(httpx.Client):
             elif auth_method == AuthMethod.TOKEN:
                 self._token_auth_check(token, no_token_check)  # type: ignore
         except CapellaConsoleClientError:
+            message = {
+                AuthMethod.BASIC: "please check your credentials",
+                AuthMethod.TOKEN: "provided token invalid",
+            }[auth_method]
+
             raise AuthenticationError(
-                f"Unable to authenticate with {self.base_url} ({auth_method}) - please check your credentials."
+                f"Unable to authenticate with {self.base_url} ({auth_method}) - {message}"
             ) from None
 
         suffix = f"({self.base_url})" if self.base_url != CONSOLE_API_URL else ""
@@ -106,11 +114,11 @@ class CapellaConsoleSession(httpx.Client):
         basic_token = base64.b64encode(f"{email}:{password}".encode()).decode("utf-8")
         headers = {"Authorization": f"Basic {basic_token}"}
 
-        with self as session:
-            resp = session.post("/token", headers=headers)
+        resp = self.post("/token", headers=headers)
         resp.raise_for_status()
-        token = resp.json()["accessToken"]
-        self._set_auth_header(token)
+        con = resp.json()
+        self._set_auth_header(con["accessToken"])
+        self._refresh_token = con["refreshToken"]
         self._cache_user_info()
 
     def _set_auth_header(self, token: str):
@@ -122,8 +130,7 @@ class CapellaConsoleSession(httpx.Client):
 
     def _cache_user_info(self):
         """cache customer_id and organization_id - serves as test for successful auth"""
-        with self as session:
-            resp = session.get("/user")
+        resp = self.get("/user")
         resp.raise_for_status()
 
         con = resp.json()
@@ -135,6 +142,46 @@ class CapellaConsoleSession(httpx.Client):
         self._set_auth_header(token)
         if not no_token_check:
             self._cache_user_info()
+
+    def send(self, *fct_args, **kwargs):
+        """wrap httpx.Client.send for auto token_refresh"""
+        try:
+            ret = super().send(*fct_args, **kwargs)
+        except AuthenticationError as e:
+            # safeguard in case AuthenticationError get's improperly re-used
+            if e.code != INVALID_TOKEN_ERROR_CODE:
+                raise e
+
+            self.perform_token_refresh()
+
+            # retry request
+            orig_request = fct_args[0]
+            orig_request.headers["authorization"] = self.headers["authorization"]
+            ret = super().send(*fct_args, **kwargs)
+        return ret
+
+    def perform_token_refresh(self):
+        if not self._refresh_token:
+            raise NoRefreshTokenError("No refresh token found") from None
+
+        def _refresh():
+            if not self.is_closed:
+                return self.post(
+                    "/token/refresh", json={"refreshToken": self._refresh_token}
+                )
+
+            with self as session:
+                return session.post(
+                    "/token/refresh", json={"refreshToken": self._refresh_token}
+                )
+
+        resp = _refresh()
+
+        con = resp.json()
+        self._set_auth_header(con["accessToken"])
+        if con["refreshToken"] != self._refresh_token:
+            self._refresh_token = con["refreshToken"]
+        logger.info("successfully refreshed access token")
 
     # dedicated search URL for speedup - networking permitting
     @property
@@ -153,7 +200,7 @@ class CapellaConsoleSession(httpx.Client):
     def _is_api_gateway_reachable(self) -> bool:
         try:
             with self as session:
-                resp = session.head(API_GATEWAY)
+                session.head(API_GATEWAY)
         except:
             return False
         return True
