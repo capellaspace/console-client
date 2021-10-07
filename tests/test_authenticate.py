@@ -59,6 +59,7 @@ def _shared_basic_auth_asserts(auth_httpx_mock, client, email, pw):
     assert "Authorization" in client._sesh.headers
     mock_access_token = post_mock_responses("/token")["accessToken"]
     assert client._sesh.headers["Authorization"] == f"Bearer {mock_access_token}"
+    assert client._sesh._refresh_token == post_mock_responses("/token")["refreshToken"]
 
 
 def test_token_auth(httpx_mock: HTTPXMock):

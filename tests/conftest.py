@@ -17,6 +17,7 @@ from .test_data import (
     search_catalog_get_stac_ids_multi_page,
     create_mock_asset_hrefs,
 )
+from tests import test_data
 
 
 MOCK_ASSET_HREF = create_mock_asset_hrefs()["HH"]["href"]
@@ -218,3 +219,13 @@ def multi_page_search_client(verbose_test_client, auth_httpx_mock):
         json=search_catalog_get_stac_ids_multi_page(),
     )
     yield verbose_test_client
+
+
+@pytest.fixture
+def refresh_token_client(test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/token/refresh",
+        method="POST",
+        json=post_mock_responses("/token/refresh"),
+    )
+    yield test_client

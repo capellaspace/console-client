@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import List
+import json
 import httpx
 
 from .exceptions import handle_error_response, NON_RETRYABLE_ERROR_CODES
@@ -36,9 +36,9 @@ def log_on_4xx_5xx(response):
             return
 
         logger.error(
-            f"response event hook: {request.method} {request.url} - Status {response.status_code}"
+            f"Request: {request.method} {request.url} - Status {response.status_code} - Response: {response.json()}"
         )
-        logger.error(f"the following error occured: {response.json()}")
+        return True
 
 
 def retry_if_http_status_error(exception):
