@@ -4,9 +4,8 @@
 
 import sys
 from pathlib import Path
-from typing import Union, List
+from typing import List
 from uuid import UUID
-import json
 
 import typer
 import questionary
@@ -26,6 +25,7 @@ from capella_console_client.cli.sanitize import convert_to_uuid_str
 from capella_console_client.cli.user_searches.core import _load_and_prompt, SearchEntity
 from capella_console_client.cli.visualize import show_tabulated
 from capella_console_client.cli.search import _prompt_post_search_actions
+from capella_console_client.logconf import logger
 
 
 def auto_auth_callback(ctx: typer.Context):
@@ -52,7 +52,7 @@ def auto_auth_callback(ctx: typer.Context):
         auth_kwargs = {}
         if "console_user" in CURRENT_SETTINGS:
             auth_kwargs["email"] = CURRENT_SETTINGS["console_user"]
-            typer.echo(f"authenticating as {auth_kwargs['email']}")
+            logger.info(f"authenticating as {auth_kwargs['email']}")
         CLIENT._sesh.authenticate(**auth_kwargs)  # type: ignore
         jwt = CLIENT._sesh.headers["authorization"]
         CLICache.write_jwt(jwt)
@@ -131,7 +131,7 @@ def download(
     else:
         one_of_required = ("order_id", "tasking_request_id", "collect_id")
         if not any(cur_locals[cur] for cur in one_of_required):
-            typer.secho(
+            logger(
                 "please provide one of order_id, tasking_request_id or collect_id",
                 bold=True,
             )
@@ -155,6 +155,14 @@ def _download_from_search(**kwargs):
     )
     kwargs.pop("order_id", None)
     paths = CLIENT.download_products(order_id=order_id, **kwargs)
+
+
+@app.command()
+def configure():
+    """
+    configure capella-console-wizard
+    """
+    capella_console_client.cli.settings.configure()
 
 
 def main():

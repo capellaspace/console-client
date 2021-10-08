@@ -2,7 +2,6 @@ from typing import List
 
 import typer
 import questionary
-from pathlib import Path
 
 from tabulate import tabulate
 
@@ -18,6 +17,8 @@ from capella_console_client.cli.config import (
     CLI_SUPPORTED_RESULT_HEADERS,
     CURRENT_SETTINGS,
 )
+from capella_console_client.cli.prompt_helpers import get_first_checked
+from capella_console_client.logconf import logger
 
 
 app = typer.Typer(help="fine tune settings")
@@ -29,12 +30,10 @@ def _prompt_search_result_headers() -> List[str]:
         for cur in CLI_SUPPORTED_RESULT_HEADERS
     ]
 
-    first_checked = next(c for c in choices if c.checked)
-
     search_result_fields = questionary.checkbox(
         "Which STAC item fields would you like to display in the search results table?",
         choices=choices,
-        initial_choice=first_checked,
+        initial_choice=get_first_checked(choices),
         validate=_at_least_one_selected,
     ).ask()
     _no_selection_bye(search_result_fields, info_msg="no valid path provided")
@@ -71,7 +70,7 @@ def limit():
     set default limit to be used in searches
     """
     limit = questionary.text(
-        "Speciy default limit to be used in searches (can be overridden):",
+        "Speciy default limit to be used in searches (can be overridden at search time):",
         default=str(CURRENT_SETTINGS["limit"]),
         validate=_must_be_type(int),
     ).ask()
@@ -107,7 +106,7 @@ def output():
     set default output location for downloads and .json STAC exports
     """
     out_path = questionary.path(
-        "Specify the default location for your downloads and .json STAC exports:",
+        "Specify the default location for your downloads and .json STAC exports: (press <tab>)",
         default=CURRENT_SETTINGS["out_path"],
         validate=_validate_dir_exists,
     ).ask()
@@ -117,12 +116,11 @@ def output():
     typer.echo("updated default output path for .json STAC exports")
 
 
-@app.command()
 def configure():
-    """
-    configure ALL settings
-    """
-    typer.echo("\n\tPress Ctrl + c to quit\n")
+    logger.info(
+        typer.style("let's get you all setup using capella-console-wizard:", bold=True)
+    )
+    logger.info("\t\tPress Ctrl + C anytime to quit\n")
     user()
     output()
     result_table()

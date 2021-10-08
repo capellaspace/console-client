@@ -11,6 +11,8 @@ from capella_console_client.cli.user_searches.core import (
     SearchEntity,
     _load_and_prompt,
 )
+from capella_console_client.logconf import logger
+
 
 app = typer.Typer(help="manage saved search results")
 
@@ -37,8 +39,8 @@ def list(
         table_data.append(cur)
 
     headers = ["identifier", "created", "updated", "size", "STAC ids"]
-    typer.secho("My saved search results\n", bold=True)
-    typer.echo(tabulate(table_data, tablefmt="fancy_grid", headers=headers))
+    logger.info(typer.style("My saved search results\n", bold=True))
+    typer.secho(tabulate(table_data, tablefmt="fancy_grid", headers=headers))
     return saved_search_results
 
 
@@ -56,7 +58,7 @@ def delete():
     delete previously saved search result
     """
     saved_search_results, selection = _load_and_prompt(
-        "Which saved search result would you like to delete?"
+        "Which saved search result would you like to delete?", SearchEntity.result
     )
 
     if not selection:
@@ -66,7 +68,9 @@ def delete():
         del saved_search_results[selected]
 
     CLICache.write_my_search_results(saved_search_results)
-    typer.echo(f"Deleted {len(selection)} search result")
+    suffix = "s" if len(selection) > 1 else ""
+    logger.info(f"Deleted the following search result{suffix}:")
+    logger.info("\n".join(selected))
 
 
 @app.command()
@@ -81,4 +85,4 @@ def prune():
             CLICache.MY_SEARCH_RESULTS.unlink()
         except FileNotFoundError:
             pass
-        typer.echo(f"Deleted ALL saved search results")
+        logger.info(f"Deleted ALL saved search results")

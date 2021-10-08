@@ -1,5 +1,7 @@
 import typer
 
+from capella_console_client.logconf import logger
+
 
 def no_data_info(search_entity):
     typer.secho(f"No search {search_entity.name} currently saved!\n", bold=True)
@@ -27,4 +29,4 @@ Issue
 
 in order to list your saved search results or queries.
 """
-    typer.echo(txt)
+    logger.info(txt)

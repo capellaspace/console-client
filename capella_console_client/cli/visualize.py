@@ -58,7 +58,6 @@ def show_orders_tabulated(orders: List[Dict[str, Any]]):
 
 
 def show_order_review_tabulated(order_review: Dict[str, Any]):
-
     order_summary = order_review["orderDetails"]["summary"]
     typer.secho("summary:\n", bold=True)
     table_data = [

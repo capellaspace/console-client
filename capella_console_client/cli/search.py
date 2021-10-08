@@ -5,12 +5,8 @@ from collections import defaultdict
 
 import typer
 import questionary
-from tabulate import tabulate
 
 from capella_console_client.enumerations import BaseEnum
-from capella_console_client.config import (
-    STAC_PREFIXED_BY_QUERY_FIELDS,
-)
 from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.cli.validate import (
     get_validator,
@@ -31,6 +27,7 @@ from capella_console_client.cli.user_searches.core import SearchEntity
 from capella_console_client.cli.visualize import show_tabulated
 from capella_console_client.cli.settings import _prompt_search_result_headers
 from capella_console_client.cli.info import my_search_entity_info
+from capella_console_client.cli.prompt_helpers import get_first_checked
 
 
 app = typer.Typer(help="search STAC items")
@@ -96,7 +93,10 @@ class STACQueryPayload(dict):
         return cls(_con)
 
     def add(self, field: str, search_op: str, value: Any):
-        field_desc = f"{field}__{self.OPS_MAP[search_op]}" if search_op else field
+        if not search_op or search_op == "=":
+            field_desc = field
+        else:
+            field_desc = f"{field}__{self.OPS_MAP[search_op]}"
         self[field_desc] = value
 
 
@@ -105,7 +105,11 @@ def _prompt_search_operator(field: str, prev_selection: List[str]) -> List[str]:
         questionary.Choice(cur, checked=cur in prev_selection)
         for cur in STACQueryPayload.OPS_MAP.keys()
     ]
-    operators = questionary.checkbox(f"{field}:", choices=choices).ask()
+    operators = questionary.checkbox(
+        f"{field}:",
+        choices=choices,
+        initial_choice=get_first_checked(choices, prev_selection),
+    ).ask()
     _no_selection_bye(operators, "Please select at least one search operator")
     return operators
 
@@ -122,7 +126,9 @@ def _prompt_enum_choices(field: str, init: Any = None) -> Optional[Dict[str, Any
         for e in ENUM_CHOICES_BY_FIELD_NAME[field]
     ]
 
-    choices = questionary.checkbox(f"{field}:", choices=choices).ask()  # type: ignore
+    choices = questionary.checkbox(
+        f"{field}:", choices=choices, initial_choice=get_first_checked(choices, init)
+    ).ask()  # type: ignore
     _no_selection_bye(choices)
     return {field: choices}
 
@@ -144,7 +150,6 @@ def _prompt_operator_value(field: str, search_op: str, init: Any = ""):
 def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPayload:
     if prev_search is None:
         prev_search = STACQueryPayload()
-    prev_search.pop("limit", None)
 
     choices = [
         questionary.Choice(cur, checked=cur in prev_search)
@@ -154,6 +159,7 @@ def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPay
     search_filter_names = questionary.checkbox(
         "What are you looking for today?",
         choices=choices,
+        initial_choice=get_first_checked(choices, prev_search),
         validate=_at_least_one_selected,
     ).ask()
     _no_selection_bye(
@@ -182,6 +188,10 @@ def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPay
 
     if "limit" not in query:
         query["limit"] = CURRENT_SETTINGS["limit"]
+
+    if "constellation" not in query:
+        query["constellation"] = "capella"
+
     return query
 
 
@@ -196,7 +206,9 @@ def search_and_post_actions(search_query: STACQueryPayload):
 class PostSearchActions(str, BaseEnum):
     refine_search = "refine search"
     adjust_headers = "change result table headers"
-    save_current_search = "save search query and result for reuse"
+    save_current_search = (
+        "save search query and result into my-search-results | my-search-queries"
+    )
     export_json = "export STAC items of search as .json"
     quit = "quit"
 
@@ -205,7 +217,7 @@ class PostSearchActions(str, BaseEnum):
         cls, stac_items: List[Dict[str, Any]], search_kwargs: STACQueryPayload
     ):
         identifier = questionary.text(
-            message="Please provide an identifier for your search",
+            message="Please provide an identifier for your search:",
             default=str(search_kwargs),
             validate=lambda x: x is not None and len(x) > 0,
         ).ask()
@@ -239,10 +251,14 @@ class PostSearchActions(str, BaseEnum):
     def refine_search_cmd(
         cls, prev_search: STACQueryPayload
     ) -> Tuple[STACQueryPayload, List[Dict[str, Any]]]:
+        prev_search.pop("constellation", None)
+        if prev_search["limit"][0][1] == CURRENT_SETTINGS["limit"]:
+            prev_search.pop("limit")
+
         typer.echo(f"Refining\n\t{json.dumps(prev_search)}")
-        search_kwargs = _prompt_search_filters(prev_search=prev_search)
-        stac_items = CLIENT.search(**search_kwargs)
-        return (search_kwargs, stac_items)
+        search_query = _prompt_search_filters(prev_search=prev_search)
+        stac_items = CLIENT.search(**search_query)
+        return (search_query, stac_items)
 
     @classmethod
     def _get_choices(cls, results_found: bool):

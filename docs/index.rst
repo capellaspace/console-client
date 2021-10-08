@@ -42,7 +42,7 @@ Check out the :ref:`quickstart`, the many examples in :ref:`example_usage` and t
 
 🧙‍capella-console-wizard 🧙‍♂️
 ===============================
-starting with ``capella-console-client>=0.8.0`` this package ships with an interactive wizard
+starting with `capella-console-client>=0.8.0` the SDK ships with an interactive wizard-like CLI: ``capella-console-wizard``
 
 .. code-block:: console
 

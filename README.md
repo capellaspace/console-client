@@ -59,7 +59,7 @@ product_paths = client.download_products(
 The documentation for `capella-console-client` can be found [here](https://capella-console-client.readthedocs.io).
 
 ## 🧙‍ capella-console-wizard 🧙‍♂️
-starting with `capella-console-client>=0.8.0` the SDK ships with an interactive wizard 
+starting with `capella-console-client>=0.8.0` the SDK ships with an interactive wizard-like CLI: `capella-console-wizard` 
 
 ### Installation
 ```
