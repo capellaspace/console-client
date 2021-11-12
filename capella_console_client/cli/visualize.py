@@ -14,7 +14,7 @@ from capella_console_client.cli.config import (
 
 
 def show_tabulated(
-    stac_items: List[Dict[str, Any]], search_headers: Optional[List[str]] = None
+    stac_items: List[Dict[str, Any]], search_headers: Optional[List[str]] = None, show_row_number: bool=False
 ):
     if not search_headers:
         search_headers = CURRENT_SETTINGS["search_headers"]  # type: ignore
@@ -26,6 +26,10 @@ def show_tabulated(
     if "id" in search_headers:
         del search_headers[search_headers.index("id")]
         search_headers.insert(0, "id")
+
+    headers = []
+    if show_row_number:
+        table_data["#"] = list(range(1, len(stac_items) + 1))
 
     for field in search_headers:
         for it in stac_items:

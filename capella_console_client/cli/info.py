@@ -1,12 +1,10 @@
 import typer
 
-from capella_console_client.logconf import logger
-
 
 def no_data_info(search_entity):
     typer.secho(f"No search {search_entity.name} currently saved!\n", bold=True)
     typer.echo(f"Issue")
-    typer.secho(f"\tcapella-console-wizard search interactive", bold=True)
+    typer.secho(f"\tcapella-console-wizard workflows search", bold=True)
     typer.echo(f"\nin order to search and save your first search {search_entity.name}.")
     raise typer.Exit(code=1)
 
@@ -29,4 +27,4 @@ Issue
 
 in order to list your saved search results or queries.
 """
-    logger.info(txt)
+    typer.echo(txt)

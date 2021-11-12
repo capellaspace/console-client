@@ -55,9 +55,11 @@ def _validate_uuid(val):
 
 
 def _validate_dir_exists(path_str: str) -> bool:
-    err_msg = "please specify a valid uuid (e.g. aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)"
+    err_msg = "please specify an existing directory path"
     p = Path(path_str).resolve()
-    return p.exists() and p.is_dir()
+    if p.exists() and p.is_dir():
+        return True
+    return err_msg
 
 
 def _validate_out_path(path_str: str) -> bool:

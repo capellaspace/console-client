@@ -2,7 +2,6 @@ from typing import Any, Dict, Tuple, List, DefaultDict, Optional
 from collections import defaultdict
 from urllib.parse import urlparse
 
-import httpx
 from retrying import retry  # type: ignore
 
 from capella_console_client.logconf import logger

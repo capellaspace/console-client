@@ -2,12 +2,8 @@ from typing import List, Dict, Any
 from uuid import UUID
 import typer
 import questionary
-from pathlib import Path
-
-from tabulate import tabulate
 
 from capella_console_client.cli.config import (
-    CLI_SUPPORTED_RESULT_HEADERS,
     CURRENT_SETTINGS,
 )
 from capella_console_client.cli.client_singleton import CLIENT
@@ -49,6 +45,7 @@ class PostOrderListActions(str, BaseEnum):
         stac_ids = [item["granuleId"] for item in selected_order["items"]]
         order_id = CLIENT.submit_order(stac_ids=stac_ids)
         download_hint(order_id)
+        return order_id
 
 
 def _prompt_post_order_list_actions(orders: List[Dict[str, Any]]):

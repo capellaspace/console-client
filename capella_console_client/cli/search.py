@@ -30,17 +30,12 @@ from capella_console_client.cli.info import my_search_entity_info
 from capella_console_client.cli.prompt_helpers import get_first_checked
 
 
-app = typer.Typer(help="search STAC items")
-
-
 # TODO: autocomplete option
-@app.command()
-def interactive():
-    """
-    interactive search with prompts
-    """
+def interactive_search():
     search_query = _prompt_search_filters()
-    search_and_post_actions(search_query)
+    choices = list(PostSearchActions)
+    del choices[choices.index(PostSearchActions.continue_flow)]
+    search_and_post_actions(search_query, choices=choices)
 
 
 class STACQueryPayload(dict):
@@ -157,13 +152,13 @@ def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPay
     ]
 
     search_filter_names = questionary.checkbox(
-        "What are you looking for today?",
+        "Select your search filters:",
         choices=choices,
         initial_choice=get_first_checked(choices, prev_search),
         validate=_at_least_one_selected,
     ).ask()
     _no_selection_bye(
-        search_filter_names, "Please select at least one search condition"
+        search_filter_names, "Please select at least one search filter"
     )
 
     query = STACQueryPayload()
@@ -194,15 +189,6 @@ def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPay
 
     return query
 
-
-def search_and_post_actions(search_query: STACQueryPayload):
-    stac_items = CLIENT.search(**search_query)
-    if stac_items:
-        show_tabulated(stac_items)
-
-    _prompt_post_search_actions(stac_items, search_query)
-
-
 class PostSearchActions(str, BaseEnum):
     refine_search = "refine search"
     adjust_headers = "change result table headers"
@@ -210,7 +196,9 @@ class PostSearchActions(str, BaseEnum):
         "save search query and result into my-search-results | my-search-queries"
     )
     export_json = "export STAC items of search as .json"
+    continue_flow = "continue"
     quit = "quit"
+    
 
     @classmethod
     def save_search(
@@ -268,10 +256,20 @@ class PostSearchActions(str, BaseEnum):
             return [PostSearchActions.refine_search, PostSearchActions.quit]
 
 
+def search_and_post_actions(search_query: STACQueryPayload, choices: List[PostSearchActions]=None):
+    stac_items = CLIENT.search(**search_query)
+    if stac_items:
+        show_tabulated(stac_items, show_row_number=True)
+
+    stac_items = _prompt_post_search_actions(stac_items, search_query, choices)
+    return stac_items
+
+
 def _prompt_post_search_actions(
-    stac_items: List[Dict[str, Any]], search_kwargs: STACQueryPayload
+    stac_items: List[Dict[str, Any]], search_kwargs: STACQueryPayload, choices: List[PostSearchActions]=None
 ):
-    choices = PostSearchActions._get_choices(results_found=bool(stac_items))
+    if not choices:
+        choices = PostSearchActions._get_choices(results_found=bool(stac_items))
     action_selection = None
 
     while action_selection != PostSearchActions.quit:
@@ -285,7 +283,7 @@ def _prompt_post_search_actions(
             search_headers = _prompt_search_result_headers()
             CURRENT_SETTINGS["search_headers"] = search_headers
             CLICache.write_user_settings("search_headers", search_headers)
-            show_tabulated(stac_items, search_headers)
+            show_tabulated(stac_items, search_headers, show_row_number=True)
 
         if action_selection == PostSearchActions.save_current_search:
             PostSearchActions.save_search(stac_items, search_kwargs)
@@ -299,11 +297,13 @@ def _prompt_post_search_actions(
         if action_selection == PostSearchActions.refine_search:
             prev_search = STACQueryPayload.unflatten(search_kwargs)
             search_kwargs, stac_items = PostSearchActions.refine_search_cmd(prev_search)
-            show_tabulated(stac_items)
+            show_tabulated(stac_items, show_row_number=True)
             choices = PostSearchActions._get_choices(results_found=bool(stac_items))
+        
+        if action_selection == PostSearchActions.continue_flow:
+            return stac_items
 
 
-@app.command()
 def from_saved():
     """
     select and show STAC items of saved search
