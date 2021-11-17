@@ -157,9 +157,7 @@ def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPay
         initial_choice=get_first_checked(choices, prev_search),
         validate=_at_least_one_selected,
     ).ask()
-    _no_selection_bye(
-        search_filter_names, "Please select at least one search filter"
-    )
+    _no_selection_bye(search_filter_names, "Please select at least one search filter")
 
     query = STACQueryPayload()
     for field in search_filter_names:
@@ -189,6 +187,7 @@ def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPay
 
     return query
 
+
 class PostSearchActions(str, BaseEnum):
     refine_search = "refine search"
     adjust_headers = "change result table headers"
@@ -198,7 +197,6 @@ class PostSearchActions(str, BaseEnum):
     export_json = "export STAC items of search as .json"
     continue_flow = "continue"
     quit = "quit"
-    
 
     @classmethod
     def save_search(
@@ -249,14 +247,16 @@ class PostSearchActions(str, BaseEnum):
         return (search_query, stac_items)
 
     @classmethod
-    def _get_choices(cls, results_found: bool):
+    def _get_choices(cls, results_found: bool) -> List[PostSearchActions]:
         if results_found:
             return list(PostSearchActions)
         else:
             return [PostSearchActions.refine_search, PostSearchActions.quit]
 
 
-def search_and_post_actions(search_query: STACQueryPayload, choices: List[PostSearchActions]=None):
+def search_and_post_actions(
+    search_query: STACQueryPayload, choices: List[PostSearchActions] = None
+):
     stac_items = CLIENT.search(**search_query)
     if stac_items:
         show_tabulated(stac_items, show_row_number=True)
@@ -266,7 +266,9 @@ def search_and_post_actions(search_query: STACQueryPayload, choices: List[PostSe
 
 
 def _prompt_post_search_actions(
-    stac_items: List[Dict[str, Any]], search_kwargs: STACQueryPayload, choices: List[PostSearchActions]=None
+    stac_items: List[Dict[str, Any]],
+    search_kwargs: STACQueryPayload,
+    choices: List[PostSearchActions] = None,
 ):
     if not choices:
         choices = PostSearchActions._get_choices(results_found=bool(stac_items))
@@ -299,7 +301,7 @@ def _prompt_post_search_actions(
             search_kwargs, stac_items = PostSearchActions.refine_search_cmd(prev_search)
             show_tabulated(stac_items, show_row_number=True)
             choices = PostSearchActions._get_choices(results_found=bool(stac_items))
-        
+
         if action_selection == PostSearchActions.continue_flow:
             return stac_items
 

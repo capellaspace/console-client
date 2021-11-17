@@ -8,8 +8,14 @@ from capella_console_client.cli.config import CURRENT_SETTINGS
 from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.cli.validate import _validate_uuid, _validate_dir_exists
 from capella_console_client.enumerations import BaseEnum
-from capella_console_client.cli.search import _prompt_search_filters, search_and_post_actions
-from capella_console_client.cli.orders import _list_orders_and_tabulate, review, PostOrderListActions
+from capella_console_client.cli.search import (
+    _prompt_search_filters,
+    search_and_post_actions,
+)
+from capella_console_client.cli.orders import (
+    _list_orders_and_tabulate,
+    PostOrderListActions,
+)
 
 
 app = typer.Typer(help="order and download products")
@@ -18,8 +24,8 @@ app = typer.Typer(help="order and download products")
 class CheckoutStartOptions(str, BaseEnum):
     new_search = "new search"
     saved_search = "use previously saved search results"
-    collect_id = "provide a finished collect id"
-    tasking_request_id = "provide a finished tasking request id"
+    collect_id = "provide a collect id"
+    tasking_request_id = "provide a taskingrequest id"
     existing_order = "select existing order"
 
     @classmethod
@@ -29,16 +35,24 @@ class CheckoutStartOptions(str, BaseEnum):
 
 def interactive_search_order_and_download():
 
-    start_from_opt = questionary.select("What would you like to do?", choices=CheckoutStartOptions._get_choices()).ask()
-    
+    start_from_opt = questionary.select(
+        "What would you like to do?", choices=CheckoutStartOptions._get_choices()
+    ).ask()
+
     questions = _get_questions(start_from_opt)
-    if start_from_opt in [CheckoutStartOptions.collect_id, CheckoutStartOptions.tasking_request_id]:
+    if start_from_opt in [
+        CheckoutStartOptions.collect_id,
+        CheckoutStartOptions.tasking_request_id,
+    ]:
         answers = prompt(questions)
-        if answers['include'] == 'all':
-            del answers['include']
+        if answers["include"] == "all":
+            del answers["include"]
         paths = CLIENT.download_products(**answers)
-    
-    elif start_from_opt in (CheckoutStartOptions.new_search, CheckoutStartOptions.saved_search):
+
+    elif start_from_opt in (
+        CheckoutStartOptions.new_search,
+        CheckoutStartOptions.saved_search,
+    ):
         if start_from_opt == CheckoutStartOptions.new_search:
             search_query = _prompt_search_filters()
             stac_items = search_and_post_actions(search_query)
@@ -48,8 +62,8 @@ def interactive_search_order_and_download():
                 check_active_orders=True,
                 omit_search=True,
             )
-            stac_ids = [s['id'] for s in stac_items]
-        
+            stac_ids = [s["id"] for s in stac_items]
+
         else:
             stac_ids = _stac_ids_from_saved_search()
             answers = prompt(questions)
@@ -72,58 +86,70 @@ def interactive_search_order_and_download():
         asset_paths = list(paths[stac_id].values())
         product_paths.update([a.parent for a in asset_paths])
 
-    if questionary.confirm("Want to open any product directories?").ask():
-        dirs_to_open = questionary.checkbox("select which product directories you want to open", choices=list(map(str, product_paths))).ask()
-        
+    if questionary.confirm("Do you want to open any product directories?").ask():
+        dirs_to_open = questionary.checkbox(
+            "select which product directories you want to open",
+            choices=list(map(str, product_paths)),
+        ).ask()
+
         for open_dir in dirs_to_open:
             typer.launch(open_dir)
 
 
 def _get_questions(start_option: CheckoutStartOptions):
     question_types = {
-         'uuid': {
-            'type': 'text',
-            'name': start_option.name,
-            'message': f'{start_option.value}:',
-            'validate': _validate_uuid
+        "uuid": {
+            "type": "text",
+            "name": start_option.name,
+            "message": f"{start_option.value}:",
+            "validate": _validate_uuid,
         },
-        'product_types': {
-            'type': 'checkbox',
-            'name': 'product_types',
-            'message': 'product type(s):',
-            'choices': list(ProductType)
+        "product_types": {
+            "type": "checkbox",
+            "name": "product_types",
+            "message": "product type(s):",
+            "choices": list(ProductType),
         },
-        'asset_types': {
-            'type': 'checkbox',
-            'name': 'include',
-            'message': 'asset type:',
-            'choices': ['all', 'raster', 'metadata', 'thumbnail']
+        "asset_types": {
+            "type": "checkbox",
+            "name": "include",
+            "message": "asset type:",
+            "choices": ["all", "raster", "metadata", "thumbnail"],
         },
-        'local_dir': {
-            'type': 'path',
-            'name': 'local_dir',
-            'message': 'download location:',
-            'default': CURRENT_SETTINGS["out_path"],
-            'validate': _validate_dir_exists
+        "local_dir": {
+            "type": "path",
+            "name": "local_dir",
+            "message": "download location:",
+            "default": CURRENT_SETTINGS["out_path"],
+            "validate": _validate_dir_exists,
         },
     }
 
     return {
         CheckoutStartOptions.collect_id: [
-            question_types['uuid'], question_types['product_types'], question_types['asset_types'], question_types['local_dir']
+            question_types["uuid"],
+            question_types["product_types"],
+            question_types["asset_types"],
+            question_types["local_dir"],
         ],
         CheckoutStartOptions.tasking_request_id: [
-            question_types['uuid'], question_types['product_types'], question_types['asset_types'], question_types['local_dir']
+            question_types["uuid"],
+            question_types["product_types"],
+            question_types["asset_types"],
+            question_types["local_dir"],
         ],
         CheckoutStartOptions.existing_order: [
-            question_types['asset_types'], question_types['local_dir']
+            question_types["asset_types"],
+            question_types["local_dir"],
         ],
         CheckoutStartOptions.new_search: [
-            question_types['asset_types'], question_types['local_dir']
+            question_types["asset_types"],
+            question_types["local_dir"],
         ],
         CheckoutStartOptions.saved_search: [
-            question_types['asset_types'], question_types['local_dir']
-        ]
+            question_types["asset_types"],
+            question_types["local_dir"],
+        ],
     }[start_option]
 
 
@@ -135,4 +161,3 @@ def _stac_ids_from_saved_search():
     )
     stac_ids = saved[selection]["data"]
     return stac_ids
-    

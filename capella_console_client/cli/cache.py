@@ -7,10 +7,11 @@ from capella_console_client.logconf import logger
 
 
 def _safe_load_json(file_path: Path) -> Dict[str, Any]:
+    content = {}
     try:
         content = json.loads(file_path.read_text())
     except:
-        content = {}
+        pass
     return content
 
 

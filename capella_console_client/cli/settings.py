@@ -16,7 +16,7 @@ from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.config import (
     CLI_SUPPORTED_RESULT_HEADERS,
     CURRENT_SETTINGS,
-    SearchFilterOrderOption
+    SearchFilterOrderOption,
 )
 from capella_console_client.cli.prompt_helpers import get_first_checked
 from capella_console_client.logconf import logger
@@ -128,8 +128,12 @@ def search_filter_order():
         default=SearchFilterOrderOption[CURRENT_SETTINGS["search_filter_order"]],
     ).ask()
 
-    _no_selection_bye(search_filter_order, info_msg="no valid search filter order provided")
-    CLICache.write_user_settings("search_filter_order", SearchFilterOrderOption(search_filter_order).name)
+    _no_selection_bye(
+        search_filter_order, info_msg="no valid search filter order provided"
+    )
+    CLICache.write_user_settings(
+        "search_filter_order", SearchFilterOrderOption(search_filter_order).name
+    )
     typer.echo("updated order of search filters to be used in searches")
 
 

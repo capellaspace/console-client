@@ -63,3 +63,7 @@ exclude = "((.eggs | .git | .pytype | .pytest_cache | build | dist))"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+warn_unused_configs = true
+ignore_missing_imports = true

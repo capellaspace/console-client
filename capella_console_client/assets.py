@@ -96,13 +96,15 @@ def _get_raster_href(assets_presigned: Dict[str, Any]) -> str:
     raster_asset = assets_presigned.get("HH")
     if raster_asset is None:
         raster_asset = assets_presigned["VV"]
-    return raster_asset["href"]
+
+    raster_asset_href: str = raster_asset["href"]
+    return raster_asset_href
 
 
 def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
     raster_asset_href = _get_raster_href(assets_presigned)
     try:
-        stac_id = STAC_ID_REGEX.findall(raster_asset_href)[0]
+        stac_id: str = STAC_ID_REGEX.findall(raster_asset_href)[0]
     except IndexError:
         raise ValueError(f"Could not derive STAC ID from {raster_asset_href}")
     return stac_id
@@ -111,7 +113,7 @@ def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
 def _derive_product_type(assets_presigned: Dict[str, Any]) -> str:
     raster_asset_href = _get_raster_href(assets_presigned)
     try:
-        product_type = PRODUCT_TYPE_REGEX.findall(raster_asset_href)[0]
+        product_type: str = PRODUCT_TYPE_REGEX.findall(raster_asset_href)[0]
     except IndexError:
         raise ValueError(f"Could not derive product type from {raster_asset_href}")
     return product_type

@@ -11,14 +11,16 @@ from capella_console_client.enumerations import (
     OrbitState,
     OrbitalPlane,
     ProductType,
-    BaseEnum
+    BaseEnum,
 )
+
 
 class SearchFilterOrderOption(str, BaseEnum):
     console_ui = "console UI filters on top"
     alphabetical = "alphabetical"
     # TODO
     # custom = "custom"
+
 
 DEFAULT_SEARCH_RESULT_HEADERS = [
     "id",
@@ -33,7 +35,7 @@ DEFAULT_SETTINGS = {
     "search_headers": DEFAULT_SEARCH_RESULT_HEADERS,
     "out_path": str(Path.home()),
     "order_list_limit": 50,
-    "search_filter_order": SearchFilterOrderOption.console_ui.name
+    "search_filter_order": SearchFilterOrderOption.console_ui.name,
 }
 
 
@@ -72,11 +74,12 @@ CLI_SEARCH_FIELDS = [
     "resolution_ground_range",
     "squint_angle",
     "orbital_plane",
-    "billable_area"
+    "billable_area",
 ]
 
+
 def get_cli_supported_search_filters():
-    if CURRENT_SETTINGS['search_filter_order'] == SearchFilterOrderOption.alphabetical:
+    if CURRENT_SETTINGS["search_filter_order"] == SearchFilterOrderOption.alphabetical:
         return sorted(CLI_SEARCH_FIELDS)
     return CLI_SEARCH_FIELDS
 
@@ -117,12 +120,12 @@ ENUM_CHOICES_BY_FIELD_NAME = {
 }
 
 COLLECTIONS = [
-    'capella-cphd',
-    'capella-gec',
-    'capella-geo',
-    'capella-open-data',
-    'capella-sicd',
-    'capella-sidd',
-    'capella-slc',
-    'other',
+    "capella-cphd",
+    "capella-gec",
+    "capella-geo",
+    "capella-open-data",
+    "capella-sicd",
+    "capella-sidd",
+    "capella-slc",
+    "other",
 ]

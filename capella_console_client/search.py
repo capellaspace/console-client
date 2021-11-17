@@ -140,7 +140,9 @@ def _paginated_search(
 def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
     links = page_data.get("links", [])
     try:
-        next_href = next(filter(lambda c: c["rel"] == "next", links))["href"]
+        next_href: Optional[str] = next(filter(lambda c: c["rel"] == "next", links))[
+            "href"
+        ]
     except StopIteration:
         next_href = None
 
@@ -170,5 +172,5 @@ def _page_search(
     with session:
         resp = session.post(url, json=payload)
 
-    data = resp.json()
+    data: Dict[str, Any] = resp.json()
     return data
