@@ -247,7 +247,7 @@ class PostSearchActions(str, BaseEnum):
         return (search_query, stac_items)
 
     @classmethod
-    def _get_choices(cls, results_found: bool) -> List[PostSearchActions]:
+    def _get_choices(cls, results_found: bool) -> List["PostSearchActions"]:
         if results_found:
             return list(PostSearchActions)
         else:
