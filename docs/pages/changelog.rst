@@ -163,3 +163,8 @@ History
 0.7.7 (2021-10-07)
 ------------------
 * auto refresh of expired tokens with request retry
+
+
+0.8.0 (2021-11-17)
+------------------
+* optional pip installable interactive wizard-like CLI capella-console-wizard
