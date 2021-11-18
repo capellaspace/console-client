@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import re
 from dateutil.parser import parse, ParserError
+from typing import Union
 
 import typer
 
@@ -54,10 +55,12 @@ def _validate_uuid(val):
     return True
 
 
-def _validate_dir_exists(path_str: str) -> bool:
-    err_msg = "please specify a valid uuid (e.g. aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)"
+def _validate_dir_exists(path_str: str) -> Union[bool, str]:
+    err_msg = "please specify an existing directory path"
     p = Path(path_str).resolve()
-    return p.exists() and p.is_dir()
+    if p.exists() and p.is_dir():
+        return True
+    return err_msg
 
 
 def _validate_out_path(path_str: str) -> bool:
@@ -93,7 +96,7 @@ def _parse_str_collection(list_str):
         separator = "," if "," in _cur else " "
         stac_ids = _cur.split(separator)
     else:
-        stac_ids = json.loads(_cur)
+        stac_ids = json.loads(_cur.replace("'", '"'))
     return stac_ids
 
 

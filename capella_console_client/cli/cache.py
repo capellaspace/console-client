@@ -3,14 +3,15 @@ from pathlib import Path
 from typing import List, Dict, Any, Union
 from datetime import datetime
 
-import typer
+from capella_console_client.logconf import logger
 
 
 def _safe_load_json(file_path: Path) -> Dict[str, Any]:
+    content = {}
     try:
         content = json.loads(file_path.read_text())
     except:
-        content = {}
+        pass
     return content
 
 
@@ -24,7 +25,7 @@ class CLICache:
     @classmethod
     def write_jwt(cls, jwt: str):
         cls.JWT.write_text(jwt)
-        typer.echo(f"Cached JWT to {cls.JWT}")
+        logger.info(f"Cached JWT to {cls.JWT}")
 
     @classmethod
     def load_jwt(cls) -> str:

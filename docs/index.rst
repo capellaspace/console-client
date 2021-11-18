@@ -30,7 +30,9 @@ Requirements
 ============
 
 * ``python >= 3.6``
-* ``capella-console-client`` requires an active account on `console.capellaspace.com <https://console.capellaspace.com>`_. Sign up for an account `here <https://console.capellaspace.com/user/register/>`_
+
+Sign up for an account at [https://www.capellaspace.com/community/]().
+* ``capella-console-client`` requires an active account on `console.capellaspace.com <https://console.capellaspace.com>`_. Sign up for an account at `https://www.capellaspace.com/community/ <https://www.capellaspace.com/community/>`_
 
 
 Usage
@@ -39,6 +41,19 @@ Usage
 .. image:: images/quickstart.gif
 
 Check out the :ref:`quickstart`, the many examples in :ref:`example_usage` and the :ref:`api-reference`.
+
+🧙‍capella-console-wizard 🧙‍♂️
+===============================
+starting with `capella-console-client>=0.8.0` the SDK ships with an interactive wizard-like CLI: ``capella-console-wizard``
+
+.. code-block:: console
+
+    $ pip install capella-console-client[wizard]
+    $ capella-console-wizard --help
+
+
+For more detail see :ref:`wizard`
+
 
 License
 =======
@@ -50,6 +65,7 @@ License
    pages/installation
    pages/quickstart
    pages/example_usage
+   pages/wizard
    pages/api_reference
    pages/support
 
