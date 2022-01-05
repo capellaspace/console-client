@@ -168,3 +168,8 @@ History
 0.8.0 (2021-11-17)
 ------------------
 * optional pip installable interactive wizard-like CLI capella-console-wizard
+
+
+0.8.1 (2021-01-05)
+------------------
+* configure STAC search endpoint via optional CapellaConsoleClient(search_url="")

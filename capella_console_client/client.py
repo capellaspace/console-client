@@ -13,8 +13,6 @@ from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.logconf import logger
 from capella_console_client.exceptions import (
-    CapellaConsoleClientError,
-    AuthenticationError,
     InsufficientFundsError,
     OrderRejectedError,
     NoValidStacIdsError,
@@ -68,10 +66,13 @@ class CapellaConsoleClient:
         verbose: bool = False,
         no_token_check: bool = False,
         base_url: Optional[str] = CONSOLE_API_URL,
+        search_url: Optional[str] = None,
         no_auth: bool = False,
     ):
         self._set_verbosity(verbose)
-        self._sesh = CapellaConsoleSession(base_url=base_url, verbose=verbose)
+        self._sesh = CapellaConsoleSession(
+            base_url=base_url, search_url=search_url, verbose=verbose
+        )
 
         if not no_auth:
             self._sesh.authenticate(email, password, token, no_token_check)

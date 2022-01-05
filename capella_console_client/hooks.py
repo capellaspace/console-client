@@ -1,11 +1,11 @@
 import logging
+from typing import List
 from dataclasses import dataclass
-import json
+
 import httpx
 
 from .exceptions import handle_error_response, NON_RETRYABLE_ERROR_CODES
 from capella_console_client.exceptions import CapellaConsoleClientError
-from capella_console_client.config import API_GATEWAY
 
 logger = logging.getLogger()
 
@@ -17,7 +17,7 @@ class RequestMeta:
 
 
 # do not log out the following requests
-SILENCE_REQUESTS = [RequestMeta(method="HEAD", url=httpx.URL(API_GATEWAY))]
+SILENCE_REQUESTS: List[RequestMeta] = []
 
 
 def translate_error_to_exception(response):

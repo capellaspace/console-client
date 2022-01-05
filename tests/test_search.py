@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 
 import pytest
-import httpx
-from pytest_httpx import HTTPXMock
-from unittest.mock import MagicMock
 
 from .test_data import get_search_test_cases, search_catalog_get_stac_ids
 from capella_console_client import client
-from capella_console_client import session
-from capella_console_client.config import API_GATEWAY, CONSOLE_API_URL
 from capella_console_client.validate import _validate_uuid
-from capella_console_client.search import _paginated_search, _page_search
+from capella_console_client.search import _paginated_search
 
 
 @pytest.mark.parametrize("search_args,expected", get_search_test_cases())
@@ -33,18 +28,3 @@ def test_paginated_search_single_page(single_page_search_client):
 def test_paginated_search_multi_page(multi_page_search_client):
     results = _paginated_search(multi_page_search_client._sesh, payload={"limit": 10})
     assert len(results) == 10
-
-
-@pytest.fixture
-def gateway_reachable(monkeypatch):
-    monkeypatch.setattr(
-        session.CapellaConsoleSession, "_is_api_gateway_reachable", lambda x: True
-    )
-
-
-def test_search_url_api_gateway_reachable(test_client, gateway_reachable):
-    assert test_client._sesh.search_url == f"{API_GATEWAY}/search"
-
-
-def test_search_url_api_gateway_not_reachable(test_client):
-    assert test_client._sesh.search_url == f"{CONSOLE_API_URL}/catalog/search"
