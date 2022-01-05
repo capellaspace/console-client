@@ -6,7 +6,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from capella_console_client import client as capella_client_module
-from capella_console_client.config import CONSOLE_API_URL, API_GATEWAY
+from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from capella_console_client import client
 
@@ -41,11 +41,6 @@ def auth_httpx_mock(httpx_mock: HTTPXMock):
 
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user")
-    )
-    httpx_mock.add_response(
-        url=API_GATEWAY,
-        method="HEAD",
-        status_code=403,
     )
     yield httpx_mock
 
@@ -135,7 +130,6 @@ def non_expired_order_mock(test_client, auth_httpx_mock):
 
 @pytest.fixture
 def authed_tasking_request_mock(auth_httpx_mock):
-
     MOCK_IDENTIFIER_LIST = (
         "/task/abc",
         "/task/def",
@@ -197,10 +191,6 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
 
 @pytest.fixture
 def single_page_search_client(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
-        url=f"{API_GATEWAY}/search",
-        json=search_catalog_get_stac_ids(),
-    )
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json=search_catalog_get_stac_ids(),

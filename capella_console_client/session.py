@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 import httpx
 
-from capella_console_client.config import DEFAULT_TIMEOUT, CONSOLE_API_URL, API_GATEWAY
+from capella_console_client.config import DEFAULT_TIMEOUT, CONSOLE_API_URL
 from capella_console_client.hooks import log_on_4xx_5xx, translate_error_to_exception
 from capella_console_client.logconf import logger
 from capella_console_client.exceptions import (
@@ -25,7 +25,8 @@ class AuthMethod(Enum):
 
 class CapellaConsoleSession(httpx.Client):
     def __init__(self, *args, **kwargs):
-        verbose = kwargs.pop("verbose")
+        verbose = kwargs.pop("verbose", False)
+        search_url = kwargs.pop("search_url", None)
         event_hooks = [translate_error_to_exception]
         if verbose:
             event_hooks.insert(0, log_on_4xx_5xx)
@@ -42,7 +43,10 @@ class CapellaConsoleSession(httpx.Client):
         )
         self.customer_id = None
         self.organization_id = None
-        self._search_url = None
+
+        self.search_url = (
+            search_url if search_url is not None else f"{self.base_url}/catalog/search"
+        )
         self._refresh_token = None
 
     def authenticate(
@@ -182,25 +186,3 @@ class CapellaConsoleSession(httpx.Client):
         if con["refreshToken"] != self._refresh_token:
             self._refresh_token = con["refreshToken"]
         logger.info("successfully refreshed access token")
-
-    # dedicated search URL for speedup - networking permitting
-    @property
-    def search_url(self):
-        if self._search_url:
-            return self._search_url
-
-        if self._is_api_gateway_reachable():
-            self._search_url = f"{API_GATEWAY}/search"
-            logger.info(f"Using {self._search_url} for searches")
-        else:
-            self._search_url = f"{CONSOLE_API_URL}/catalog/search"
-
-        return self._search_url
-
-    def _is_api_gateway_reachable(self) -> bool:
-        try:
-            with self as session:
-                session.head(API_GATEWAY)
-        except:
-            return False
-        return True

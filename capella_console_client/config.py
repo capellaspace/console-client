@@ -1,5 +1,4 @@
 CONSOLE_API_URL = "https://api.capellaspace.com"
-API_GATEWAY = "https://0r1mdcwa5c.execute-api.us-west-2.amazonaws.com/prod"
 DEFAULT_TIMEOUT = 60
 DEFAULT_PAGE_SIZE = 999
 DEFAULT_MAX_FEATURE_COUNT = 500

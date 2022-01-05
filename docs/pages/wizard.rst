@@ -151,7 +151,6 @@ New search
 
 .. code:: console
 
-    2021-11-17 14:10:33,895 - 🛰️  Capella Space 🐐 - INFO - successfully authenticated as thomas.console@capellaspace.com 
     ? What would you like to do? new search                                                                                                                                                            
     ? Select your search filters: done (2 selections)                                                                                                                                                  
     ? collections [=]: capella-open-data                                                                                                                                                               

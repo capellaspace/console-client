@@ -11,8 +11,10 @@ def no_data_info(search_entity):
 
 def download_hint(order_id: str):
     typer.echo(f"Issue")
-    typer.secho(f"\tcapella-console-wizard download --order-id {order_id}", bold=True)
-    typer.echo("\nin order to download all products of the order.")
+    typer.secho("\tcapella-console-wizard checkout", bold=True)
+    typer.echo(
+        f"\n select order 'select existing order' and provide order id {order_id} in order to download all products of the order."
+    )
 
 
 def my_search_entity_info(identifier: str):
