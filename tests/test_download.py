@@ -13,7 +13,6 @@ from .test_data import (
     get_mock_responses,
     create_mock_asset_hrefs,
     DUMMY_STAC_IDS,
-    get_order_2_download_return,
 )
 
 MOCK_ASSETS_PRESIGNED = create_mock_asset_hrefs()

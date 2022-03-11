@@ -218,7 +218,12 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
                 "code": "AUTHORIZATION_INSUFFICIENT_FUNDS",
             },
         },
-        "/orders/1/download": [{"assets": create_mock_asset_hrefs()}],
+        "/orders/1/download": [
+            {
+                "assets": create_mock_asset_hrefs(),
+                "id": DUMMY_STAC_IDS[0],
+            }
+        ],
         "/orders/2/download": [
             {
                 "assets": create_mock_asset_hrefs(DUMMY_STAC_IDS[0]),

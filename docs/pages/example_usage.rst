@@ -673,7 +673,7 @@ Issue the following snippet to get tasking request information
 read imagery
 ############
 
-Given a presigned asset href (see `presigned asset hrefs`_) load imagery into memory
+Given a presigned asset href (see `presigned assets`_) load imagery into memory
 
 NOTE: requires `rasterio <https://pypi.org/project/rasterio/>`_ (not part of this package)
 
