@@ -1,8 +1,13 @@
 import uuid
+import re
+from collections import Counter
 
 from typing import no_type_check, Optional, List, Dict, Any, Union
 
 from capella_console_client.enumerations import ProductType, AssetType
+from capella_console_client.logconf import logger
+
+STAC_ID_REGEX_STRICT = re.compile("^CAPELLA_C\\d{2}_\\w+_\\w+_\\w{2}_\\d{14}_\\d{14}$")
 
 
 @no_type_check
@@ -41,3 +46,24 @@ def _validate_and_filter_asset_types(
     if isinstance(asset_types, str):
         return [a for a in [asset_types] if a in AssetType]
     return [a for a in asset_types if a in AssetType]
+
+
+def _validate_and_filter_stac_ids(stac_ids: Optional[List[str]]) -> List[str]:
+    if not stac_ids:
+        return []
+
+    valid_stac_ids = list(set(filter(STAC_ID_REGEX_STRICT.match, stac_ids)))
+
+    diff = set(stac_ids) - set(valid_stac_ids)
+    if diff:
+        logger.warning(f"filtered {','.join(diff)} (no valid STAC id)")
+
+    if not valid_stac_ids:
+        logger.warning("No valid STAC id provided")
+        return []
+
+    duplicates = [k for k, v in Counter(stac_ids).items() if v > 1]
+    if duplicates:
+        logger.warning(f"filtered {','.join(duplicates)} (duplicate)")
+
+    return valid_stac_ids

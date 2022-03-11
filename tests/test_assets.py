@@ -1,8 +1,6 @@
 import pytest
-from pytest_httpx import HTTPXMock
 
 from capella_console_client.assets import (
-    _get_asset_bytesize,
     _get_raster_href,
     _derive_stac_id,
     _derive_product_type,

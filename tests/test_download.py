@@ -10,11 +10,10 @@ import pytest
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from .test_data import (
-    post_mock_responses,
     get_mock_responses,
-    search_catalog_get_stac_ids,
     create_mock_asset_hrefs,
     DUMMY_STAC_IDS,
+    get_order_2_download_return,
 )
 
 MOCK_ASSETS_PRESIGNED = create_mock_asset_hrefs()
