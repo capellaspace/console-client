@@ -7,7 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 import tempfile
 
-import dateutil.parser  # type: ignore
+import dateutil.parser
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.session import CapellaConsoleSession
@@ -33,7 +33,9 @@ from capella_console_client.validate import (
     _validate_stac_id_or_stac_items,
     _validate_and_filter_product_types,
     _validate_and_filter_asset_types,
+    _validate_and_filter_stac_ids,
 )
+from capella_console_client.sort import _sort_stac_items
 
 
 class CapellaConsoleClient:
@@ -390,7 +392,11 @@ class CapellaConsoleClient:
         return order_id
 
     def get_presigned_assets(
-        self, order_id: str, stac_ids: Optional[List[str]] = None
+        self,
+        order_id: str,
+        stac_ids: Optional[List[str]] = None,
+        sort_by: Optional[List[str]] = None,
+        assets_only: Optional[bool] = True,
     ) -> List[Dict[str, Any]]:
         """
         get presigned assets hrefs for all products contained in order
@@ -398,6 +404,8 @@ class CapellaConsoleClient:
         Args:
             order_id: active order ID (see :py:meth:`submit_order`)
             stac_ids: filter presigned assets by STAC IDs
+            sort_by: list of stac ids to sort by
+            assets_only: return only list of STAC item assets
 
         Returns:
             List[Dict[str, Any]]: List of assets of respective product, e.g.
@@ -418,20 +426,36 @@ class CapellaConsoleClient:
 
         """
         _validate_uuid(order_id)
+
         logger.info(f"getting presigned assets for order {order_id}")
         with self._sesh as session:
-            res_dl = session.get(f"/orders/{order_id}/download")
+            response = session.get(f"/orders/{order_id}/download")
 
-        resp = res_dl.json()
+        presigned_stac_items = response.json()
+
+        # ensure sort
+        sort_by = _validate_and_filter_stac_ids(sort_by)
+        if sort_by:
+            # import ipdb; ipdb.set_trace()
+            presigned_stac_items = _sort_stac_items(
+                items=presigned_stac_items, stac_ids=sort_by
+            )
+
+        # no filter
         if not stac_ids:
-            return [item["assets"] for item in resp]
+            return (
+                [item["assets"] for item in presigned_stac_items]
+                if assets_only
+                else presigned_stac_items
+            )
 
         stac_ids_set = set(stac_ids)
-        return [
-            item["assets"]
-            for item in resp
-            if _derive_stac_id(item["assets"]) in stac_ids_set
+        sub_selection = [
+            item for item in presigned_stac_items if item["id"] in stac_ids_set
         ]
+        return (
+            [item["assets"] for item in sub_selection] if assets_only else sub_selection
+        )
 
     def get_asset_bytesize(self, pre_signed_url: str) -> int:
         """get size in bytes of `pre_signed_url`"""

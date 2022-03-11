@@ -173,3 +173,10 @@ History
 0.8.1 (2021-01-05)
 ------------------
 * configure STAC search endpoint via optional CapellaConsoleClient(search_url="")
+
+
+0.8.2 (2021-03-11)
+------------------
+* optional flags for get_presigned_assets: 
+    * sort_by: sort presigned assets by provided STAC ID list,
+    * assets_only (default==True): return only assets of stac items

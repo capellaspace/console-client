@@ -573,10 +573,10 @@ If you would like to review the cost of an order before you submission, issue:
     order_details = client.review_order(items=capella_spotlight_olympic_NP_geo)
     print(order_details['orderDetails']['summary'])
 
-.. _presigned asset hrefs:
+.. _presigned assets:
 
-presigned asset hrefs
-#####################
+presigned assets
+################
 
 In order to directly load assets (imagery or metadata) into memory you need to request signed S3 URLs first.
 
@@ -588,6 +588,15 @@ In order to directly load assets (imagery or metadata) into memory you need to r
     first_two_ids = [item["id"] for item in capella_spotlight_olympic_NP_geo[:2]]
     assets_presigned = client.get_presigned_assets(order_id,
                                                    stac_ids=first_two_ids)
+
+    # return the whole stac item instead of just assets
+    stac_items_presigned = client.get_presigned_assets(order_id,
+                                                       assets_only=false)
+
+    # sort presigned assets by list of stac ids
+    sorted_stac_ids = sorted([s['id'] for s in capella_spotlight_olympic_NP_geo])
+    assets_presigned_sorted = client.get_presigned_assets(order_id, 
+                                                          sort_by=sorted_stac_ids)
 
 See `read imagery`_  or `read metadata`_ for more information.
 
@@ -664,7 +673,7 @@ Issue the following snippet to get tasking request information
 read imagery
 ############
 
-Given a presigned asset href (see `presigned asset hrefs`_) load imagery into memory
+Given a presigned asset href (see `presigned assets`_) load imagery into memory
 
 NOTE: requires `rasterio <https://pypi.org/project/rasterio/>`_ (not part of this package)
 
