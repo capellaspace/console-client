@@ -8,8 +8,13 @@ import re
 
 import httpx
 import rich.progress
+from retrying import retry  # type: ignore
 
 from capella_console_client.logconf import logger
+from capella_console_client.hooks import (
+    retry_if_httpx_status_error,
+    log_attempt_delay,
+)
 from capella_console_client.exceptions import ConnectError
 
 
@@ -20,8 +25,8 @@ PRODUCT_TYPE_REGEX = re.compile("^.*CAPELLA_\\w+_\\w+_(\\w+)_\\w+_\\d{14}_\\d{14
 @dataclass
 class DownloadRequest:
     url: str
-    local_path: Optional[Path] = None
-    asset_key: str = "asset"
+    local_path: Path
+    asset_key: str
     stac_id: str = ""
 
 
@@ -147,7 +152,6 @@ def _perform_download(
     download_requests: List[DownloadRequest],
     override: bool,
     threaded: bool,
-    verbose: bool,
     show_progress: bool = False,
 ) -> Dict[str, Path]:
 
@@ -162,7 +166,6 @@ def _perform_download(
                 local_paths_by_key[dl_request.asset_key] = _download_asset(
                     dl_request,
                     override=override,
-                    verbose=verbose,
                     show_progress=show_progress,
                     progress=progress,
                 )
@@ -178,7 +181,6 @@ def _perform_download(
                         _download_asset,
                         dl_request=dl_request,
                         override=override,
-                        verbose=verbose,
                         show_progress=show_progress,
                         progress=progress,
                     )
@@ -192,36 +194,52 @@ def _perform_download(
 def _download_asset(
     dl_request: DownloadRequest,
     override: bool,
-    verbose: bool,
     show_progress: bool,
     progress: rich.progress.Progress,
 ) -> Path:
-    local_path = dl_request.local_path
-    if local_path is None:
+    if dl_request.local_path is None:
         local_file = _get_filename(dl_request.url)
-        local_path = Path(tempfile.gettempdir()) / local_file
+        dl_request.local_path = Path(tempfile.gettempdir()) / local_file
 
-    local_path = Path(local_path)
+    dl_request.local_path = Path(dl_request.local_path)
 
-    if not override and local_path.exists():
-        logger.info(f"already downloaded to {local_path}")
-        return local_path
-
-    suffix = ""
+    if not override and dl_request.local_path.exists():
+        logger.info(f"already downloaded to {dl_request.local_path}")
+        return dl_request.local_path
 
     try:
         asset_size = _get_asset_bytesize(dl_request.url)
-        suffix += f"({_sizeof_fmt(asset_size)})"
     except Exception:
-        # logger.warning(f"Couldn't derive size of {local_path.name} ... that's ok")
         asset_size = -1
 
     if not show_progress:
-        logger.info(f"downloading to {local_path} {suffix}")
+        size_suffix = f"({_sizeof_fmt(asset_size)})" if asset_size != -1 else ""
+        logger.info(f"downloading to {dl_request.local_path} {size_suffix}")
 
+    _fetch(dl_request, asset_size, show_progress, progress)
+
+    if not show_progress:
+        logger.info(f"successfully downloaded to {dl_request.local_path}")
+
+    return dl_request.local_path
+
+
+@retry(
+    retry_on_exception=retry_if_httpx_status_error,
+    wait_func=log_attempt_delay,
+    wait_exponential_multiplier=2000,
+    wait_exponential_max=16000,
+)
+def _fetch(
+    dl_request: DownloadRequest,
+    asset_size: int,
+    show_progress: bool,
+    progress: rich.progress.Progress,
+):
     try:
-        with open(local_path, "wb") as f:
+        with open(dl_request.local_path, "wb") as f:
             with httpx.stream("GET", dl_request.url) as response:
+                response.raise_for_status()
                 if show_progress:
                     download_task_id = _register_progress_task(
                         dl_request, progress, asset_size
@@ -237,10 +255,7 @@ def _download_asset(
     except httpx.ConnectError as e:
         raise ConnectError(f"Could not connect to {dl_request.url}: {e}") from None
 
-    if not show_progress:
-        logger.info(f"successfully downloaded to {local_path}")
-
-    return local_path
+    return dl_request.local_path
 
 
 def _register_progress_task(
