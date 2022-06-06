@@ -46,3 +46,12 @@ def retry_if_http_status_error(exception):
     if getattr(exception, "code", None) in NON_RETRYABLE_ERROR_CODES:
         return False
     return isinstance(exception, CapellaConsoleClientError)
+
+
+def retry_if_httpx_status_error(exception):
+    return isinstance(exception, httpx.HTTPStatusError)
+
+
+def log_attempt_delay(attempts, delay):
+    logger.info(f"Attempt #{attempts}, retrying in {delay} ms")
+    return delay

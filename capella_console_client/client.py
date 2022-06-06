@@ -487,7 +487,6 @@ class CapellaConsoleClient:
             download_requests=[dl_request],
             override=override,
             threaded=False,
-            verbose=self.verbose,
             show_progress=show_progress,
         )["asset"]
 
@@ -608,7 +607,6 @@ class CapellaConsoleClient:
             download_requests=download_requests,
             override=override,
             threaded=threaded,
-            verbose=self.verbose,
             show_progress=show_progress,
         )
         return by_stac_id  # type: ignore
@@ -743,7 +741,6 @@ class CapellaConsoleClient:
             download_requests=download_requests,
             override=override,
             threaded=threaded,
-            verbose=self.verbose,
             show_progress=show_progress,
         )
 

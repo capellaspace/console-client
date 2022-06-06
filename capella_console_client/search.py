@@ -16,7 +16,7 @@ from capella_console_client.config import (
     DEFAULT_PAGE_SIZE,
     DEFAULT_MAX_FEATURE_COUNT,
 )
-from capella_console_client.hooks import retry_if_http_status_error
+from capella_console_client.hooks import retry_if_http_status_error, log_attempt_delay
 
 
 def _build_search_payload(**kwargs) -> Dict[str, Any]:
@@ -152,6 +152,7 @@ def _log_page_query(page_cnt: int, len_feat: int, limit: int):
 
 @retry(
     retry_on_exception=retry_if_http_status_error,
+    wait_func=log_attempt_delay,
     wait_exponential_multiplier=1000,
     stop_max_delay=16000,
 )
