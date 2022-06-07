@@ -180,3 +180,9 @@ History
 * optional flags for get_presigned_assets: 
     * sort_by: sort presigned assets by provided STAC ID list,
     * assets_only (default==True): return only assets of stac items
+
+
+0.8.3 (2021-06-07)
+------------------
+* hardening asset download with retries
+* adding py.typed
