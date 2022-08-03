@@ -578,13 +578,13 @@ class CapellaConsoleClient:
 
         len_assets_presigned = len(assets_presigned)
         suffix = "s" if len_assets_presigned > 1 else ""
-        logger.info(f"downloading {len_assets_presigned} product{suffix}")
 
         # filter product_type
         if product_types:
             assets_presigned = _filter_assets_by_product_types(
                 assets_presigned, product_types
             )
+        logger.info(f"downloading {len_assets_presigned} product{suffix}")
 
         # gather download requests
         download_requests = []

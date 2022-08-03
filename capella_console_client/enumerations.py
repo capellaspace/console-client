@@ -26,6 +26,7 @@ class ProductType(str, BaseEnum):
 class AssetType(str, BaseEnum):
     HH = "HH"
     VV = "VV"
+    preview = "preview"
     raster = "raster"
     metadata = "metadata"
     thumbnail = "thumbnail"

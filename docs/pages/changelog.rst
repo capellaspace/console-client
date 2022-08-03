@@ -186,3 +186,8 @@ History
 ------------------
 * hardening asset download with retries
 * adding py.typed
+
+
+0.8.4 (2021-08-03)
+------------------
+* allow preview only download
