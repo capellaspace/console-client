@@ -49,9 +49,7 @@ def _load_and_prompt(
 
 
 def rename_search_entity(search_entity: SearchEntity):
-    saved, selection = _load_and_prompt(
-        f"Which saved {search_entity.name} would you like to rename?", search_entity
-    )
+    saved, selection = _load_and_prompt(f"Which saved {search_entity.name} would you like to rename?", search_entity)
 
     change_cnt = 0
     for selected in selection:

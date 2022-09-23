@@ -7,6 +7,7 @@ from tabulate import tabulate
 from capella_console_client.config import (
     STAC_PREFIXED_BY_QUERY_FIELDS,
 )
+from capella_console_client.search import SearchResult
 
 from capella_console_client.cli.config import (
     CURRENT_SETTINGS,
@@ -14,7 +15,7 @@ from capella_console_client.cli.config import (
 
 
 def show_tabulated(
-    stac_items: List[Dict[str, Any]],
+    stac_items: SearchResult,
     search_headers: Optional[List[str]] = None,
     show_row_number: bool = False,
 ):
@@ -81,6 +82,4 @@ def show_order_review_tabulated(order_review: Dict[str, Any]):
         cur = (li["granuleId"], li["order"]["finalListPrice"])
         line_item_table.append(cur)
 
-    typer.echo(
-        tabulate(line_item_table, tablefmt="fancy_grid", headers=["STAC id", "cost"])
-    )
+    typer.echo(tabulate(line_item_table, tablefmt="fancy_grid", headers=["STAC id", "cost"]))

@@ -24,15 +24,13 @@ Installation
 
   $ pip install capella-console-client
 
-For more detail see :ref:`installation`
+for more detail see the :ref:`installation` page
 
 Requirements
 ============
 
-* ``python >= 3.6``
-
-Sign up for an account at [https://www.capellaspace.com/community/]().
-* ``capella-console-client`` requires an active account on `console.capellaspace.com <https://console.capellaspace.com>`_. Sign up for an account at `https://www.capellaspace.com/community/ <https://www.capellaspace.com/community/>`_
+* ``python >= 3.7``
+* ``capella-console-client`` requires an active account on `console.capellaspace.com <https://console.capellaspace.com>`_. Sign up for an account on `the community page <https://www.capellaspace.com/community/>`_.
 
 
 Usage
@@ -57,7 +55,7 @@ For more detail see :ref:`wizard`
 
 License
 =======
-• Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_ • 2021 • Capella Space •
+• Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_ • 2022 • Capella Space •
 
 .. toctree::
    :hidden:

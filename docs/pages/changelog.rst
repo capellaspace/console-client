@@ -175,19 +175,26 @@ History
 * configure STAC search endpoint via optional CapellaConsoleClient(search_url="")
 
 
-0.8.2 (2021-03-11)
+0.8.2 (2022-03-11)
 ------------------
 * optional flags for get_presigned_assets: 
     * sort_by: sort presigned assets by provided STAC ID list,
     * assets_only (default==True): return only assets of stac items
 
 
-0.8.3 (2021-06-07)
+0.8.3 (2022-06-07)
 ------------------
 * hardening asset download with retries
 * adding py.typed
 
 
-0.8.4 (2021-08-03)
+0.8.4 (2022-08-03)
 ------------------
 * allow preview only download
+
+
+0.9.0 (2022-08-03)
+------------------
+* client.search internas to be class based in order to extend functionality of returned SearchResult
+* full dependency update
+* dropping Python 3.6 support, adding 3.11.0-rc2 support

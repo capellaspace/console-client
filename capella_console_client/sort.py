@@ -3,9 +3,7 @@ from typing import Dict, List, Any, Optional
 from capella_console_client.logconf import logger
 
 
-def _sort_stac_items(
-    items: List[Dict[str, Any]], stac_ids: List[str]
-) -> List[Dict[str, Any]]:
+def _sort_stac_items(items: List[Dict[str, Any]], stac_ids: List[str]) -> List[Dict[str, Any]]:
     """
     sort items by stac_ids
 
@@ -17,9 +15,7 @@ def _sort_stac_items(
         List[Dict[str, Any]]: stac items sorted by stac_ids
     """
     if len(stac_ids) != len(items):
-        logger.warning(
-            f"wrong size stac_ids ({len(stac_ids)} instead of {len(items)})... omitting sort "
-        )
+        logger.warning(f"wrong size stac_ids ({len(stac_ids)} instead of {len(items)})... omitting sort ")
         return items
 
     sorted = []

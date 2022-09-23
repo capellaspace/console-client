@@ -16,11 +16,7 @@ app = typer.Typer(help="manage saved search queries")
 
 
 @app.command()
-def list(
-    detailed: bool = typer.Option(
-        False, "--detailed", help="Show STAC ids of saved search queries"
-    )
-):
+def list(detailed: bool = typer.Option(False, "--detailed", help="Show STAC ids of saved search queries")):
     """
     list previously saved search queries
     """

@@ -38,9 +38,7 @@ class PostOrderListActions(str, BaseEnum):
 
     @classmethod
     def prompt_and_reorder(cls, orders):
-        selected_order = cls._select_order(
-            question="Specify the orderId you'd like to resubmit:", orders=orders
-        )
+        selected_order = cls._select_order(question="Specify the orderId you'd like to resubmit:", orders=orders)
 
         stac_ids = [item["granuleId"] for item in selected_order["items"]]
         order_id = CLIENT.submit_order(stac_ids=stac_ids)
@@ -78,9 +76,7 @@ def _list_orders_and_tabulate(
 
 @app.command("list")
 def list_orders(
-    is_active: bool = typer.Option(
-        False, "--active", help="only show active (non-expired) orders"
-    ),
+    is_active: bool = typer.Option(False, "--active", help="only show active (non-expired) orders"),
     limit: int = typer.Option(
         CURRENT_SETTINGS["order_list_limit"],
         help="limit orders to display (up to 300 currently)",
@@ -95,12 +91,8 @@ def list_orders(
 
 @app.command("review")
 def review(
-    is_active: bool = typer.Option(
-        False, "--active", help="only show active (non-expired) orders"
-    ),
-    from_saved: bool = typer.Option(
-        False, "--from-saved", help="from previously saved search result"
-    ),
+    is_active: bool = typer.Option(False, "--active", help="only show active (non-expired) orders"),
+    from_saved: bool = typer.Option(False, "--from-saved", help="from previously saved search result"),
 ):
     """
     review orders

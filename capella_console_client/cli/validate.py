@@ -76,9 +76,7 @@ def _validate_email(email: str):
 
 
 def _validate_datetime(dt_str: str):
-    err_msg = (
-        "please specify a valid UTC date(time) (e.g. 2020-08-14 or 2020-08-14 12:00:00)"
-    )
+    err_msg = "please specify a valid UTC date(time) (e.g. 2020-08-14 or 2020-08-14 12:00:00)"
     if not dt_str or len(dt_str) < 10:
         return err_msg
 

@@ -35,9 +35,7 @@ class CheckoutStartOptions(str, BaseEnum):
 
 def interactive_search_order_and_download():
 
-    start_from_opt = questionary.select(
-        "What would you like to do?", choices=CheckoutStartOptions._get_choices()
-    ).ask()
+    start_from_opt = questionary.select("What would you like to do?", choices=CheckoutStartOptions._get_choices()).ask()
 
     questions = _get_questions(start_from_opt)
     if start_from_opt in [

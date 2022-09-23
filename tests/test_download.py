@@ -5,7 +5,9 @@
 import tempfile
 from pathlib import Path
 
+import httpx
 import pytest
+from pytest_httpx import HTTPXMock
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
@@ -14,6 +16,7 @@ from .test_data import (
     create_mock_asset_hrefs,
     DUMMY_STAC_IDS,
 )
+from capella_console_client.exceptions import ConnectError
 
 MOCK_ASSETS_PRESIGNED = create_mock_asset_hrefs()
 MOCK_ASSET_HREF = MOCK_ASSETS_PRESIGNED["HH"]["href"]
@@ -36,21 +39,15 @@ def test_get_presigned_assets_filtered(auth_httpx_mock, disable_validate_uuid):
         json=get_mock_responses("/orders/2/download"),
     )
     client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
-    presigned_assets = client.get_presigned_assets(
-        order_id="2", stac_ids=[DUMMY_STAC_IDS[0]]
-    )
+    presigned_assets = client.get_presigned_assets(order_id="2", stac_ids=[DUMMY_STAC_IDS[0]])
     assert len(presigned_assets) == 1
 
     mock_response = get_mock_responses("/orders/2/download")
-    order_2_assets = [
-        m["assets"] for m in mock_response if m["id"] == DUMMY_STAC_IDS[0]
-    ][0]
+    order_2_assets = [m["assets"] for m in mock_response if m["id"] == DUMMY_STAC_IDS[0]][0]
     assert presigned_assets[0] == order_2_assets
 
 
-def test_get_presigned_assets_filtered_no_overlap(
-    auth_httpx_mock, disable_validate_uuid
-):
+def test_get_presigned_assets_filtered_no_overlap(auth_httpx_mock, disable_validate_uuid):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/2/download",
         json=get_mock_responses("/orders/2/download"),
@@ -63,9 +60,7 @@ def test_get_presigned_assets_filtered_no_overlap(
 def test_asset_download(download_client):
     local_path = Path(tempfile.NamedTemporaryFile().name)
     assert not local_path.exists()
-    download_client.download_asset(
-        pre_signed_url=MOCK_ASSET_HREF, local_path=local_path
-    )
+    download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path)
     assert local_path.exists()
     assert local_path.read_text() == "MOCK_CONTENT"
     local_path.unlink()
@@ -74,9 +69,7 @@ def test_asset_download(download_client):
 def test_asset_download_progress(big_download_client):
     local_path = Path(tempfile.NamedTemporaryFile().name)
     assert not local_path.exists()
-    big_download_client.download_asset(
-        pre_signed_url=MOCK_ASSET_HREF, local_path=local_path, show_progress=True
-    )
+    big_download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path, show_progress=True)
     assert local_path.exists()
     assert local_path.read_text() == "MOCK_CONTENT"
     local_path.unlink()
@@ -85,9 +78,7 @@ def test_asset_download_progress(big_download_client):
 def test_verbose_asset_download(verbose_download_client):
     local_path = Path(tempfile.NamedTemporaryFile().name)
     assert not local_path.exists()
-    verbose_download_client.download_asset(
-        pre_signed_url=MOCK_ASSET_HREF, local_path=local_path
-    )
+    verbose_download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path)
     assert local_path.exists()
     assert local_path.read_text() == "MOCK_CONTENT"
     local_path.unlink()
@@ -103,9 +94,7 @@ def test_asset_download_defaults_to_temp(download_client):
 def test_asset_download_does_not_override(test_client):
     local_path = Path(tempfile.NamedTemporaryFile().name)
     local_path.write_text("ORIG_CONTENT")
-    local_path = test_client.download_asset(
-        pre_signed_url=MOCK_ASSET_HREF, local_path=local_path
-    )
+    local_path = test_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path)
     assert local_path.read_text() == "ORIG_CONTENT"
     local_path.unlink()
 
@@ -113,9 +102,7 @@ def test_asset_download_does_not_override(test_client):
 def test_asset_download_does_override(download_client):
     local_path = Path(tempfile.NamedTemporaryFile().name)
     local_path.write_text("ORIG_CONTENT")
-    local_path = download_client.download_asset(
-        pre_signed_url=MOCK_ASSET_HREF, local_path=local_path, override=True
-    )
+    local_path = download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path, override=True)
     assert local_path.read_text() == "MOCK_CONTENT"
     local_path.unlink()
 
@@ -125,9 +112,7 @@ def test_product_download_dir_exists(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
-        paths_by_key = download_client.download_product(
-            MOCK_ASSETS_PRESIGNED, local_dir=temp_dir
-        )
+        paths_by_key = download_client.download_product(MOCK_ASSETS_PRESIGNED, local_dir=temp_dir)
         paths = list(paths_by_key.values())
 
         assert all([p.exists() for p in paths])
@@ -138,9 +123,7 @@ def test_product_download_dir_exists(download_client):
             assert p.relative_to(temp_dir)
 
 
-def test_product_download_dir_exists_from_order(
-    download_client, monkeypatch, disable_validate_uuid
-):
+def test_product_download_dir_exists_from_order(download_client, monkeypatch, disable_validate_uuid):
     monkeypatch.setattr(
         CapellaConsoleClient,
         "get_presigned_assets",
@@ -150,9 +133,7 @@ def test_product_download_dir_exists_from_order(
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
-        paths_by_key = download_client.download_product(
-            order_id="1", local_dir=temp_dir
-        )
+        paths_by_key = download_client.download_product(order_id="1", local_dir=temp_dir)
         paths = list(paths_by_key.values())
 
         assert all([p.exists() for p in paths])
@@ -167,9 +148,7 @@ def test_product_download_threaded_within_dir(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
-        paths_by_key = download_client.download_product(
-            MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, threaded=True
-        )
+        paths_by_key = download_client.download_product(MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, threaded=True)
         paths = list(paths_by_key.values())
 
         assert all([p.exists() for p in paths])
@@ -216,9 +195,7 @@ def test_product_download_asset_include(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
-        paths_by_key = download_client.download_product(
-            MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, include=["HH"]
-        )
+        paths_by_key = download_client.download_product(MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, include=["HH"])
         paths = list(paths_by_key.values())
         assert len(paths) == 1
         assert "thumb.png" not in str(paths[0])
@@ -229,9 +206,7 @@ def test_product_download_asset_include_str(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
-        paths_by_key = download_client.download_product(
-            MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, include="HH"
-        )
+        paths_by_key = download_client.download_product(MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, include="HH")
         paths = list(paths_by_key.values())
         assert len(paths) == 1
         asset_keys = list(paths_by_key.keys())
@@ -259,9 +234,7 @@ def test_product_download_exclude_str(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
-        paths_by_key = download_client.download_product(
-            MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, exclude="HH"
-        )
+        paths_by_key = download_client.download_product(MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, exclude="HH")
         assert "HH" not in paths_by_key
 
 
@@ -270,9 +243,7 @@ def test_product_download_exclude_raster(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
-        paths_by_key = download_client.download_product(
-            MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, exclude="raster"
-        )
+        paths_by_key = download_client.download_product(MOCK_ASSETS_PRESIGNED, local_dir=temp_dir, exclude="raster")
         assert "HH" not in paths_by_key
 
 
@@ -333,9 +304,7 @@ def test_download_products_for_tasking_request(
         _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir)
 
 
-def test_download_products_for_order_id(
-    verbose_download_multiple_client, disable_validate_uuid
-):
+def test_download_products_for_order_id(verbose_download_multiple_client, disable_validate_uuid):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
 
@@ -346,9 +315,7 @@ def test_download_products_for_order_id(
         _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir)
 
 
-def test_download_products_for_collect_id(
-    verbose_download_multiple_client, auth_httpx_mock, disable_validate_uuid
-):
+def test_download_products_for_collect_id(verbose_download_multiple_client, auth_httpx_mock, disable_validate_uuid):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
         json=get_mock_responses("/orders"),
@@ -395,7 +362,17 @@ def test_download_products_with_product_types_filter_all_exclude(download_client
 
 
 def test_get_asset_bytesize(download_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
 
     bytesize = download_client.get_asset_bytesize(MOCK_ASSET_HREF)
     assert bytesize == 127
+
+
+def test_get_asset_bytesize_raises(test_client, auth_httpx_mock: HTTPXMock):
+    def raise_conntection_error(request):
+        raise httpx.ConnectError("NO CONNECTION")
+
+    auth_httpx_mock.add_callback(raise_conntection_error)
+
+    with pytest.raises(ConnectError):
+        test_client.get_asset_bytesize(MOCK_ASSET_HREF)

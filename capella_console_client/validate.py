@@ -6,6 +6,7 @@ from typing import no_type_check, Optional, List, Dict, Any, Union
 
 from capella_console_client.enumerations import ProductType, AssetType
 from capella_console_client.logconf import logger
+from capella_console_client.search import SearchResult
 
 STAC_ID_REGEX_STRICT = re.compile("^CAPELLA_C\\d{2}_\\w+_\\w+_\\w{2}_\\d{14}_\\d{14}$")
 
@@ -19,7 +20,8 @@ def _validate_uuid(uuid_str: str) -> None:
 
 
 def _validate_stac_id_or_stac_items(
-    stac_ids: Optional[List[str]] = None, items: Optional[List[Dict[str, Any]]] = None
+    stac_ids: Optional[List[str]] = None,
+    items: Union[Optional[List[Dict[str, Any]]], SearchResult] = None,
 ) -> List[str]:
     if not stac_ids and not items:
         raise ValueError("Please provide stac_ids or items")

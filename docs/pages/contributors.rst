@@ -20,19 +20,19 @@ counts, so please do not hesitate!
 
   .. code-block:: console
 
-    $ black capella_console_client
+    $ make formatter && make lint
 
 5. Check all of the unit tests pass by running
 
   .. code-block:: console
 
-    $ pytest --cov capella_console_client --cov-report=html -sv
+    $ make test
 
 6. Check the type checks pass by running
 
   .. code-block:: console
 
-    $ mypy capella_console_client
+    $ make types
 
 7. Send a pull request and bug the maintainer until it gets merged and
    published 🙂

@@ -27,7 +27,7 @@ from capella_console_client.assets import (
     _derive_stac_id,
     _filter_assets_by_product_types,
 )
-from capella_console_client.search import _build_search_payload, _paginated_search
+from capella_console_client.search import StacSearch, SearchResult
 from capella_console_client.validate import (
     _validate_uuid,
     _validate_stac_id_or_stac_items,
@@ -50,6 +50,9 @@ class CapellaConsoleClient:
         token: valid JWT access token
         verbose: flag to enable verbose logging
         no_token_check: does not check if provided JWT token is valid
+        base_url: Capella console API base URL override
+        search_url: Capella catalog/search/ override
+        no_auth: bypass authentication
 
     NOTE:
         not providing either email and password or a jwt token for authentication
@@ -72,9 +75,7 @@ class CapellaConsoleClient:
         no_auth: bool = False,
     ):
         self._set_verbosity(verbose)
-        self._sesh = CapellaConsoleSession(
-            base_url=base_url, search_url=search_url, verbose=verbose
-        )
+        self._sesh = CapellaConsoleSession(base_url=base_url, search_url=search_url, verbose=verbose)
 
         if not no_auth:
             self._sesh.authenticate(email, password, token, no_token_check)
@@ -93,8 +94,7 @@ class CapellaConsoleClient:
         Returns:
             Dict[str, Any]: return of GET /user
         """
-        with self._sesh as session:
-            resp = session.get("/user")
+        resp = self._sesh.get("/user")
         return resp.json()
 
     # TASKING
@@ -123,14 +123,10 @@ class CapellaConsoleClient:
 
         # get selected
         if tasking_request_ids:
-            tasking_request_meta = [
-                self.get_task(t_req_id) for t_req_id in tasking_request_ids  # type: ignore
-            ]
+            tasking_request_meta = [self.get_task(t_req_id) for t_req_id in tasking_request_ids]  # type: ignore
             if status:
                 tasking_request_meta = [
-                    t_meta
-                    for t_meta in tasking_request_meta
-                    if self._task_contains_status(t_meta, status)
+                    t_meta for t_meta in tasking_request_meta if self._task_contains_status(t_meta, status)
                 ]
             return tasking_request_meta
 
@@ -139,15 +135,12 @@ class CapellaConsoleClient:
         else:
             params = {"customerId": self._sesh.customer_id}
 
-        with self._sesh as session:
-            resp = session.get("/tasks", params=params)
+        resp = self._sesh.get("/tasks", params=params)
         tasking_request_meta = resp.json()
 
         if status:
             tasking_request_meta = [
-                t_meta
-                for t_meta in tasking_request_meta
-                if self._task_contains_status(t_meta, status)
+                t_meta for t_meta in tasking_request_meta if self._task_contains_status(t_meta, status)
             ]
         return tasking_request_meta
 
@@ -161,15 +154,11 @@ class CapellaConsoleClient:
         Returns:
             Dict[str, Any]: task metadata
         """
-        with self._sesh as session:
-            task_response = session.get(f"/task/{tasking_request_id}")
-
+        task_response = self._sesh.get(f"/task/{tasking_request_id}")
         return task_response.json()
 
     def _task_contains_status(self, task: Dict[str, Any], status_name: str) -> bool:
-        return status_name.lower() in (
-            s["code"] for s in task["properties"]["statusHistory"]
-        )
+        return status_name.lower() in (s["code"] for s in task["properties"]["statusHistory"])
 
     def is_task_completed(self, task: Dict[str, Any]) -> bool:
         """
@@ -190,19 +179,14 @@ class CapellaConsoleClient:
         task = self.get_task(tasking_request_id)
         tasking_request_id = task["properties"]["taskingrequestId"]
         if not self.is_task_completed(task):
-            raise TaskNotCompleteError(
-                f"TaskingRequest<{tasking_request_id}> is not in completed state"
-            )
+            raise TaskNotCompleteError(f"TaskingRequest<{tasking_request_id}> is not in completed state")
 
-        with self._sesh as session:
-            collects_list_resp = session.get(f"/collects/list/{tasking_request_id}")
+        collects_list_resp = self._sesh.get(f"/collects/list/{tasking_request_id}")
 
         return collects_list_resp.json()
 
     # ORDER
-    def list_orders(
-        self, *order_ids: Optional[str], is_active: Optional[bool] = False
-    ) -> List[Dict[str, Any]]:
+    def list_orders(self, *order_ids: Optional[str], is_active: Optional[bool] = False) -> List[Dict[str, Any]]:
         """
         list orders
 
@@ -228,25 +212,21 @@ class CapellaConsoleClient:
         else:
             # list all orders
             if not order_ids:
-                with self._sesh as session:
-                    params = {
-                        "customerId": self._sesh.customer_id,
-                    }
-                    resp = session.get("/orders", params=params)
+                params = {
+                    "customerId": self._sesh.customer_id,
+                }
+                resp = self._sesh.get("/orders", params=params)
                 orders = resp.json()
 
             # list specific orders
             else:
-                with self._sesh as session:
-                    for order_id in order_ids:
-                        resp = session.get(f"/orders/{order_id}")
-                        orders.append(resp.json())
+                for order_id in order_ids:
+                    resp = self._sesh.get(f"/orders/{order_id}")
+                    orders.append(resp.json())
 
         return orders
 
-    def get_stac_items_of_order(
-        self, order_id: str, ids_only: bool = False
-    ) -> Union[List[str], List[Dict[str, Any]]]:
+    def get_stac_items_of_order(self, order_id: str, ids_only: bool = False) -> Union[List[str], SearchResult]:
         """
         get stac items of an existing order
 
@@ -265,7 +245,7 @@ class CapellaConsoleClient:
     def review_order(
         self,
         stac_ids: Optional[List[str]] = None,
-        items: Optional[List[Dict[str, Any]]] = None,
+        items: Optional[Union[List[Dict[str, Any]], SearchResult]] = None,
     ) -> Dict[str, Any]:
         stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
 
@@ -280,21 +260,16 @@ class CapellaConsoleClient:
 
         # review order
         order_payload = self._construct_order_payload(stac_items)
-        with self._sesh as session:
-            review_order_response = session.post(
-                "/orders/review", json=order_payload
-            ).json()
+        review_order_response = self._sesh.post("/orders/review", json=order_payload).json()
 
         if not review_order_response.get("authorized", False):
-            raise InsufficientFundsError(
-                review_order_response["authorizationDenialReason"]["message"]
-            )
+            raise InsufficientFundsError(review_order_response["authorizationDenialReason"]["message"])
         return review_order_response
 
     def submit_order(
         self,
         stac_ids: Optional[List[str]] = None,
-        items: Optional[List[Dict[str, Any]]] = None,
+        items: Optional[Union[List[Dict[str, Any]], SearchResult]] = None,
         check_active_orders: bool = False,
         omit_search: bool = False,
         omit_review: bool = False,
@@ -329,9 +304,7 @@ class CapellaConsoleClient:
             stac_items = self.search(ids=stac_ids)
         else:
             if omit_search and not items:
-                logger.warning(
-                    "setting omit_search=True only works in combination providing items instead of stac_ids"
-                )
+                logger.warning("setting omit_search=True only works in combination providing items instead of stac_ids")
                 stac_items = self.search(ids=stac_ids)
             else:
                 stac_items = items  # type: ignore
@@ -344,10 +317,7 @@ class CapellaConsoleClient:
 
         logger.info(f"submitting order for {', '.join(stac_ids)}")
         order_payload = self._construct_order_payload(stac_items)
-
-        # perform actual order
-        with self._sesh as session:
-            res_order = session.post("/orders", json=order_payload)
+        res_order = self._sesh.post("/orders", json=order_payload)
 
         con = res_order.json()
         order_id = con["orderId"]
@@ -364,12 +334,7 @@ class CapellaConsoleClient:
 
         order_items = []
         for collection, stac_ids_of_coll in by_collect_id.items():
-            order_items.extend(
-                [
-                    {"collectionId": collection, "granuleId": stac_id}
-                    for stac_id in stac_ids_of_coll
-                ]
-            )
+            order_items.extend([{"collectionId": collection, "granuleId": stac_id} for stac_id in stac_ids_of_coll])
         return {"items": order_items}
 
     def _find_active_order(self, stac_ids: List[str]) -> Optional[str]:
@@ -428,34 +393,22 @@ class CapellaConsoleClient:
         _validate_uuid(order_id)
 
         logger.info(f"getting presigned assets for order {order_id}")
-        with self._sesh as session:
-            response = session.get(f"/orders/{order_id}/download")
+        response = self._sesh.get(f"/orders/{order_id}/download")
 
         presigned_stac_items = response.json()
 
         # ensure sort
         sort_by = _validate_and_filter_stac_ids(sort_by)
         if sort_by:
-            # import ipdb; ipdb.set_trace()
-            presigned_stac_items = _sort_stac_items(
-                items=presigned_stac_items, stac_ids=sort_by
-            )
+            presigned_stac_items = _sort_stac_items(items=presigned_stac_items, stac_ids=sort_by)
 
         # no filter
         if not stac_ids:
-            return (
-                [item["assets"] for item in presigned_stac_items]
-                if assets_only
-                else presigned_stac_items
-            )
+            return [item["assets"] for item in presigned_stac_items] if assets_only else presigned_stac_items
 
         stac_ids_set = set(stac_ids)
-        sub_selection = [
-            item for item in presigned_stac_items if item["id"] in stac_ids_set
-        ]
-        return (
-            [item["assets"] for item in sub_selection] if assets_only else sub_selection
-        )
+        sub_selection = [item for item in presigned_stac_items if item["id"] in stac_ids_set]
+        return [item["assets"] for item in sub_selection] if assets_only else sub_selection
 
     def get_asset_bytesize(self, pre_signed_url: str) -> int:
         """get size in bytes of `pre_signed_url`"""
@@ -563,36 +516,28 @@ class CapellaConsoleClient:
         one_of_required = (assets_presigned, order_id, tasking_request_id, collect_id)
 
         if not any(map(bool, one_of_required)):
-            raise ValueError(
-                "please provide one of assets_presigned, order_id, tasking_request_id or collect_id"
-            )
+            raise ValueError("please provide one of assets_presigned, order_id, tasking_request_id or collect_id")
 
         product_types = _validate_and_filter_product_types(product_types)
         include = _validate_and_filter_asset_types(include)
         exclude = _validate_and_filter_asset_types(exclude)
 
         if not assets_presigned:
-            assets_presigned = self._resolve_assets_presigned(
-                order_id, tasking_request_id, collect_id, product_types
-            )
+            assets_presigned = self._resolve_assets_presigned(order_id, tasking_request_id, collect_id, product_types)
 
         len_assets_presigned = len(assets_presigned)
         suffix = "s" if len_assets_presigned > 1 else ""
 
         # filter product_type
         if product_types:
-            assets_presigned = _filter_assets_by_product_types(
-                assets_presigned, product_types
-            )
+            assets_presigned = _filter_assets_by_product_types(assets_presigned, product_types)
         logger.info(f"downloading {len_assets_presigned} product{suffix}")
 
         # gather download requests
         download_requests = []
         by_stac_id = {}
         for cur_assets in assets_presigned:
-            cur_download_requests = _gather_download_requests(
-                cur_assets, local_dir, include, exclude, separate_dirs
-            )
+            cur_download_requests = _gather_download_requests(cur_assets, local_dir, include, exclude, separate_dirs)
             by_stac_id[cur_download_requests[0].stac_id] = {
                 cur.asset_key: cur.local_path for cur in cur_download_requests
             }
@@ -628,9 +573,7 @@ class CapellaConsoleClient:
             # 2 - submit order for tasking_request_id
             if tasking_request_id:
                 _validate_uuid(tasking_request_id)
-                order_id, stac_ids = self._order_products_for_task(
-                    tasking_request_id, product_types
-                )  # type: ignore
+                order_id, stac_ids = self._order_products_for_task(tasking_request_id, product_types)  # type: ignore
             # 3 - submit order for collect_id
             else:
                 _validate_uuid(collect_id)
@@ -650,9 +593,7 @@ class CapellaConsoleClient:
             tasking_request_id: tasking request UUID you wish to order all associated products for
         """
         # gather up all collect IDs associated of this task
-        collect_ids = [
-            coll["collectId"] for coll in self.get_collects_for_task(tasking_request_id)
-        ]
+        collect_ids = [coll["collectId"] for coll in self.get_collects_for_task(tasking_request_id)]
         return self._order_products_for_collect_ids(collect_ids, product_types)
 
     def _order_products_for_collect_ids(
@@ -664,16 +605,13 @@ class CapellaConsoleClient:
         if product_types:
             search_kwargs["product_type__in"] = product_types
 
-        stac_items = self.search(**search_kwargs)
-        if not stac_items:
+        result = self.search(**search_kwargs)
+        if not result:
             logger.warning("No STAC items found ... aborting")
             sys.exit(0)
 
-        order_id = self.submit_order(
-            items=stac_items, omit_search=True, check_active_orders=True
-        )
-        stac_ids = [i["id"] for i in stac_items]
-        return order_id, stac_ids
+        order_id = self.submit_order(items=result, omit_search=True, check_active_orders=True)
+        return order_id, result.stac_ids
 
     def download_product(
         self,
@@ -755,7 +693,7 @@ class CapellaConsoleClient:
         return assets_presigned[0]
 
     # SEARCH
-    def search(self, **kwargs) -> List[Dict[str, Any]]:
+    def search(self, **kwargs) -> SearchResult:
         """
         paginated search for up to 500 matches (if no bigger limit specified)
 
@@ -809,15 +747,13 @@ class CapellaConsoleClient:
         Returns:
             List[Dict[str, Any]]: STAC items matched
         """
-        payload = _build_search_payload(**kwargs)
-        logger.info(f"searching catalog with payload {payload}")
-        return _paginated_search(self._sesh, payload)
+        search = StacSearch(session=self._sesh, **kwargs)
+        return search.fetch_all()
 
 
 def _get_non_expired_orders(session: CapellaConsoleSession) -> List[Dict[str, Any]]:
-    with session:
-        params = {"customerId": session.customer_id}
-        res = session.get("/orders", params=params)
+    params = {"customerId": session.customer_id}
+    res = session.get("/orders", params=params)
 
     all_orders = res.json()
 

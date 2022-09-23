@@ -13,11 +13,10 @@ from capella_console_client import client
 from .test_data import (
     post_mock_responses,
     get_mock_responses,
-    search_catalog_get_stac_ids,
-    search_catalog_get_stac_ids_multi_page,
+    get_canned_search_results,
+    get_canned_search_results_multi_page,
     create_mock_asset_hrefs,
 )
-from tests import test_data
 
 
 MOCK_ASSET_HREF = create_mock_asset_hrefs()["HH"]["href"]
@@ -35,13 +34,9 @@ def disable_validate_uuid(monkeypatch):
 
 @pytest.fixture
 def auth_httpx_mock(httpx_mock: HTTPXMock):
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/token", json=post_mock_responses("/token")
-    )
+    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/token", json=post_mock_responses("/token"))
 
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user")
-    )
+    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user"))
     yield httpx_mock
 
 
@@ -59,7 +54,7 @@ def verbose_test_client(auth_httpx_mock):
 
 @pytest.fixture
 def search_client(test_client, monkeypatch):
-    monkeypatch.setattr(client, "_paginated_search", MagicMock())
+    monkeypatch.setattr(client.StacSearch, "fetch_all", MagicMock())
     yield test_client
 
 
@@ -117,13 +112,9 @@ def order_client_unsuccessful(test_client, auth_httpx_mock):
 def non_expired_order_mock(test_client, auth_httpx_mock):
     orders = get_mock_responses("/orders")
     non_expired_order = deepcopy(orders[0])
-    non_expired_order["expirationDate"] = (
-        datetime.utcnow() + timedelta(minutes=10)
-    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    non_expired_order["expirationDate"] = (datetime.utcnow() + timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     orders.append(non_expired_order)
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID", json=orders
-    )
+    auth_httpx_mock.add_response(url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID", json=orders)
 
     yield test_client, non_expired_order
 
@@ -147,21 +138,19 @@ def authed_tasking_request_mock(auth_httpx_mock):
 
 @pytest.fixture
 def download_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
     yield test_client
 
 
 @pytest.fixture
 def big_download_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
-        data="MOCK_CONTENT", headers={"Content-Length": "12700"}
-    )
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12700"})
     yield test_client
 
 
 @pytest.fixture
 def verbose_download_client(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
     yield verbose_test_client
 
 
@@ -169,7 +158,7 @@ def verbose_download_client(verbose_test_client, auth_httpx_mock):
 def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids(),
+        json=get_canned_search_results(),
     )
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/review",
@@ -183,9 +172,7 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
         url=f"{CONSOLE_API_URL}/orders/1/download",
         json=get_mock_responses("/orders/1/download"),
     )
-    auth_httpx_mock.add_response(
-        url=MOCK_ASSET_HREF, data="MOCK_CONTENT", headers={"Content-Length": "127"}
-    )
+    auth_httpx_mock.add_response(url=MOCK_ASSET_HREF, text="MOCK_CONTENT", headers={"Content-Length": "127"})
     yield verbose_test_client
 
 
@@ -193,7 +180,7 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
 def single_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids(),
+        json=get_canned_search_results(),
     )
     yield verbose_test_client
 
@@ -202,11 +189,11 @@ def single_page_search_client(verbose_test_client, auth_httpx_mock):
 def multi_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids_multi_page(),
+        json=get_canned_search_results_multi_page(),
     )
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/next_href",
-        json=search_catalog_get_stac_ids_multi_page(),
+        json=get_canned_search_results_multi_page(),
     )
     yield verbose_test_client
 

@@ -241,17 +241,13 @@ def _fetch(
             with httpx.stream("GET", dl_request.url) as response:
                 response.raise_for_status()
                 if show_progress:
-                    download_task_id = _register_progress_task(
-                        dl_request, progress, asset_size
-                    )
+                    download_task_id = _register_progress_task(dl_request, progress, asset_size)
 
                 for chunk in response.iter_bytes():
                     f.write(chunk)
 
                     if show_progress:
-                        progress.update(
-                            download_task_id, completed=response.num_bytes_downloaded
-                        )
+                        progress.update(download_task_id, completed=response.num_bytes_downloaded)
     except httpx.ConnectError as e:
         raise ConnectError(f"Could not connect to {dl_request.url}: {e}") from None
 
@@ -264,9 +260,7 @@ def _register_progress_task(
     file_name_str = str(dl_request.local_path)
     if dl_request.local_path and isinstance(dl_request.local_path, Path):
         file_name_str = dl_request.local_path.name
-    download_task_id = progress.add_task(
-        "Download", total=asset_size, filename=file_name_str
-    )
+    download_task_id = progress.add_task("Download", total=asset_size, filename=file_name_str)
     return download_task_id
 
 

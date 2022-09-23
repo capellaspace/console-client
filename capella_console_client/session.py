@@ -44,9 +44,7 @@ class CapellaConsoleSession(httpx.Client):
         self.customer_id = None
         self.organization_id = None
 
-        self.search_url = (
-            search_url if search_url is not None else f"{self.base_url}/catalog/search"
-        )
+        self.search_url = search_url if search_url is not None else f"{self.base_url}/catalog/search"
         self._refresh_token = None
 
     def authenticate(
@@ -66,7 +64,7 @@ class CapellaConsoleSession(httpx.Client):
                 self._basic_auth(email, password)  # type: ignore
             elif auth_method == AuthMethod.TOKEN:
                 self._token_auth_check(token, no_token_check)  # type: ignore
-        except CapellaConsoleClientError:
+        except httpx.HTTPStatusError:
             message = {
                 AuthMethod.BASIC: "please check your credentials",
                 AuthMethod.TOKEN: "provided token invalid",
@@ -90,9 +88,7 @@ class CapellaConsoleSession(httpx.Client):
             password = getpass("password: ").strip()
         return (email, password)
 
-    def _get_auth_method(
-        self, email: Optional[str], password: Optional[str], token: Optional[str]
-    ) -> AuthMethod:
+    def _get_auth_method(self, email: Optional[str], password: Optional[str], token: Optional[str]) -> AuthMethod:
         basic_auth_provided = bool(email) and bool(password)
         has_token = bool(token)
 
@@ -100,9 +96,7 @@ class CapellaConsoleSession(httpx.Client):
             raise ValueError("please provide either email and password or token")
 
         if has_token and basic_auth_provided:
-            logger.info(
-                "both token and email/ password provided ... using email/ password for authentication"
-            )
+            logger.info("both token and email/ password provided ... using email/ password for authentication")
 
         auth_method = AuthMethod.BASIC
         if not basic_auth_provided:
@@ -116,13 +110,12 @@ class CapellaConsoleSession(httpx.Client):
         returns jwt access token
         """
         basic_token = base64.b64encode(f"{email}:{password}".encode()).decode("utf-8")
-        headers = {"Authorization": f"Basic {basic_token}"}
-
-        resp = self.post("/token", headers=headers)
+        resp = self.post("/token", headers={"Authorization": f"Basic {basic_token}"})
         resp.raise_for_status()
-        con = resp.json()
-        self._set_auth_header(con["accessToken"])
-        self._refresh_token = con["refreshToken"]
+        response_body = resp.json()
+
+        self._set_auth_header(response_body["accessToken"])
+        self._refresh_token = response_body["refreshToken"]
         self._cache_user_info()
 
     def _set_auth_header(self, token: str):
@@ -168,19 +161,7 @@ class CapellaConsoleSession(httpx.Client):
         if not self._refresh_token:
             raise NoRefreshTokenError("No refresh token found") from None
 
-        def _refresh():
-            if not self.is_closed:
-                return self.post(
-                    "/token/refresh", json={"refreshToken": self._refresh_token}
-                )
-
-            with self as session:
-                return session.post(
-                    "/token/refresh", json={"refreshToken": self._refresh_token}
-                )
-
-        resp = _refresh()
-
+        resp = self.post("/token/refresh", json={"refreshToken": self._refresh_token})
         con = resp.json()
         self._set_auth_header(con["accessToken"])
         if con["refreshToken"] != self._refresh_token:

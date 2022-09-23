@@ -24,14 +24,7 @@ def test_basic_auth(auth_httpx_mock: HTTPXMock):
 
 def test_failed_basic_auth(httpx_mock: HTTPXMock):
     httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/token",
-        status_code=400,
-        json={
-            "error": {
-                "message": "Incorrect username or password.",
-                "code": "GENERAL_API_ERROR",
-            }
-        },
+        url=f"{CONSOLE_API_URL}/token", method="POST", status_code=400, json={"error": {"code": "not allowed"}}
     )
     with pytest.raises(AuthenticationError):
         CapellaConsoleClient(email="MOCK_INVALID_EMAIL", password="MOCK_INVALID_PW")
@@ -63,9 +56,7 @@ def _shared_basic_auth_asserts(auth_httpx_mock, client, email, pw):
 
 
 def test_token_auth(httpx_mock: HTTPXMock):
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user")
-    )
+    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user"))
 
     token = "MOCK_TOKEN"
 
@@ -129,7 +120,6 @@ def test_authenticate_missing_data_prompts_empty(monkeypatch):
 def test_whoami(auth_httpx_mock):
     client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
     whoami = client.whoami()
-
     assert whoami == get_mock_responses("/user")
 
 

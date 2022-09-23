@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath("../"))
 from capella_console_client.version import __version__
 
 project = "capella-console-client"
-copyright = "2021, Capella Space"
+copyright = "2022, Capella Space"
 author = "Capella Space"
 
 version = __version__

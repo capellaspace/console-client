@@ -1,5 +1,3 @@
-from typing import List, Dict, Tuple, Any
-
 import typer
 from tabulate import tabulate
 import questionary
@@ -18,11 +16,7 @@ app = typer.Typer(help="manage saved search results")
 
 
 @app.command()
-def list(
-    detailed: bool = typer.Option(
-        False, "--detailed", help="Show STAC ids of saved search results"
-    )
-):
+def list(detailed: bool = typer.Option(False, "--detailed", help="Show STAC ids of saved search results")):
     """
     list previously saved search results
     """
