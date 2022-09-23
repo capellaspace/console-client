@@ -50,6 +50,9 @@ class CapellaConsoleClient:
         token: valid JWT access token
         verbose: flag to enable verbose logging
         no_token_check: does not check if provided JWT token is valid
+        base_url: Capella console API base URL override
+        search_url: Capella catalog/search/ override
+        no_auth: bypass authentication
 
     NOTE:
         not providing either email and password or a jwt token for authentication

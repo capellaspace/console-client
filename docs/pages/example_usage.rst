@@ -12,6 +12,7 @@ authenticate
 ############
 
 interactive prompt
+******************
 
 .. code:: python3
 
@@ -23,6 +24,7 @@ interactive prompt
 
 
 provide user credentials
+************************
 
 .. code:: python3
 
@@ -37,6 +39,7 @@ provide user credentials
 
 
 JWT
+***
 
 .. code:: python3
 
@@ -48,6 +51,7 @@ JWT
 
 
 token refresh with auto retry
+*****************************
 
 .. code:: python3
     
@@ -116,7 +120,7 @@ By default **up to 500** STAC items are returned. This can be increased by provi
 
 
 search fields
-##############
+*************
 
 .. list-table:: supported fields for search
     :widths: 30 40 20 20
@@ -374,6 +378,29 @@ advanced search
 The API for advanced filtering operations was inspired by `Django's ORM <https://docs.djangoproject.com/en/3.2/topics/db/queries/#chaining-filters>`_
 
 
+visualize search results
+########################
+
+.. code:: python3
+
+    from pathlib import Path
+    import json
+
+    results = client.search(
+        instrument_mode="spotligh",
+        product_type="GEO",
+        sortby="-datetime"
+    )
+    # store stac items in geojson FeatureCollection
+    feature_collection = results.to_feature_collection()
+
+    # write to disk
+    feature_collection_path = Path('CAPELLA_SP_GEOs.geojson')
+    feature_collection_path.write_text(json.dumps(feature_collection))
+
+    # open e.g. in QGIS
+
+
 order products
 ##############
 
@@ -394,8 +421,8 @@ Issue the following snippets to submit a (purchasing) order by providing STAC it
                                    check_active_orders=True)
 
 
-download multiple products
-##########################
+download
+########
 
 Download assets of previously ordered products to local disk.
 
@@ -634,7 +661,7 @@ single assets can be downloaded to gven paths
 
 
 list orders
-##############
+###########
 
 Issue the following snippet to view the ordering history
 

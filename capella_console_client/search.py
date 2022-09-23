@@ -125,6 +125,8 @@ class StacSearch:
         return sorts
 
     def fetch_all(self) -> SearchResult:
+        logger.info(f"searching catalog with payload {self.payload}")
+
         requested_limit = self.payload.get("limit", DEFAULT_MAX_FEATURE_COUNT)
 
         if "limit" not in self.payload:
