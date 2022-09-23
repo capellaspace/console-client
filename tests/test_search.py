@@ -2,16 +2,15 @@
 
 import pytest
 
-from .test_data import get_search_test_cases, search_catalog_get_stac_ids
-from capella_console_client import client
+from .test_data import get_search_test_cases, get_canned_search_results, get_canned_search_results_multi_page
 from capella_console_client.validate import _validate_uuid
-from capella_console_client.search import _paginated_search
+from capella_console_client.search import StacSearch
 
 
 @pytest.mark.parametrize("search_args,expected", get_search_test_cases())
-def test_search(search_args, expected, search_client):
-    search_client.search(**search_args)
-    assert client._paginated_search.call_args[0][1] == expected
+def test_search_payload(search_args, expected, search_client):
+    search = StacSearch(search_client._sesh, **search_args)
+    assert search.payload == expected
 
 
 def test_validate_uuid_raises():
@@ -20,11 +19,30 @@ def test_validate_uuid_raises():
 
 
 def test_paginated_search_single_page(single_page_search_client):
-    results = _paginated_search(single_page_search_client._sesh, payload={"limit": 1})
+    search = StacSearch(single_page_search_client._sesh, limit=1)
+    results = search.fetch_all()
     assert len(results) == 1
-    assert results[0] == search_catalog_get_stac_ids()["features"][0]
+    assert results[0] == get_canned_search_results()["features"][0]
 
 
-def test_paginated_search_multi_page(multi_page_search_client):
-    results = _paginated_search(multi_page_search_client._sesh, payload={"limit": 10})
-    assert len(results) == 10
+def test_paginated_search_limits(multi_page_search_client):
+    search = StacSearch(multi_page_search_client._sesh, limit=6)
+    results = search.fetch_all()
+    assert len(results) == get_canned_search_results()["numberMatched"]
+
+
+def test_search_result_to_feature_collection(multi_page_search_client):
+    search = StacSearch(multi_page_search_client._sesh)
+    results = search.fetch_all()
+    feature_collection = results.to_feature_collection()
+    assert feature_collection["type"] == "FeatureCollection"
+    
+    # 2 pages
+    page_ret = get_canned_search_results_multi_page()["features"]
+    assert feature_collection["features"] == page_ret * 2
+
+
+def test_search_result_repr(multi_page_search_client):
+    search = StacSearch(multi_page_search_client._sesh)
+    results = search.fetch_all()
+    assert repr(results)

@@ -1,6 +1,8 @@
-from typing import Any, Dict, Tuple, List, DefaultDict, Optional
+from copy import deepcopy
+from typing import Any, Dict, Tuple, DefaultDict, Optional, List
 from collections import defaultdict
 from urllib.parse import urlparse
+from dataclasses import dataclass, field
 
 from retrying import retry  # type: ignore
 
@@ -18,120 +20,165 @@ from capella_console_client.config import (
 )
 from capella_console_client.hooks import retry_if_http_status_error, log_attempt_delay
 
+@dataclass
+class SearchResult:
 
-def _build_search_payload(**kwargs) -> Dict[str, Any]:
-    payload = {}
-    query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
+    request_body: Dict[str, Any]
+    _pages: List[Dict[str, Any]] = field(default_factory=list)
+    _features: List[Dict[str, Any]] = field(default_factory=list)
 
-    for field, value in kwargs.items():
-        field, op = _split_op(field)
-        if field not in ALL_SUPPORTED_FIELDS:
-            logger.warning(f"filter {field} not supported ... omitting")
-            continue
+    def add(self, page: Dict[str, Any]):
+        self._pages.append(page)
+        self._features.extend(page["features"])
 
-        if op not in OPERATOR_SUFFIXES:
-            logger.warning(f"operator {op} not supported ... omitting")
-            continue
+    # backwards compability
+    def __getitem__(self, key):
+        return self._features.__getitem__(key)
 
-        if field in SUPPORTED_SEARCH_FIELDS:
-            payload[field] = value
-        elif field in SUPPORTED_QUERY_FIELDS:
-            if type(value) == list:
-                op = "in"
+    def __iter__(self):
+        return self._features.__iter__()
 
-            target_field = STAC_PREFIXED_BY_QUERY_FIELDS.get(field, field)
-            query_payload[target_field][op] = value
+    def __len__(self):
+        return len(self._features)
 
-    if query_payload:
-        payload["query"] = dict(query_payload)
+    def __repr__(self):
+        return f"{self.__class__} ({len(self)} STAC items)"
 
-    if "sortby" in kwargs:
-        payload["sortby"] = _get_sort_payload(kwargs)
+    def to_feature_collection(self):
+        return {"type": "FeatureCollection", "features": self._features}
 
-    return payload
+    @property
+    def stac_ids(self):
+        return [item["id"] for item in self._features]
+
+class StacSearch:
+    def __init__(self, session: CapellaConsoleSession, **kwargs) -> None:
+        cur_kwargs = deepcopy(kwargs)
+        self.session = session
+        self.payload: Dict[str, Any] = {}
+        
+        sortby = cur_kwargs.pop("sortby", None)
+        query_payload = self._get_query_payload(cur_kwargs)
+        if query_payload:
+            self.payload["query"] = dict(query_payload)
+
+        if sortby:
+            self.payload["sortby"] = self._get_sort_payload(sortby)
+
+    def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
+        query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
+
+        for cur_field, value in kwargs.items():
+            cur_field, op = self._split_op(cur_field)
+            if cur_field not in ALL_SUPPORTED_FIELDS:
+                logger.warning(f"filter {cur_field} not supported ... omitting")
+                continue
+
+            if op not in OPERATOR_SUFFIXES:
+                logger.warning(f"operator {op} not supported ... omitting")
+                continue
+
+            if cur_field in SUPPORTED_SEARCH_FIELDS:
+                self.payload[cur_field] = value
+            elif cur_field in SUPPORTED_QUERY_FIELDS:
+                if type(value) == list:
+                    op = "in"
+
+                target_field = STAC_PREFIXED_BY_QUERY_FIELDS.get(cur_field, cur_field)
+                query_payload[target_field][op] = value
+        
+        return query_payload
+
+    def _split_op(self, cur_field: str) -> Tuple[str, str]:
+        parts = cur_field.split("__")
+        if len(parts) == 2:
+            op = parts[1]
+        else:
+            op = "eq"
+        return (parts[0], op)
+
+    def _get_sort_payload(self, sortby):
+        directions = {"-": "desc", "+": "asc"}
+        sorts = []
+        orig = sortby
+
+        if not isinstance(orig, list):
+            orig = [orig]
+
+        for sort_arg in orig:
+            field = sort_arg[1:]
+            direction = sort_arg[0]
+            if direction not in directions:
+                direction = "+"
+                field = sort_arg
+
+            if field not in ALL_SUPPORTED_SORTBY:
+                logger.warning(f"sorting by {field} not supported ... omitting")
+                continue
+
+            if field in SUPPORTED_QUERY_FIELDS or field == "datetime":
+                field = f"properties.{field}"
+
+            sorts.append({"field": field, "direction": directions[direction]})
+        return sorts
+
+    def fetch_all(
+        self
+    ) -> SearchResult:
+        requested_limit = self.payload.get("limit", DEFAULT_MAX_FEATURE_COUNT)
+
+        if "limit" not in self.payload:
+            self.payload["limit"] = DEFAULT_MAX_FEATURE_COUNT
+
+        # ensure DEFAULT_PAGE_SIZE if requested limit > DEFAULT_PAGE_SIZE
+        self.payload["limit"] = min(DEFAULT_PAGE_SIZE, self.payload["limit"])
+
+        page_cnt = 1
+        search_result = SearchResult(request_body=self.payload)
+        next_href = None
+
+        with self.session:
+            while True:
+                _log_page_query(page_cnt, len(search_result), self.payload["limit"])
+                page_data = _page_search(self.session, self.payload, next_href)
+                number_matched = page_data["numberMatched"]
+                search_result.add(page_data)
+
+                limit_reached = (
+                    len(search_result) >= requested_limit
+                    or len(search_result) >= number_matched
+                )
+                if limit_reached:
+                    break
+
+                next_href = _get_next_page_href(page_data)
+                if next_href is None:
+                    break
+
+                if page_cnt == 1:
+                    logger.info(f"Matched a total of {number_matched} stac items")
+
+                self.payload["limit"] = DEFAULT_PAGE_SIZE
+                page_cnt += 1
+                self.payload["page"] = page_cnt
+
+        # truncate to limit
+        len_features = len(search_result)
+        if len_features > requested_limit:
+            search_result._features = search_result._features[:requested_limit]
+
+        if not len_features:
+            logger.info("found no STAC items matching your query")
+        else:
+            multiple_suffix = "s" if len_features > 1 else ""
+            logger.info(f"found {len(search_result)} STAC item{multiple_suffix}")
+
+        return search_result
 
 
-def _get_sort_payload(kwargs):
-    directions = {"-": "desc", "+": "asc"}
-    sorts = []
-    orig = kwargs["sortby"]
-
-    if not isinstance(orig, list):
-        orig = [orig]
-
-    for sort_arg in orig:
-        field = sort_arg[1:]
-        direction = sort_arg[0]
-        if direction not in directions:
-            direction = "+"
-            field = sort_arg
-
-        if field not in ALL_SUPPORTED_SORTBY:
-            logger.warning(f"sorting by {field} not supported ... omitting")
-            continue
-
-        if field in SUPPORTED_QUERY_FIELDS or field == "datetime":
-            field = f"properties.{field}"
-
-        sorts.append({"field": field, "direction": directions[direction]})
-    return sorts
-
-
-def _split_op(field: str) -> Tuple[str, str]:
-    parts = field.split("__")
-    if len(parts) == 2:
-        op = parts[1]
-    else:
-        op = "eq"
-    return (parts[0], op)
-
-
-def _paginated_search(
-    session: CapellaConsoleSession, payload: Dict[str, Any]
-) -> List[Dict[str, Any]]:
-    requested_limit = payload.get("limit", DEFAULT_MAX_FEATURE_COUNT)
-
-    if "limit" not in payload:
-        payload["limit"] = DEFAULT_MAX_FEATURE_COUNT
-
-    # ensure DEFAULT_PAGE_SIZE if requested limit > DEFAULT_PAGE_SIZE
-    payload["limit"] = min(DEFAULT_PAGE_SIZE, payload["limit"])
-
-    page_cnt = 1
-    features: List[Dict[str, Any]] = []
-    next_href = None
-
-    with session:
-        while True:
-            _log_page_query(page_cnt, len(features), payload["limit"])
-            page_data = _page_search(session, payload, next_href)
-            features.extend(page_data["features"])
-
-            limit_reached = len(features) >= requested_limit
-            if limit_reached:
-                break
-
-            next_href = _get_next_page_href(page_data)
-            if next_href is None:
-                break
-
-            payload["limit"] = min(requested_limit - len(features), DEFAULT_PAGE_SIZE)
-            page_cnt += 1
-            payload["page"] = page_cnt
-
-    len_feat = len(features)
-
-    # truncate to limit
-    if len_feat > requested_limit:
-        features = features[:requested_limit]
-
-    if not len_feat:
-        logger.info(f"found no STAC items matching your query")
-    else:
-        multiple_suffix = "s" if len_feat > 1 else ""
-        logger.info(f"found {len(features)} STAC item{multiple_suffix}")
-
-    return features
+def _log_page_query(page_cnt: int, len_feat: int, limit: int):
+    if page_cnt != 1:
+        logger.info(f"\tpage {page_cnt} ({len_feat} - {len_feat + limit})")
 
 
 def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
@@ -144,10 +191,6 @@ def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
         next_href = None
 
     return next_href
-
-
-def _log_page_query(page_cnt: int, len_feat: int, limit: int):
-    logger.info(f"\tpage {page_cnt} ({len_feat} - {len_feat + limit})")
 
 
 @retry(

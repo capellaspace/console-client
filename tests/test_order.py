@@ -57,7 +57,10 @@ def test_list_active_orders(non_expired_order_mock):
 def test_review_order(order_client, httpx_mock):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
+        json={
+            "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
+            "numberMatched": 1,
+        },
     )
     order_client.review_order(stac_ids=["MOCK_STAC_ID"])
 
@@ -65,7 +68,10 @@ def test_review_order(order_client, httpx_mock):
 def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx_mock):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
+        json={
+            "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
+            "numberMatched": 1,
+        },
     )
 
     with pytest.raises(InsufficientFundsError):
@@ -75,7 +81,7 @@ def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx
 def test_review_order_no_match(order_client, httpx_mock):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json={"features": []},
+        json={"features": [], "numberMatched": 0},
     )
     with pytest.raises(NoValidStacIdsError):
         order_client.review_order(stac_ids=["MOCK_STAC_ID"])
@@ -86,7 +92,10 @@ def test_submit_order_not_previously_ordered_check_active_orders(
 ):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
+        json={
+            "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
+            "numberMatched": 1,
+        },
     )
 
     order_id = order_client.submit_order(
@@ -107,7 +116,10 @@ def test_submit_order_not_previously_ordered_no_check_active_orders(
 ):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
+        json={
+            "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
+            "numberMatched": 1,
+        },
     )
     order_id = order_client.submit_order(
         stac_ids=["MOCK_STAC_ID"], check_active_orders=False
@@ -140,7 +152,7 @@ def test_submit_order_invalid_stac_id(test_client, httpx_mock):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         method="POST",
-        json={"features": []},
+        json={"features": [], "numberMatched": 0},
     )
 
     with pytest.raises(NoValidStacIdsError):
@@ -158,7 +170,8 @@ def test_submit_order_rejected(order_client_unsuccessful, httpx_mock):
                     "id": "CAPELLA_C02_SM_SLC_HH_20201126192221_20201126192225",
                     "collection": "capella-test",
                 }
-            ]
+            ],
+            "numberMatched": 1,
         },
     )
 
@@ -169,7 +182,10 @@ def test_submit_order_rejected(order_client_unsuccessful, httpx_mock):
 def test_submit_order_items(order_client, httpx_mock):
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json={"features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}]},
+        json={
+            "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
+            "numberMatched": 1,
+        },
     )
 
     order_id = order_client.submit_order(
@@ -244,7 +260,8 @@ def test_get_stac_items_of_order(
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={
-            "features": [{"id": "CAPELLA_C02_SM_SLC_HH_20201126192221_20201126192225"}]
+            "features": [{"id": "CAPELLA_C02_SM_SLC_HH_20201126192221_20201126192225"}],
+            "numberMatched": 1,
         },
     )
     ret = client.get_stac_items_of_order(order_id)

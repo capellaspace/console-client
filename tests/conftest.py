@@ -13,11 +13,10 @@ from capella_console_client import client
 from .test_data import (
     post_mock_responses,
     get_mock_responses,
-    search_catalog_get_stac_ids,
-    search_catalog_get_stac_ids_multi_page,
+    get_canned_search_results,
+    get_canned_search_results_multi_page,
     create_mock_asset_hrefs,
 )
-from tests import test_data
 
 
 MOCK_ASSET_HREF = create_mock_asset_hrefs()["HH"]["href"]
@@ -59,7 +58,7 @@ def verbose_test_client(auth_httpx_mock):
 
 @pytest.fixture
 def search_client(test_client, monkeypatch):
-    monkeypatch.setattr(client, "_paginated_search", MagicMock())
+    monkeypatch.setattr(client.StacSearch, "fetch_all", MagicMock())
     yield test_client
 
 
@@ -169,7 +168,7 @@ def verbose_download_client(verbose_test_client, auth_httpx_mock):
 def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids(),
+        json=get_canned_search_results(),
     )
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/review",
@@ -193,7 +192,7 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
 def single_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids(),
+        json=get_canned_search_results(),
     )
     yield verbose_test_client
 
@@ -202,11 +201,11 @@ def single_page_search_client(verbose_test_client, auth_httpx_mock):
 def multi_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=search_catalog_get_stac_ids_multi_page(),
+        json=get_canned_search_results_multi_page(),
     )
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/next_href",
-        json=search_catalog_get_stac_ids_multi_page(),
+        json=get_canned_search_results_multi_page(),
     )
     yield verbose_test_client
 

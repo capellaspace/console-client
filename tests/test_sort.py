@@ -27,6 +27,12 @@ TEST_CASES = [
         [{"id": 4}, {"id": 5}, {"id": 3}],
         id="all miss",
     ),
+    pytest.param(
+        [{"id": 4}, {"id": 5}, {"id": 3}],
+        [4, 5],
+        [{"id": 4}, {"id": 5}, {"id": 3}],
+        id="unequal length",
+    ),
     pytest.param([], [], [], id="empty"),
 ]
 

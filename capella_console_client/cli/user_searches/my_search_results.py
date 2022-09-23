@@ -1,5 +1,3 @@
-from typing import List, Dict, Tuple, Any
-
 import typer
 from tabulate import tabulate
 import questionary

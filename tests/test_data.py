@@ -329,7 +329,7 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
     }[endpoint]
 
 
-def search_catalog_get_stac_ids() -> Dict[str, Any]:
+def get_canned_search_results() -> Dict[str, Any]:
     return {
         "features": [
             {
@@ -349,13 +349,16 @@ def search_catalog_get_stac_ids() -> Dict[str, Any]:
                 "collection": "capella-archive",
             },
         ],
+        "numberMatched": 4,
     }
 
 
-def search_catalog_get_stac_ids_multi_page() -> Dict[str, Any]:
-    con = search_catalog_get_stac_ids()
-    con["links"] = [{"rel": "next", "href": "next_href"}]
-    return con
+def get_canned_search_results_multi_page() -> Dict[str, Any]:
+    results = get_canned_search_results()
+    # drop half to force 2nd page
+    results["features"] = results["features"][:2]
+    results["links"] = [{"rel": "next", "href": "next_href"}]
+    return results
 
 
 def post_mock_responses(endpoint: str) -> Dict[str, Any]:

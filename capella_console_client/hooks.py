@@ -4,8 +4,7 @@ from dataclasses import dataclass
 
 import httpx
 
-from .exceptions import handle_error_response, NON_RETRYABLE_ERROR_CODES
-from capella_console_client.exceptions import CapellaConsoleClientError
+from capella_console_client.exceptions import CapellaConsoleClientError,  handle_error_response, NON_RETRYABLE_ERROR_CODES
 
 logger = logging.getLogger()
 

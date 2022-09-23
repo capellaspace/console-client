@@ -27,7 +27,7 @@ from capella_console_client.assets import (
     _derive_stac_id,
     _filter_assets_by_product_types,
 )
-from capella_console_client.search import _build_search_payload, _paginated_search
+from capella_console_client.search import StacSearch, SearchResult
 from capella_console_client.validate import (
     _validate_uuid,
     _validate_stac_id_or_stac_items,
@@ -246,7 +246,7 @@ class CapellaConsoleClient:
 
     def get_stac_items_of_order(
         self, order_id: str, ids_only: bool = False
-    ) -> Union[List[str], List[Dict[str, Any]]]:
+    ) -> Union[List[str], SearchResult]:
         """
         get stac items of an existing order
 
@@ -265,7 +265,7 @@ class CapellaConsoleClient:
     def review_order(
         self,
         stac_ids: Optional[List[str]] = None,
-        items: Optional[List[Dict[str, Any]]] = None,
+        items: Optional[Union[List[Dict[str, Any]], SearchResult]] = None,
     ) -> Dict[str, Any]:
         stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
 
@@ -294,7 +294,7 @@ class CapellaConsoleClient:
     def submit_order(
         self,
         stac_ids: Optional[List[str]] = None,
-        items: Optional[List[Dict[str, Any]]] = None,
+        items: Optional[Union[List[Dict[str, Any]], SearchResult]] = None,
         check_active_orders: bool = False,
         omit_search: bool = False,
         omit_review: bool = False,
@@ -436,7 +436,6 @@ class CapellaConsoleClient:
         # ensure sort
         sort_by = _validate_and_filter_stac_ids(sort_by)
         if sort_by:
-            # import ipdb; ipdb.set_trace()
             presigned_stac_items = _sort_stac_items(
                 items=presigned_stac_items, stac_ids=sort_by
             )
@@ -664,16 +663,15 @@ class CapellaConsoleClient:
         if product_types:
             search_kwargs["product_type__in"] = product_types
 
-        stac_items = self.search(**search_kwargs)
-        if not stac_items:
+        result = self.search(**search_kwargs)
+        if not result:
             logger.warning("No STAC items found ... aborting")
             sys.exit(0)
 
         order_id = self.submit_order(
-            items=stac_items, omit_search=True, check_active_orders=True
+            items=result, omit_search=True, check_active_orders=True
         )
-        stac_ids = [i["id"] for i in stac_items]
-        return order_id, stac_ids
+        return order_id, result.stac_ids
 
     def download_product(
         self,
@@ -755,7 +753,7 @@ class CapellaConsoleClient:
         return assets_presigned[0]
 
     # SEARCH
-    def search(self, **kwargs) -> List[Dict[str, Any]]:
+    def search(self, **kwargs) -> SearchResult:
         """
         paginated search for up to 500 matches (if no bigger limit specified)
 
@@ -809,9 +807,8 @@ class CapellaConsoleClient:
         Returns:
             List[Dict[str, Any]]: STAC items matched
         """
-        payload = _build_search_payload(**kwargs)
-        logger.info(f"searching catalog with payload {payload}")
-        return _paginated_search(self._sesh, payload)
+        search = StacSearch(session=self._sesh, **kwargs)
+        return search.fetch_all()
 
 
 def _get_non_expired_orders(session: CapellaConsoleSession) -> List[Dict[str, Any]]:

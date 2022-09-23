@@ -7,6 +7,7 @@ from tabulate import tabulate
 from capella_console_client.config import (
     STAC_PREFIXED_BY_QUERY_FIELDS,
 )
+from capella_console_client.search import SearchResult
 
 from capella_console_client.cli.config import (
     CURRENT_SETTINGS,
@@ -14,7 +15,7 @@ from capella_console_client.cli.config import (
 
 
 def show_tabulated(
-    stac_items: List[Dict[str, Any]],
+    stac_items: SearchResult,
     search_headers: Optional[List[str]] = None,
     show_row_number: bool = False,
 ):

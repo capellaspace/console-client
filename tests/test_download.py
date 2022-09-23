@@ -5,7 +5,9 @@
 import tempfile
 from pathlib import Path
 
+import httpx
 import pytest
+from pytest_httpx import HTTPXMock
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
@@ -399,3 +401,11 @@ def test_get_asset_bytesize(download_client, auth_httpx_mock):
 
     bytesize = download_client.get_asset_bytesize(MOCK_ASSET_HREF)
     assert bytesize == 127
+
+
+def test_get_asset_bytesize_raises(download_client, auth_httpx_mock: HTTPXMock):
+    import ipdb; ipdb.set_trace()
+    auth_httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_exception(httpx.ConnectError("NONONO"))
+
+    bytesize = download_client.get_asset_bytesize(MOCK_ASSET_HREF)
