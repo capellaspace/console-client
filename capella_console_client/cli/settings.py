@@ -49,9 +49,7 @@ def show():
     """
     typer.secho("Current settings:\n", underline=True)
     table_data = list(CURRENT_SETTINGS.items())
-    typer.echo(
-        tabulate(table_data, tablefmt="fancy_grid", headers=["setting", "value"])
-    )
+    typer.echo(tabulate(table_data, tablefmt="fancy_grid", headers=["setting", "value"]))
 
 
 @app.command()
@@ -128,19 +126,13 @@ def search_filter_order():
         default=SearchFilterOrderOption[CURRENT_SETTINGS["search_filter_order"]],
     ).ask()
 
-    _no_selection_bye(
-        search_filter_order, info_msg="no valid search filter order provided"
-    )
-    CLICache.write_user_settings(
-        "search_filter_order", SearchFilterOrderOption(search_filter_order).name
-    )
+    _no_selection_bye(search_filter_order, info_msg="no valid search filter order provided")
+    CLICache.write_user_settings("search_filter_order", SearchFilterOrderOption(search_filter_order).name)
     typer.echo("updated order of search filters to be used in searches")
 
 
 def configure():
-    logger.info(
-        typer.style("let's get you all setup using capella-console-wizard:", bold=True)
-    )
+    logger.info(typer.style("let's get you all setup using capella-console-wizard:", bold=True))
     logger.info("\t\tPress Ctrl + C anytime to quit\n")
     user()
     output()

@@ -44,10 +44,7 @@ def test_derive_stac_id_invalid():
 )
 def test_derive_derive_product_type(stac_id, expected):
     HREF_TMPL = "https://test-data.capellaspace.com/capella-test/2021/1/19/{stac_id}/{stac_id}.png?AWSAccessKeyId=********&Expires=*****&Signature=******&x-amz-security-token=****"
-    assert (
-        _derive_product_type({"HH": {"href": HREF_TMPL.format(stac_id=stac_id)}})
-        == expected
-    )
+    assert _derive_product_type({"HH": {"href": HREF_TMPL.format(stac_id=stac_id)}}) == expected
 
 
 def test_derive_derive_product_type_invalid():

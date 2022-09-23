@@ -99,15 +99,9 @@ def handle_error_response(resp):
     # try to assign some more meaningful exception class by message
     if code == DEFAULT_ERROR_CODE and message:
         try:
-            code = next(
-                v
-                for k, v in ERROR_CODES_BY_MESSAGE_SNIP.items()
-                if k in message.lower()
-            )
+            code = next(v for k, v in ERROR_CODES_BY_MESSAGE_SNIP.items() if k in message.lower())
         except StopIteration:
             pass
 
-    exc = ERROR_CODES.get(code, CapellaConsoleClientError)(
-        message=message, code=code, data=data, response=resp
-    )
+    exc = ERROR_CODES.get(code, CapellaConsoleClientError)(message=message, code=code, data=data, response=resp)
     raise exc

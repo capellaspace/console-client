@@ -42,9 +42,7 @@ class CLICache:
         return _safe_load_json(cls.SETTINGS)
 
     @classmethod
-    def add_timestamps(
-        cls, data: Union[Dict[str, Any], List[str]], is_new: bool = False
-    ) -> Dict[str, Any]:
+    def add_timestamps(cls, data: Union[Dict[str, Any], List[str]], is_new: bool = False) -> Dict[str, Any]:
         now = str(datetime.now())[:-7]
         record = {
             "data": data,
@@ -59,9 +57,7 @@ class CLICache:
         cls.MY_SEARCH_RESULTS.write_text(json.dumps(my_search_results))
 
     @classmethod
-    def update_my_search_results(
-        cls, search_identifier: str, stac_ids: List[str], is_new: bool = False
-    ):
+    def update_my_search_results(cls, search_identifier: str, stac_ids: List[str], is_new: bool = False):
         my_search_results = cls.load_my_search_results()
         my_search_results[search_identifier] = cls.add_timestamps(stac_ids, is_new)
         cls.write_my_search_results(my_search_results)
@@ -75,9 +71,7 @@ class CLICache:
         cls.MY_SEARCH_QUERIES.write_text(json.dumps(my_queries))
 
     @classmethod
-    def update_my_search_queries(
-        cls, search_identifier: str, search_query: Dict[str, Any], is_new: bool = False
-    ):
+    def update_my_search_queries(cls, search_identifier: str, search_query: Dict[str, Any], is_new: bool = False):
         my_queries = cls.load_my_search_queries()
         my_queries[search_identifier] = cls.add_timestamps(search_query, is_new)
         cls.write_my_search_queries(my_queries)

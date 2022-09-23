@@ -4,7 +4,11 @@ from dataclasses import dataclass
 
 import httpx
 
-from capella_console_client.exceptions import CapellaConsoleClientError,  handle_error_response, NON_RETRYABLE_ERROR_CODES
+from capella_console_client.exceptions import (
+    CapellaConsoleClientError,
+    handle_error_response,
+    NON_RETRYABLE_ERROR_CODES,
+)
 
 logger = logging.getLogger()
 
@@ -20,7 +24,7 @@ SILENCE_REQUESTS: List[RequestMeta] = []
 
 
 def translate_error_to_exception(response):
-    if response.is_error:
+    if response.status_code >= 500:
         handle_error_response(response)
 
 
@@ -28,7 +32,6 @@ def log_on_4xx_5xx(response):
     try:
         response.raise_for_status()
     except Exception:
-
         request = response.request
         cur = RequestMeta(request.method, request.url)
         if cur in SILENCE_REQUESTS:

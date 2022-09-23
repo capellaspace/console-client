@@ -97,10 +97,7 @@ class STACQueryPayload(dict):
 
 
 def _prompt_search_operator(field: str, prev_selection: List[str]) -> List[str]:
-    choices = [
-        questionary.Choice(cur, checked=cur in prev_selection)
-        for cur in STACQueryPayload.OPS_MAP.keys()
-    ]
+    choices = [questionary.Choice(cur, checked=cur in prev_selection) for cur in STACQueryPayload.OPS_MAP.keys()]
     operators = questionary.checkbox(
         f"{field}:",
         choices=choices,
@@ -118,8 +115,7 @@ def _prompt_enum_choices(field: str, init: Any = None) -> Optional[Dict[str, Any
         return None
 
     choices = [  # type: ignore
-        questionary.Choice(e.value, checked=e.value in init)
-        for e in ENUM_CHOICES_BY_FIELD_NAME[field]
+        questionary.Choice(e.value, checked=e.value in init) for e in ENUM_CHOICES_BY_FIELD_NAME[field]
     ]
 
     choices = questionary.checkbox(
@@ -147,10 +143,7 @@ def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPay
     if prev_search is None:
         prev_search = STACQueryPayload()
 
-    choices = [
-        questionary.Choice(cur, checked=cur in prev_search)
-        for cur in CLI_SUPPORTED_SEARCH_FILTERS
-    ]
+    choices = [questionary.Choice(cur, checked=cur in prev_search) for cur in CLI_SUPPORTED_SEARCH_FILTERS]
 
     search_filter_names = questionary.checkbox(
         "Select your search filters:",
@@ -192,17 +185,13 @@ def _prompt_search_filters(prev_search: STACQueryPayload = None) -> STACQueryPay
 class PostSearchActions(str, BaseEnum):
     refine_search = "refine search"
     adjust_headers = "change result table headers"
-    save_current_search = (
-        "save search query and result into my-search-results | my-search-queries"
-    )
+    save_current_search = "save search query and result into my-search-results | my-search-queries"
     export_json = "export STAC items of search as .json"
     continue_flow = "continue"
     quit = "quit"
 
     @classmethod
-    def save_search(
-        cls, result: SearchResult, search_kwargs: STACQueryPayload
-    ):
+    def save_search(cls, result: SearchResult, search_kwargs: STACQueryPayload):
         identifier = questionary.text(
             message="Please provide an identifier for your search:",
             default=str(search_kwargs),
@@ -213,9 +202,7 @@ class PostSearchActions(str, BaseEnum):
         my_search_entity_info(identifier)
 
     @classmethod
-    def export_search(
-        cls, result: SearchResult, search_kwargs: STACQueryPayload
-    ) -> str:
+    def export_search(cls, result: SearchResult, search_kwargs: STACQueryPayload) -> str:
         default = CURRENT_SETTINGS["out_path"]
         if default[-1] != os.sep:
             default += os.sep
@@ -234,9 +221,7 @@ class PostSearchActions(str, BaseEnum):
         return path
 
     @classmethod
-    def refine_search_cmd(
-        cls, prev_search: STACQueryPayload
-    ) -> Tuple[STACQueryPayload, SearchResult]:
+    def refine_search_cmd(cls, prev_search: STACQueryPayload) -> Tuple[STACQueryPayload, SearchResult]:
         prev_search.pop("constellation", None)
         if prev_search["limit"][0][1] == CURRENT_SETTINGS["limit"]:
             prev_search.pop("limit")
@@ -254,9 +239,7 @@ class PostSearchActions(str, BaseEnum):
             return [PostSearchActions.refine_search, PostSearchActions.quit]
 
 
-def search_and_post_actions(
-    search_query: STACQueryPayload, choices: List[PostSearchActions] = None
-):
+def search_and_post_actions(search_query: STACQueryPayload, choices: List[PostSearchActions] = None):
     result = CLIENT.search(**search_query)
     if result:
         show_tabulated(result, show_row_number=True)

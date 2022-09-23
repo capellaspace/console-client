@@ -82,6 +82,4 @@ def show_order_review_tabulated(order_review: Dict[str, Any]):
         cur = (li["granuleId"], li["order"]["finalListPrice"])
         line_item_table.append(cur)
 
-    typer.echo(
-        tabulate(line_item_table, tablefmt="fancy_grid", headers=["STAC id", "cost"])
-    )
+    typer.echo(tabulate(line_item_table, tablefmt="fancy_grid", headers=["STAC id", "cost"]))

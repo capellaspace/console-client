@@ -2,7 +2,11 @@
 
 import pytest
 
-from .test_data import get_search_test_cases, get_canned_search_results, get_canned_search_results_multi_page
+from .test_data import (
+    get_search_test_cases,
+    get_canned_search_results,
+    get_canned_search_results_multi_page,
+)
 from capella_console_client.validate import _validate_uuid
 from capella_console_client.search import StacSearch
 
@@ -36,7 +40,7 @@ def test_search_result_to_feature_collection(multi_page_search_client):
     results = search.fetch_all()
     feature_collection = results.to_feature_collection()
     assert feature_collection["type"] == "FeatureCollection"
-    
+
     # 2 pages
     page_ret = get_canned_search_results_multi_page()["features"]
     assert feature_collection["features"] == page_ret * 2

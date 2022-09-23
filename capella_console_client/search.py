@@ -20,6 +20,7 @@ from capella_console_client.config import (
 )
 from capella_console_client.hooks import retry_if_http_status_error, log_attempt_delay
 
+
 @dataclass
 class SearchResult:
 
@@ -51,12 +52,13 @@ class SearchResult:
     def stac_ids(self):
         return [item["id"] for item in self._features]
 
+
 class StacSearch:
     def __init__(self, session: CapellaConsoleSession, **kwargs) -> None:
         cur_kwargs = deepcopy(kwargs)
         self.session = session
         self.payload: Dict[str, Any] = {}
-        
+
         sortby = cur_kwargs.pop("sortby", None)
         query_payload = self._get_query_payload(cur_kwargs)
         if query_payload:
@@ -86,7 +88,7 @@ class StacSearch:
 
                 target_field = STAC_PREFIXED_BY_QUERY_FIELDS.get(cur_field, cur_field)
                 query_payload[target_field][op] = value
-        
+
         return query_payload
 
     def _split_op(self, cur_field: str) -> Tuple[str, str]:
@@ -122,9 +124,7 @@ class StacSearch:
             sorts.append({"field": field, "direction": directions[direction]})
         return sorts
 
-    def fetch_all(
-        self
-    ) -> SearchResult:
+    def fetch_all(self) -> SearchResult:
         requested_limit = self.payload.get("limit", DEFAULT_MAX_FEATURE_COUNT)
 
         if "limit" not in self.payload:
@@ -137,30 +137,26 @@ class StacSearch:
         search_result = SearchResult(request_body=self.payload)
         next_href = None
 
-        with self.session:
-            while True:
-                _log_page_query(page_cnt, len(search_result), self.payload["limit"])
-                page_data = _page_search(self.session, self.payload, next_href)
-                number_matched = page_data["numberMatched"]
-                search_result.add(page_data)
+        while True:
+            _log_page_query(page_cnt, len(search_result), self.payload["limit"])
+            page_data = _page_search(self.session, self.payload, next_href)
+            number_matched = page_data["numberMatched"]
+            search_result.add(page_data)
 
-                limit_reached = (
-                    len(search_result) >= requested_limit
-                    or len(search_result) >= number_matched
-                )
-                if limit_reached:
-                    break
+            limit_reached = len(search_result) >= requested_limit or len(search_result) >= number_matched
+            if limit_reached:
+                break
 
-                next_href = _get_next_page_href(page_data)
-                if next_href is None:
-                    break
+            next_href = _get_next_page_href(page_data)
+            if next_href is None:
+                break
 
-                if page_cnt == 1:
-                    logger.info(f"Matched a total of {number_matched} stac items")
+            if page_cnt == 1:
+                logger.info(f"Matched a total of {number_matched} stac items")
 
-                self.payload["limit"] = DEFAULT_PAGE_SIZE
-                page_cnt += 1
-                self.payload["page"] = page_cnt
+            self.payload["limit"] = DEFAULT_PAGE_SIZE
+            page_cnt += 1
+            self.payload["page"] = page_cnt
 
         # truncate to limit
         len_features = len(search_result)
@@ -184,9 +180,7 @@ def _log_page_query(page_cnt: int, len_feat: int, limit: int):
 def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
     links = page_data.get("links", [])
     try:
-        next_href: Optional[str] = next(filter(lambda c: c["rel"] == "next", links))[
-            "href"
-        ]
+        next_href: Optional[str] = next(filter(lambda c: c["rel"] == "next", links))["href"]
     except StopIteration:
         next_href = None
 
@@ -199,9 +193,7 @@ def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
     wait_exponential_multiplier=1000,
     stop_max_delay=16000,
 )
-def _page_search(
-    session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str = None
-) -> Dict[str, Any]:
+def _page_search(session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str = None) -> Dict[str, Any]:
 
     if next_href:
         # STAC API to return normalized asset hrefs, not api gateway - fixing this here ...
@@ -210,9 +202,7 @@ def _page_search(
             next_href = f"{session.search_url}?{url_parsed.query}"
 
     url = session.search_url if next_href is None else next_href
-
-    with session:
-        resp = session.post(url, json=payload)
+    resp = session.post(url, json=payload)
 
     data: Dict[str, Any] = resp.json()
     return data

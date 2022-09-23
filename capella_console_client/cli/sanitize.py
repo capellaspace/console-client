@@ -12,9 +12,7 @@ class SafeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def convert_to_uuid_str(
-    dict_args: Dict[str, Any], uuid_arg_names: Iterable[str]
-) -> Dict[str, Any]:
+def convert_to_uuid_str(dict_args: Dict[str, Any], uuid_arg_names: Iterable[str]) -> Dict[str, Any]:
     for conv in uuid_arg_names:
         if dict_args.get(conv):
             dict_args[conv] = str(dict_args[conv])

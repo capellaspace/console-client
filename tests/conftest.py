@@ -34,13 +34,9 @@ def disable_validate_uuid(monkeypatch):
 
 @pytest.fixture
 def auth_httpx_mock(httpx_mock: HTTPXMock):
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/token", json=post_mock_responses("/token")
-    )
+    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/token", json=post_mock_responses("/token"))
 
-    httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user")
-    )
+    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user"))
     yield httpx_mock
 
 
@@ -116,13 +112,9 @@ def order_client_unsuccessful(test_client, auth_httpx_mock):
 def non_expired_order_mock(test_client, auth_httpx_mock):
     orders = get_mock_responses("/orders")
     non_expired_order = deepcopy(orders[0])
-    non_expired_order["expirationDate"] = (
-        datetime.utcnow() + timedelta(minutes=10)
-    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    non_expired_order["expirationDate"] = (datetime.utcnow() + timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     orders.append(non_expired_order)
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID", json=orders
-    )
+    auth_httpx_mock.add_response(url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID", json=orders)
 
     yield test_client, non_expired_order
 
@@ -146,21 +138,19 @@ def authed_tasking_request_mock(auth_httpx_mock):
 
 @pytest.fixture
 def download_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
     yield test_client
 
 
 @pytest.fixture
 def big_download_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
-        data="MOCK_CONTENT", headers={"Content-Length": "12700"}
-    )
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12700"})
     yield test_client
 
 
 @pytest.fixture
 def verbose_download_client(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(data="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
     yield verbose_test_client
 
 
@@ -182,9 +172,7 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
         url=f"{CONSOLE_API_URL}/orders/1/download",
         json=get_mock_responses("/orders/1/download"),
     )
-    auth_httpx_mock.add_response(
-        url=MOCK_ASSET_HREF, data="MOCK_CONTENT", headers={"Content-Length": "127"}
-    )
+    auth_httpx_mock.add_response(url=MOCK_ASSET_HREF, text="MOCK_CONTENT", headers={"Content-Length": "127"})
     yield verbose_test_client
 
 

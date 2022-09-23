@@ -20,7 +20,8 @@ def _validate_uuid(uuid_str: str) -> None:
 
 
 def _validate_stac_id_or_stac_items(
-    stac_ids: Optional[List[str]] = None, items: Union[Optional[List[Dict[str, Any]]], SearchResult] = None
+    stac_ids: Optional[List[str]] = None,
+    items: Union[Optional[List[Dict[str, Any]]], SearchResult] = None,
 ) -> List[str]:
     if not stac_ids and not items:
         raise ValueError("Please provide stac_ids or items")
