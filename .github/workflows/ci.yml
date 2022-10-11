@@ -27,6 +27,8 @@ jobs:
 
     - name: Install poetry 🦄
       uses: snok/install-poetry@v1
+      with:
+        version: 1.2.1
 
     - name: Load poetry cached libs ⬇
       uses: actions/cache@v2
@@ -64,6 +66,10 @@ jobs:
 
     - name: Install poetry 🦄
       uses: snok/install-poetry@v1
+      with:
+        version: 1.1.13
+        virtualenvs-create: true
+        virtualenvs-in-project: true
 
     - name: Load poetry cached libs ⬇
       uses: actions/cache@v2
@@ -101,6 +107,8 @@ jobs:
     
     - name: Install poetry 🦄
       uses: snok/install-poetry@v1
+      with:
+        version: 1.2.1    
     
     - name: Install dependencies 🖥
       run: poetry install --no-interaction --extras "docs"
@@ -129,6 +137,8 @@ jobs:
 
   #   - name: Install poetry 🦄
   #     uses: snok/install-poetry@v1
+  #     with:
+  #       version: 1.2.1
 
   #   - name: Build ⚒️ distributions
   #     run: |

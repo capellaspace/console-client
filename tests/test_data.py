@@ -355,9 +355,10 @@ def get_canned_search_results() -> Dict[str, Any]:
 
 def get_canned_search_results_multi_page() -> Dict[str, Any]:
     results = get_canned_search_results()
+    results["links"] = [{"rel": "next", "href": "next_href"}]
     # drop half to force 2nd page
     results["features"] = results["features"][:2]
-    results["links"] = [{"rel": "next", "href": "next_href"}]
+    results["numberMatched"] = 2
     return results
 
 
