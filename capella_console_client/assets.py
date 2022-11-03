@@ -100,7 +100,7 @@ def _gather_download_requests(
 def _get_raster_href(assets_presigned: Dict[str, Any]) -> str:
     raster_asset = assets_presigned.get("HH")
     if raster_asset is None:
-        raster_asset = assets_presigned["VV"]
+        raster_asset = assets_presigned["analytic_product"]
 
     raster_asset_href: str = raster_asset["href"]
     return raster_asset_href
