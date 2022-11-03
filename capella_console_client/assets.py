@@ -100,7 +100,13 @@ def _gather_download_requests(
 def _get_raster_href(assets_presigned: Dict[str, Any]) -> str:
     raster_asset = assets_presigned.get("HH")
     if raster_asset is None:
-        raster_asset = assets_presigned["analytic_product"]
+        try:
+            if "VV" in assets_presigned.keys():
+                raster_asset = assets_presigned["VV"]
+            elif "analytic_product" in assets_presigned.keys():
+                raster_asset = assets_presigned["analytic_product"]
+        except IndexError:
+            raise ValueError(f"Not valid key for {raster_asset_href}")
 
     raster_asset_href: str = raster_asset["href"]
     return raster_asset_href
