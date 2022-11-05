@@ -225,7 +225,6 @@ def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
     stop_max_delay=16000,
 )
 def _page_search(session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str = None) -> Dict[str, Any]:
-
     if next_href:
         # STAC API to return normalized asset hrefs, not api gateway - fixing this here ...
         url_parsed = urlparse(next_href)

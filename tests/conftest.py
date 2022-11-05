@@ -13,8 +13,9 @@ from capella_console_client import client
 from .test_data import (
     post_mock_responses,
     get_mock_responses,
-    get_canned_search_results,
-    get_canned_search_results_multi_page,
+    get_canned_search_results_single_page,
+    get_canned_search_results_multi_page_page1,
+    get_canned_search_results_multi_page_page2,
     create_mock_asset_hrefs,
 )
 
@@ -158,7 +159,7 @@ def verbose_download_client(verbose_test_client, auth_httpx_mock):
 def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=get_canned_search_results(),
+        json=get_canned_search_results_single_page(),
     )
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/review",
@@ -180,7 +181,7 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
 def single_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=get_canned_search_results(),
+        json=get_canned_search_results_single_page(),
     )
     yield verbose_test_client
 
@@ -189,11 +190,11 @@ def single_page_search_client(verbose_test_client, auth_httpx_mock):
 def multi_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
-        json=get_canned_search_results_multi_page(),
+        json=get_canned_search_results_multi_page_page1(),
     )
     auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/next_href",
-        json=get_canned_search_results_multi_page(),
+        url=f"{CONSOLE_API_URL}/catalog/search?page=2",
+        json=get_canned_search_results_multi_page_page2(),
     )
     yield verbose_test_client
 
