@@ -24,13 +24,32 @@ from capella_console_client.hooks import retry_if_http_status_error, log_attempt
 @dataclass
 class SearchResult:
 
-    request_body: Dict[str, Any]
+    request_body: Dict[str, Any] = field(default_factory=dict)
     _pages: List[Dict[str, Any]] = field(default_factory=list)
     _features: List[Dict[str, Any]] = field(default_factory=list)
 
-    def add(self, page: Dict[str, Any]):
+    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+        if not keep_duplicates:
+            page = self._filter_dupes(page)
         self._pages.append(page)
         self._features.extend(page["features"])
+        return len(page["features"])
+
+    def _filter_dupes(self, page: Dict[str, Any]) -> Dict[str, Any]:
+        # drop duplicates within page features
+        page_stac_ids = [feat["id"] for feat in page["features"]]
+        set_page_stac_ids = set(page_stac_ids)
+
+        if len(set_page_stac_ids) != len(page["features"]):
+            page["features"] = [page["features"][page_stac_ids.index(p_id)] for p_id in set_page_stac_ids]
+
+        # drop duplicates within SearchResult
+        dupes = set_page_stac_ids.intersection(self.stac_ids)
+
+        if dupes:
+            page["features"] = [p for p in page["features"] if p["id"] not in dupes]
+
+        return page
 
     # backwards compability
     def __getitem__(self, key):
@@ -51,6 +70,13 @@ class SearchResult:
     @property
     def stac_ids(self):
         return [item["id"] for item in self._features]
+
+    def merge(self, other: "SearchResult", keep_duplicates: bool = False) -> "SearchResult":
+        copy = deepcopy(self)
+        for page in other._pages:
+            copy.add(page=page, keep_duplicates=keep_duplicates)
+
+        return copy
 
 
 class StacSearch:
@@ -143,10 +169,13 @@ class StacSearch:
             _log_page_query(page_cnt, len(search_result), self.payload["limit"])
             page_data = _page_search(self.session, self.payload, next_href)
             number_matched = page_data["numberMatched"]
-            search_result.add(page_data)
+            items_added = search_result.add(page_data)
 
             limit_reached = len(search_result) >= requested_limit or len(search_result) >= number_matched
-            if limit_reached:
+
+            # all dupes
+            size_unchanged = items_added == 0
+            if limit_reached or size_unchanged:
                 break
 
             next_href = _get_next_page_href(page_data)
@@ -196,7 +225,6 @@ def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
     stop_max_delay=16000,
 )
 def _page_search(session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str = None) -> Dict[str, Any]:
-
     if next_href:
         # STAC API to return normalized asset hrefs, not api gateway - fixing this here ...
         url_parsed = urlparse(next_href)

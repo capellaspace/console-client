@@ -198,3 +198,9 @@ History
 * client.search internas to be class based in order to extend functionality of returned SearchResult
 * full dependency update
 * dropping Python 3.6 support, adding 3.11.0-rc2 support
+
+
+0.9.1 (2022-10-11)
+------------------
+* auto dedup multi-page search results by STAC id
+* merge SearchResults while dropping (keeping) duplicates

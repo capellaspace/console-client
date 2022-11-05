@@ -329,7 +329,7 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
     }[endpoint]
 
 
-def get_canned_search_results() -> Dict[str, Any]:
+def get_canned_search_results_single_page() -> Dict[str, Any]:
     return {
         "features": [
             {
@@ -353,12 +353,38 @@ def get_canned_search_results() -> Dict[str, Any]:
     }
 
 
-def get_canned_search_results_multi_page() -> Dict[str, Any]:
-    results = get_canned_search_results()
-    # drop half to force 2nd page
-    results["features"] = results["features"][:2]
-    results["links"] = [{"rel": "next", "href": "next_href"}]
-    return results
+def get_canned_search_results_multi_page_page1() -> Dict[str, Any]:
+    return {
+        "features": [
+            {
+                "id": "CAPELLA_C02_SP_SLC_HH_20210422052316_20210422052318",
+                "collection": "capella-archive",
+            },
+            {
+                "id": "CAPELLA_C02_SP_GEC_HH_20210422052305_20210422052329",
+                "collection": "capella-archive",
+            },
+        ],
+        "numberMatched": 4,
+        "links": [{"rel": "next", "href": "next_href?page=2"}],
+    }
+
+
+def get_canned_search_results_multi_page_page2() -> Dict[str, Any]:
+    return {
+        "features": [
+            {
+                "id": "CAPELLA_C02_SP_GEO_HH_20210422052305_20210422052329",
+                "collection": "capella-archive",
+            },
+            {
+                "id": "CAPELLA_C02_SP_SICD_HH_20210422052316_20210422052318",
+                "collection": "capella-archive",
+            },
+        ],
+        "numberMatched": 4,
+        "links": [],
+    }
 
 
 def post_mock_responses(endpoint: str) -> Dict[str, Any]:

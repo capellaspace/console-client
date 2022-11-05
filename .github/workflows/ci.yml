@@ -18,7 +18,7 @@ jobs:
 
     steps:
     - name: Checkout git repository 🕝
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up python3.8 🐍
       uses: actions/setup-python@v4
@@ -26,10 +26,12 @@ jobs:
         python-version: 3.8
 
     - name: Install poetry 🦄
-      uses: snok/install-poetry@v1
+      uses: Gr1N/setup-poetry@v7
+      with:
+        poetry-version: 1.2.2
 
     - name: Load poetry cached libs ⬇
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cache/pypoetry
         key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
@@ -51,11 +53,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11.0-rc.2"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - name: Checkout git repository 🕝
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up python ${{ matrix.python-version }} 🐍
       uses: actions/setup-python@v4
@@ -63,10 +65,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install poetry 🦄
-      uses: snok/install-poetry@v1
+      uses: Gr1N/setup-poetry@v7
+      with:
+        poetry-version: 1.2.2
 
     - name: Load poetry cached libs ⬇
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cache/pypoetry
         key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
@@ -80,7 +84,7 @@ jobs:
       run: make test
 
     - name: Send Coverage Report 📊
-      if: matrix.python-version == 3.8 && matrix.os == 'ubuntu-latest'
+      if: matrix.python-version == 3.11 && matrix.os == 'ubuntu-latest'
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_SERVICE_NAME: github
@@ -92,15 +96,17 @@ jobs:
     
     steps:
     - name: Checkout git repository 🕝
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Set up Python3.8 🐍
+    - name: Set up Python3.11 🐍
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.11
     
     - name: Install poetry 🦄
-      uses: snok/install-poetry@v1
+      uses: Gr1N/setup-poetry@v7
+      with:
+        poetry-version: 1.2.2
     
     - name: Install dependencies 🖥
       run: poetry install --no-interaction --extras "docs"
@@ -120,7 +126,7 @@ jobs:
 
   #   steps:
   #   - name: Checkout git repository 🕝
-  #     uses: actions/checkout@v2
+  #     uses: actions/checkout@v3
 
   #   - name: Set up python3.8 🐍
   #     uses: actions/setup-python@v4
@@ -128,7 +134,9 @@ jobs:
   #       python-version: 3.8
 
   #   - name: Install poetry 🦄
-  #     uses: snok/install-poetry@v1
+  #     uses: Gr1N/setup-poetry@v7
+  #     with:
+  #       poetry-version: 1.2.2
 
   #   - name: Build ⚒️ distributions
   #     run: |
