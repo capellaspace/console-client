@@ -20,6 +20,7 @@ from capella_console_client.exceptions import ConnectError
 
 STAC_ID_REGEX = re.compile("^.*(CAPELLA_\\w+_\\w+_\\w+_\\d{14}_\\d{14}).*$")
 PRODUCT_TYPE_REGEX = re.compile("^.*CAPELLA_\\w+_\\w+_(\\w+)_\\w+_\\d{14}_\\d{14}.*$")
+MAIN_ASSET_KEY_OPTIONS = {"HH", "VV", "analytic_product"}
 
 
 @dataclass
@@ -101,13 +102,12 @@ def _get_raster_href(assets_presigned: Dict[str, Any]) -> str:
     raster_asset = assets_presigned.get("HH")
     if raster_asset is None:
         try:
-            if "VV" in assets_presigned.keys():
-                raster_asset = assets_presigned["VV"]
-            elif "analytic_product" in assets_presigned.keys():
-                raster_asset = assets_presigned["analytic_product"]
+            intersect = set(assets_presigned).intersection(MAIN_ASSET_KEY_OPTIONS)
+            main_asset_key = list(intersect)[0]
+            raster_asset = assets_presigned[main_asset_key]
         except IndexError:
-            raise ValueError(f"Not valid key for {raster_asset_href}")
-
+            raise ValueError("none of {', '.join(MAIN_ASSET_KEY_OPTIONS)} found")
+            
     raster_asset_href: str = raster_asset["href"]
     return raster_asset_href
 
