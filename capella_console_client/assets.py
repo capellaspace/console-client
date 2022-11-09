@@ -107,7 +107,7 @@ def _get_raster_href(assets_presigned: Dict[str, Any]) -> str:
             raster_asset = assets_presigned[main_asset_key]
         except IndexError:
             raise ValueError("none of {', '.join(MAIN_ASSET_KEY_OPTIONS)} found")
-            
+
     raster_asset_href: str = raster_asset["href"]
     return raster_asset_href
 
