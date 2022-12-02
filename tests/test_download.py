@@ -14,12 +14,14 @@ from capella_console_client import CapellaConsoleClient
 from .test_data import (
     get_mock_responses,
     create_mock_asset_hrefs,
+    create_mock_items_presigned,
     DUMMY_STAC_IDS,
 )
 from capella_console_client.exceptions import ConnectError
 
 MOCK_ASSETS_PRESIGNED = create_mock_asset_hrefs()
 MOCK_ASSET_HREF = MOCK_ASSETS_PRESIGNED["HH"]["href"]
+MOCK_ITEM_PRESIGNED = create_mock_items_presigned()
 
 
 def test_get_presigned_assets(auth_httpx_mock, disable_validate_uuid):
@@ -174,11 +176,9 @@ def test_products_download_threaded_within_dir(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
-        assets_presigned = [MOCK_ASSETS_PRESIGNED, MOCK_ASSETS_PRESIGNED]
+        items_presigned = [MOCK_ITEM_PRESIGNED, MOCK_ITEM_PRESIGNED]
 
-        paths_by_stac_id_and_key = download_client.download_products(
-            assets_presigned, local_dir=temp_dir, threaded=True
-        )
+        paths_by_stac_id_and_key = download_client.download_products(items_presigned, local_dir=temp_dir, threaded=True)
         for stac_id in paths_by_stac_id_and_key:
             paths = list(paths_by_stac_id_and_key[stac_id].values())
 
@@ -334,10 +334,10 @@ def test_download_products_with_product_types_filter(download_client):
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
-        assets_presigned = [MOCK_ASSETS_PRESIGNED, MOCK_ASSETS_PRESIGNED]
+        items_presigned = [MOCK_ITEM_PRESIGNED, MOCK_ITEM_PRESIGNED]
 
         paths_by_stac_id_and_key = download_client.download_products(
-            assets_presigned, local_dir=temp_dir, product_types=["GEO"]
+            items_presigned, local_dir=temp_dir, product_types=["GEO"]
         )
         for stac_id in paths_by_stac_id_and_key:
             paths = list(paths_by_stac_id_and_key[stac_id].values())
@@ -353,10 +353,10 @@ def test_download_products_with_product_types_filter(download_client):
 def test_download_products_with_product_types_filter_all_exclude(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
-        assets_presigned = [MOCK_ASSETS_PRESIGNED, MOCK_ASSETS_PRESIGNED]
+        items_presigned = [MOCK_ITEM_PRESIGNED, MOCK_ITEM_PRESIGNED]
 
         paths_by_stac_id_and_key = download_client.download_products(
-            assets_presigned, local_dir=temp_dir, product_types=["SIDD"]
+            items_presigned, local_dir=temp_dir, product_types=["SIDD"]
         )
         assert paths_by_stac_id_and_key == {}
 

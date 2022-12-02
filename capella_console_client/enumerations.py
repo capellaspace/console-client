@@ -21,15 +21,27 @@ class ProductType(str, BaseEnum):
     GEC = "GEC"
     SIDD = "SIDD"
     CPHD = "CPHD"
+    VS = "VS"
+    ACD = "ACD"
 
 
 class AssetType(str, BaseEnum):
+    # shared
+    preview = "preview"
+    thumbnail = "thumbnail"
+    # img product type assets
     HH = "HH"
     VV = "VV"
-    preview = "preview"
     raster = "raster"
     metadata = "metadata"
-    thumbnail = "thumbnail"
+    # analytic produc type assets
+    # VS
+    analytic_product = "analytic_product"
+    analytic_product_diag = "analytic_product_diag"
+    landmask = "landmask"
+    # ACD
+    changemap = "changemap"
+    # internal only
     log = "log"
     profile = "profile"
     stats = "stats"

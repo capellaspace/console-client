@@ -20,7 +20,7 @@ from capella_console_client.exceptions import ConnectError
 
 STAC_ID_REGEX = re.compile("^.*(CAPELLA_\\w+_\\w+_\\w+_\\d{14}_\\d{14}).*$")
 PRODUCT_TYPE_REGEX = re.compile("^.*CAPELLA_\\w+_\\w+_(\\w+)_\\w+_\\d{14}_\\d{14}.*$")
-MAIN_ASSET_KEY_OPTIONS = {"HH", "VV", "analytic_product"}
+MAIN_ASSET_KEY_OPTIONS = {"HH", "VV", "analytic_product", "changemap"}
 
 
 @dataclass
@@ -98,22 +98,19 @@ def _gather_download_requests(
     return download_requests
 
 
-def _get_raster_href(assets_presigned: Dict[str, Any]) -> str:
-    raster_asset = assets_presigned.get("HH")
-    if raster_asset is None:
-        try:
-            intersect = set(assets_presigned).intersection(MAIN_ASSET_KEY_OPTIONS)
-            main_asset_key = list(intersect)[0]
-            raster_asset = assets_presigned[main_asset_key]
-        except IndexError:
-            raise ValueError("none of {', '.join(MAIN_ASSET_KEY_OPTIONS)} found")
+def _get_main_asset_href(assets_presigned: Dict[str, Any]) -> str:
+    try:
+        intersect = set(assets_presigned).intersection(MAIN_ASSET_KEY_OPTIONS)
+        main_asset_key = list(intersect)[0]
+        main_asset = assets_presigned[main_asset_key]
+    except IndexError:
+        raise ValueError(f"none of {', '.join(MAIN_ASSET_KEY_OPTIONS)} found")
 
-    raster_asset_href: str = raster_asset["href"]
-    return raster_asset_href
+    return main_asset["href"]
 
 
 def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
-    raster_asset_href = _get_raster_href(assets_presigned)
+    raster_asset_href = _get_main_asset_href(assets_presigned)
     try:
         stac_id: str = STAC_ID_REGEX.findall(raster_asset_href)[0]
     except IndexError:
@@ -121,26 +118,16 @@ def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
     return stac_id
 
 
-def _derive_product_type(assets_presigned: Dict[str, Any]) -> str:
-    raster_asset_href = _get_raster_href(assets_presigned)
-    try:
-        product_type: str = PRODUCT_TYPE_REGEX.findall(raster_asset_href)[0]
-    except IndexError:
-        raise ValueError(f"Could not derive product type from {raster_asset_href}")
-    return product_type
-
-
-def _filter_assets_by_product_types(
-    assets_presigned: List[Dict[str, Any]], product_types: List[str]
+def _filter_items_by_product_types(
+    items_presigned: List[Dict[str, Any]], product_types: List[str]
 ) -> List[Dict[str, Any]]:
     logger.info(f'filtering by product_types: {", ".join(product_types)}')
-    filtered_assets = []
-    for cur_assets in assets_presigned:
-        cur_product_type = _derive_product_type(cur_assets)
-        if cur_product_type in product_types:
-            filtered_assets.append(cur_assets)
+    filtered_items = []
+    for cur_item in items_presigned:
+        if cur_item["properties"]["sar:product_type"] in product_types:
+            filtered_items.append(cur_item)
 
-    return filtered_assets
+    return filtered_items
 
 
 def _prep_include_exclude(filter_stmnt: Union[str, List[str]]) -> List[str]:

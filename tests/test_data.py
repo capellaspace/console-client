@@ -18,6 +18,11 @@ def create_mock_asset_hrefs(stac_id: str = DUMMY_STAC_IDS[0], polarization: str 
     return {polarization: {"href": raster_href}, "thumbnail": {"href": thumb_href}}
 
 
+def create_mock_items_presigned(stac_id: str = DUMMY_STAC_IDS[0], polarization: str = "HH", product_type="GEO"):
+    assets = create_mock_asset_hrefs(stac_id, polarization)
+    return {"id": stac_id, "properties": {"sar:product_type": product_type}, "assets": assets}
+
+
 TASK_1 = {
     "type": "Feature",
     "geometry": {"type": "Point", "coordinates": [-100.0000, 40.0000]},
