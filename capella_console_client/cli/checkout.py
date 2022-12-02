@@ -71,8 +71,8 @@ def interactive_search_order_and_download():
                 omit_search=True,
             )
 
-        assets_presigned = CLIENT.get_presigned_assets(order_id, stac_ids=stac_ids)
-        paths = CLIENT.download_products(assets_presigned=assets_presigned, **answers)
+        items_presigned = CLIENT.get_presigned_items(order_id, stac_ids=stac_ids)
+        paths = CLIENT.download_products(items_presigned=items_presigned, **answers)
     elif start_from_opt == CheckoutStartOptions.existing_order:
         orders = _list_orders_and_tabulate(is_active=False, limit=300)
         order_id = PostOrderListActions.prompt_and_reorder(orders)

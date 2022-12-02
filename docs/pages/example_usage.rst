@@ -600,30 +600,26 @@ If you would like to review the cost of an order before you submission, issue:
     order_details = client.review_order(items=capella_spotlight_olympic_NP_geo)
     print(order_details['orderDetails']['summary'])
 
-.. _presigned assets:
+.. _presigned items:
 
-presigned assets
-################
+presigned items
+###############
 
 In order to directly load assets (imagery or metadata) into memory you need to request signed S3 URLs first.
 
 .. code:: python3
 
-    assets_presigned = client.get_presigned_assets(order_id)
+    items_presigned = client.get_presigned_items(order_id)
 
     # alternatively presigned assets can also be filtered - e.g. give me the presigned assets of 2 specific STAC ids
     first_two_ids = [item["id"] for item in capella_spotlight_olympic_NP_geo[:2]]
-    assets_presigned = client.get_presigned_assets(order_id,
+    items_presigned = client.get_presigned_items(order_id,
                                                    stac_ids=first_two_ids)
-
-    # return the whole stac item instead of just assets
-    stac_items_presigned = client.get_presigned_assets(order_id,
-                                                       assets_only=false)
 
     # sort presigned assets by list of stac ids
     sorted_stac_ids = sorted([s['id'] for s in capella_spotlight_olympic_NP_geo])
-    assets_presigned_sorted = client.get_presigned_assets(order_id, 
-                                                          sort_by=sorted_stac_ids)
+    items_presigned_sorted = client.get_presigned_items(order_id, 
+                                                        sort_by=sorted_stac_ids)
 
 See `read imagery`_  or `read metadata`_ for more information.
 

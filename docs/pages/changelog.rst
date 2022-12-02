@@ -204,3 +204,11 @@ History
 ------------------
 * auto dedup multi-page search results by STAC id
 * merge SearchResults while dropping (keeping) duplicates
+
+0.10.0 (2022-12-02)
+------------------
+* support for vessel detection (VS) product type
+* support for vessel amplitude change detection (ACD) product type
+* marking client.get_presigned_assets and client.download_product as to be deprecated
+* adding client.get_presigned_items
+* accepting items_presigned instead of assets_presigned in client.download_products

@@ -18,6 +18,7 @@ from capella_console_client.exceptions import (
     NoValidStacIdsError,
     TaskNotCompleteError,
 )
+from capella_console_client.enumerations import ProductType, AssetType
 
 from capella_console_client.assets import (
     _perform_download,
@@ -25,7 +26,7 @@ from capella_console_client.assets import (
     _gather_download_requests,
     _get_asset_bytesize,
     _derive_stac_id,
-    _filter_assets_by_product_types,
+    _filter_items_by_product_types,
 )
 from capella_console_client.search import StacSearch, SearchResult
 from capella_console_client.validate import (
@@ -356,21 +357,19 @@ class CapellaConsoleClient:
                 break
         return order_id
 
-    def get_presigned_assets(
+    def get_presigned_items(
         self,
         order_id: str,
         stac_ids: Optional[List[str]] = None,
         sort_by: Optional[List[str]] = None,
-        assets_only: Optional[bool] = True,
     ) -> List[Dict[str, Any]]:
         """
-        get presigned assets hrefs for all products contained in order
+        get presigned items hrefs for all products contained in order
 
         Args:
             order_id: active order ID (see :py:meth:`submit_order`)
             stac_ids: filter presigned assets by STAC IDs
             sort_by: list of stac ids to sort by
-            assets_only: return only list of STAC item assets
 
         Returns:
             List[Dict[str, Any]]: List of assets of respective product, e.g.
@@ -390,9 +389,10 @@ class CapellaConsoleClient:
                 ]
 
         """
+
         _validate_uuid(order_id)
 
-        logger.info(f"getting presigned assets for order {order_id}")
+        logger.info(f"getting presigned items for order {order_id}")
         response = self._sesh.get(f"/orders/{order_id}/download")
 
         presigned_stac_items = response.json()
@@ -404,11 +404,50 @@ class CapellaConsoleClient:
 
         # no filter
         if not stac_ids:
-            return [item["assets"] for item in presigned_stac_items] if assets_only else presigned_stac_items
+            return presigned_stac_items
 
         stac_ids_set = set(stac_ids)
-        sub_selection = [item for item in presigned_stac_items if item["id"] in stac_ids_set]
-        return [item["assets"] for item in sub_selection] if assets_only else sub_selection
+        return [item for item in presigned_stac_items if item["id"] in stac_ids_set]
+
+    def get_presigned_assets(
+        self,
+        order_id: str,
+        stac_ids: Optional[List[str]] = None,
+        sort_by: Optional[List[str]] = None,
+        assets_only: Optional[bool] = True,
+    ) -> List[Dict[str, Any]]:
+        """
+        get presigned assets hrefs for all products contained in order
+
+        Args:
+            order_id: active order ID (see :py:meth:`submit_order`)
+            stac_ids: filter presigned assets by STAC IDs
+            sort_by: list of stac ids to sort by
+
+        Returns:
+            List[Dict[str, Any]]: List of assets of respective product, e.g.
+
+            .. highlight:: python
+            .. code-block:: python
+
+                [
+                    {
+                        "<asset_type>": {
+                            "title": ...,
+                            "href": ...,
+                            "type": ...
+                        },
+                        ...
+                    }
+                ]
+
+        """
+        if not assets_only:
+            logger.warning(
+                "`assets_only` is kept for backwards compatibility but has no effect. Please use `get_presigned_items` instead"
+            )
+        items_presigned = self.get_presigned_items(order_id, stac_ids, sort_by)
+        return [item["assets"] for item in items_presigned]
 
     def get_asset_bytesize(self, pre_signed_url: str) -> int:
         """get size in bytes of `pre_signed_url`"""
@@ -426,7 +465,7 @@ class CapellaConsoleClient:
         downloads a presigned asset url to disk
 
         Args:
-            pre_signed_url: presigned asset url, see :py:meth:`get_presigned_assets`
+            pre_signed_url: presigned asset url, see :py:meth:`get_presigned_items`
             local_path: local output path - file is written to OS's temp dir if not provided
             override: override already existing `local_path`
             show_progress: show download status progressbar
@@ -445,30 +484,30 @@ class CapellaConsoleClient:
 
     def download_products(
         self,
-        assets_presigned: Optional[List[Dict[str, Any]]] = None,
+        items_presigned: Optional[List[Dict[str, Any]]] = None,
         order_id: Optional[str] = None,
         tasking_request_id: Optional[str] = None,
         collect_id: Optional[str] = None,
         local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
-        include: Union[List[str], str] = None,
-        exclude: Union[List[str], str] = None,
+        include: Union[List[Union[str, AssetType]], str] = None,
+        exclude: Union[List[Union[str, AssetType]], str] = None,
         override: bool = False,
         threaded: bool = True,
         show_progress: bool = False,
         separate_dirs: bool = True,
-        product_types: List[str] = None,
+        product_types: List[Union[str, ProductType]] = None,
     ) -> Dict[str, Dict[str, Path]]:
         """
         download all assets of multiple products
 
         Args:
-            assets_presigned: mapping of presigned assets of multiple products, see :py:meth:`get_presigned_assets`
+            items_presigned: stac items with presigned assets, see :py:meth:`get_presigned_items`
             order_id: optionally provide `order_id` instead of `assets_presigned`, see :py:meth:`submit_order`
             tasking_request_id: tasking request UUID of the task request you wish to download all associated products for
             collect_id: collect UUID you wish to download all associated products for
 
                     NOTE: Precedence order (high to low)
-                      1. assets_presigned
+                      1. items_presigned
                       2. order_id
                       3. tasking_request_id
                       4. collect_id
@@ -511,9 +550,9 @@ class CapellaConsoleClient:
                     }
                 }
         """
-        local_dir = Path(local_dir)
 
-        one_of_required = (assets_presigned, order_id, tasking_request_id, collect_id)
+        local_dir = Path(local_dir)
+        one_of_required = (items_presigned, order_id, tasking_request_id, collect_id)
 
         if not any(map(bool, one_of_required)):
             raise ValueError("please provide one of assets_presigned, order_id, tasking_request_id or collect_id")
@@ -522,22 +561,24 @@ class CapellaConsoleClient:
         include = _validate_and_filter_asset_types(include)
         exclude = _validate_and_filter_asset_types(exclude)
 
-        if not assets_presigned:
-            assets_presigned = self._resolve_assets_presigned(order_id, tasking_request_id, collect_id, product_types)
+        if not items_presigned:
+            items_presigned = self._resolve_items_presigned(order_id, tasking_request_id, collect_id, product_types)
 
-        len_assets_presigned = len(assets_presigned)
-        suffix = "s" if len_assets_presigned > 1 else ""
+        len_items_presigned = len(items_presigned)
+        suffix = "s" if len_items_presigned > 1 else ""
 
         # filter product_type
         if product_types:
-            assets_presigned = _filter_assets_by_product_types(assets_presigned, product_types)
-        logger.info(f"downloading {len_assets_presigned} product{suffix}")
+            items_presigned = _filter_items_by_product_types(items_presigned, product_types)
+        logger.info(f"downloading {len_items_presigned} product{suffix}")
 
         # gather download requests
         download_requests = []
         by_stac_id = {}
-        for cur_assets in assets_presigned:
-            cur_download_requests = _gather_download_requests(cur_assets, local_dir, include, exclude, separate_dirs)
+        for cur_item in items_presigned:
+            cur_download_requests = _gather_download_requests(
+                cur_item["assets"], local_dir, include, exclude, separate_dirs
+            )
             by_stac_id[cur_download_requests[0].stac_id] = {
                 cur.asset_key: cur.local_path for cur in cur_download_requests
             }
@@ -556,7 +597,7 @@ class CapellaConsoleClient:
         )
         return by_stac_id  # type: ignore
 
-    def _resolve_assets_presigned(
+    def _resolve_items_presigned(
         self,
         order_id: Optional[str] = None,
         tasking_request_id: Optional[str] = None,
@@ -581,7 +622,7 @@ class CapellaConsoleClient:
                     collect_ids=[collect_id], product_types=product_types  # type: ignore
                 )
 
-        return self.get_presigned_assets(order_id, stac_ids)  # type: ignore
+        return self.get_presigned_items(order_id, stac_ids)  # type: ignore
 
     def _order_products_for_task(
         self, tasking_request_id: str, product_types: List[str] = None
@@ -618,14 +659,14 @@ class CapellaConsoleClient:
         assets_presigned: Optional[Dict[str, Any]] = None,
         order_id: Optional[str] = None,
         local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
-        include: Union[List[str], str] = None,
-        exclude: Union[List[str], str] = None,
+        include: Union[List[Union[str, AssetType]], str] = None,
+        exclude: Union[List[Union[str, AssetType]], str] = None,
         override: bool = False,
         threaded: bool = True,
         show_progress: bool = False,
     ) -> Dict[str, Path]:
         """
-        download all assets of a product
+        download all assets of a product (TO BE DEPRECATED)
 
         Args:
             assets_presigned: mapping of presigned assets of multiple products, see :py:meth:`get_presigned_assets`
@@ -660,6 +701,7 @@ class CapellaConsoleClient:
                     ...
                 }
         """
+        logger.warning("this method will be deprecated in future revisions. Please use `download_products` instead.")
         if not assets_presigned and not order_id:
             raise ValueError("please provide either assets_presigned or order_id")
 
