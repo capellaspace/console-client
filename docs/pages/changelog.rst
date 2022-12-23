@@ -2,6 +2,12 @@
 History
 =======
 
+0.10.1 (2022-12-23)
+------------------
+* paginated GET tasking requests in dedicated module
+* changelog newest first
+* filter tasking requests by submission datetime
+
 0.10.0 (2022-12-02)
 ------------------
 * support for vessel detection (VS) product type
