@@ -74,3 +74,18 @@ class InstrumentMode(str, BaseEnum):
     stripmap = "stripmap"
     spotlight = "spotlight"
     sliding_spotlight = "sliding_spotlight"
+
+
+class TaskingRequestStatus(str, BaseEnum):
+    received = "received"
+    review = "review"
+    submitted = "submitted"
+    active = "active"
+    accepted = "accepted"
+    rejected = "rejected"
+    expired = "expired"
+    completed = "completed"
+    anomaly = "anomaly"
+    canceled = "canceled"
+    error = "error"
+    failed = "failed"

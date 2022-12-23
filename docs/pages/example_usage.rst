@@ -677,17 +677,38 @@ Issue the following snippet to view the ordering history
 tasking requests
 ################
 
-Issue the following snippet to get tasking request information
+search for tasking requests
 
 .. code:: python3
 
-    tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid tasking_request_id
+    tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid taskingrequest_id
 
     # get task info
     task = client.get_task(tasking_request_id)
 
     # was it completed?
     client.is_task_completed(task)
+
+advanced tasking request search
+
+.. code:: python3
+
+    # get ALL completed tasking requests of user
+    user_completed_trs = client.list_tasking_requests(status="completed")
+
+    # get all COMPLETED tasking requests of ORG (requires org manager/ admin role)
+    org+completed_trs = client.list_tasking_requests(
+        for_org=True, 
+        status="completed"
+    )
+
+    # get all completed tasking requests of org SUBMITTED AFTER 2022-12-01 (UTC)
+    org_completed_trs_submitted_dec_22 = client.list_tasking_requests(
+        for_org=True, 
+        status="completed",
+        submission_time__gt=datetime.datetime(2022, 12, 1)
+    )
+
 
 
 .. _read imagery:
