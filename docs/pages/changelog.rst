@@ -3,13 +3,13 @@ History
 =======
 
 0.10.1 (2022-12-23)
-------------------
+-------------------
 * paginated GET tasking requests in dedicated module
 * changelog newest first
 * filter tasking requests by submission datetime
 
 0.10.0 (2022-12-02)
-------------------
+-------------------
 * support for vessel detection (VS) product type
 * support for vessel amplitude change detection (ACD) product type
 * marking client.get_presigned_assets and client.download_product as to be deprecated
@@ -146,7 +146,7 @@ History
 * exclude asset key filter for product download
 
 0.2.5 (2021-02-09)
------------------
+------------------
 * option for threaded downloading
 * separate API for download_product and download_products
 
