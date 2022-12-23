@@ -9,6 +9,7 @@ from capella_console_client import client as capella_client_module
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from capella_console_client import client
+from capella_console_client import tasking as tasking_modules
 
 from .test_data import (
     post_mock_responses,
@@ -31,6 +32,7 @@ def assert_all_responses_were_requested() -> bool:
 @pytest.fixture
 def disable_validate_uuid(monkeypatch):
     monkeypatch.setattr(capella_client_module, "_validate_uuid", lambda x: None)
+    monkeypatch.setattr(tasking_modules, "_validate_uuid", lambda x: None)
 
 
 @pytest.fixture
@@ -125,8 +127,8 @@ def authed_tasking_request_mock(auth_httpx_mock):
     MOCK_IDENTIFIER_LIST = (
         "/task/abc",
         "/task/def",
-        "/tasks?customerId=MOCK_ID",
-        "/tasks?organizationId=MOCK_ORG_ID",
+        "/tasks/paged?page=1&limit=100&customerId=MOCK_ID",
+        "/tasks/paged?page=1&limit=100&organizationId=MOCK_ORG_ID",
     )
     for mock_id in MOCK_IDENTIFIER_LIST:
         auth_httpx_mock.add_response(

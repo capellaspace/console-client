@@ -33,8 +33,10 @@ def _validate_stac_id_or_stac_items(
 
 
 def _validate_and_filter_product_types(
-    product_types: Optional[List[str]],
+    product_types: Optional[Union[List[str], str]],
 ) -> Optional[List[str]]:
+    if isinstance(product_types, str):
+        product_types = [product_types]
     if not product_types:
         return None
     return [p.upper() for p in product_types if p.upper() in ProductType]

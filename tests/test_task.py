@@ -10,12 +10,12 @@ from .test_data import get_mock_responses
 
 def test_list_all_tasking_requests(test_client, authed_tasking_request_mock):
     tasking_requests = test_client.list_tasking_requests()
-    assert tasking_requests == get_mock_responses("/tasks?customerId=MOCK_ID")
+    assert tasking_requests == get_mock_responses("/tasks/paged?page=1&limit=100&customerId=MOCK_ID")["results"]
 
 
 def test_list_all_tasking_requests_for_org(test_client, authed_tasking_request_mock):
     tasking_requests = test_client.list_tasking_requests(for_org=True)
-    assert tasking_requests == get_mock_responses("/tasks?organizationId=MOCK_ORG_ID")
+    assert tasking_requests == get_mock_responses("/tasks/paged?page=1&limit=100&organizationId=MOCK_ORG_ID")["results"]
 
 
 def test_list_tasking_with_id_single(test_client, authed_tasking_request_mock, disable_validate_uuid):
