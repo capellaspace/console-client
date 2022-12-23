@@ -239,8 +239,16 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
                 "id": DUMMY_STAC_IDS[1],
             },
         ],
-        "/tasks?customerId=MOCK_ID": [TASK_1, TASK_2],
-        "/tasks?organizationId=MOCK_ORG_ID": [TASK_1, TASK_2],
+        "/tasks/paged?page=1&limit=100&customerId=MOCK_ID": {
+            "results": [TASK_1, TASK_2],
+            "currentPage": 1,
+            "totalPages": 1,
+        },
+        "/tasks/paged?page=1&limit=100&organizationId=MOCK_ORG_ID": {
+            "results": [TASK_1, TASK_2],
+            "currentPage": 1,
+            "totalPages": 1,
+        },
         "/task/abc": TASK_1,
         "/task/def": TASK_2,
         "/collects/list/abc": [

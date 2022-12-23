@@ -31,7 +31,7 @@ def translate_error_to_exception(response):
 def log_on_4xx_5xx(response):
     try:
         response.raise_for_status()
-    except Exception:
+    except httpx.HTTPError:
         request = response.request
         cur = RequestMeta(request.method, request.url)
         if cur in SILENCE_REQUESTS:

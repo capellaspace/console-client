@@ -15,8 +15,8 @@ from capella_console_client.config import (
     SUPPORTED_QUERY_FIELDS,
     STAC_PREFIXED_BY_QUERY_FIELDS,
     OPERATOR_SUFFIXES,
-    DEFAULT_PAGE_SIZE,
-    DEFAULT_MAX_FEATURE_COUNT,
+    CATALOG_DEFAULT_PAGE_SIZE,
+    CATALOG_DEFAULT_MAX_FEATURE_COUNT,
 )
 from capella_console_client.hooks import retry_if_http_status_error, log_attempt_delay
 
@@ -153,13 +153,13 @@ class StacSearch:
     def fetch_all(self) -> SearchResult:
         logger.info(f"searching catalog with payload {self.payload}")
 
-        requested_limit = self.payload.get("limit", DEFAULT_MAX_FEATURE_COUNT)
+        requested_limit = self.payload.get("limit", CATALOG_DEFAULT_MAX_FEATURE_COUNT)
 
         if "limit" not in self.payload:
-            self.payload["limit"] = DEFAULT_MAX_FEATURE_COUNT
+            self.payload["limit"] = CATALOG_DEFAULT_MAX_FEATURE_COUNT
 
-        # ensure DEFAULT_PAGE_SIZE if requested limit > DEFAULT_PAGE_SIZE
-        self.payload["limit"] = min(DEFAULT_PAGE_SIZE, self.payload["limit"])
+        # ensure CATALOG_DEFAULT_PAGE_SIZE if requested limit > CATALOG_DEFAULT_PAGE_SIZE
+        self.payload["limit"] = min(CATALOG_DEFAULT_PAGE_SIZE, self.payload["limit"])
 
         page_cnt = 1
         search_result = SearchResult(request_body=self.payload)
@@ -185,7 +185,7 @@ class StacSearch:
             if page_cnt == 1:
                 logger.info(f"Matched a total of {number_matched} stac items")
 
-            self.payload["limit"] = DEFAULT_PAGE_SIZE
+            self.payload["limit"] = CATALOG_DEFAULT_PAGE_SIZE
             page_cnt += 1
             self.payload["page"] = page_cnt
 
