@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+import datetime
+
 import pytest
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from capella_console_client.exceptions import TaskNotCompleteError
-from .test_data import get_mock_responses
+from .test_data import get_mock_responses, TASK_2
 
 
 def test_list_all_tasking_requests(test_client, authed_tasking_request_mock):
@@ -53,11 +55,19 @@ def test_list_tasking_with_id_single_status_with_ids(test_client, authed_tasking
     assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
 
 
-def test_list_tasking_with_id_single_status_nonexistent(
+def test_list_tasking_with_id_single_status_nonexistent_omitted(
     test_client, authed_tasking_request_mock, disable_validate_uuid
 ):
     tasking_requests = test_client.list_tasking_requests("abc", "def", status="doesnotexist-status")
-    assert tasking_requests == []
+    assert len(tasking_requests) == 2
+    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+    assert tasking_requests[1]["properties"]["taskingrequestId"] == "def"
+
+
+def test_list_tasking_submission_time_gt_filter(test_client, authed_tasking_request_mock, disable_validate_uuid):
+    tasking_requests = test_client.list_tasking_requests(submission_time__gt=datetime.datetime(2020, 5, 12))
+    assert len(tasking_requests) == 1
+    assert tasking_requests[0] == TASK_2
 
 
 def test_get_task(test_client, authed_tasking_request_mock):

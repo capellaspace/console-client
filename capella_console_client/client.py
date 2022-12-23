@@ -101,23 +101,27 @@ class CapellaConsoleClient:
 
     # TASKING
     def list_tasking_requests(
-        self,
-        *tasking_request_ids: Optional[str],
-        for_org: Optional[bool] = False,
-        status: Optional[str] = None,
+        self, *tasking_request_ids: Optional[str], for_org: Optional[bool] = False, **kwargs: Optional[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
-        list tasking requests
+        list/ search tasking requests
+
+        Find more information at https://docs.capellaspace.com/constellation-tasking/tasking-requests
 
         Args:
             tasking_request_ids: list only specific tasking_request_ids (variadic, specify multiple)
             for_org: list all tasking requests of your organization (instead of only yours) - **requires** organization index/ admin permission
-            status: list only tasking requests that are in this/ have passed this status, e.g. completed
+
+        additionally the following search filters are supported:
+
+         • status: TaskingRequestStatus, one of received, review, submitted, active, accepted, rejected, expired, completed, anomaly, canceled, error, failed
+         • submission_time__gt: datetime, e.g. datetime.datetime(2022, 12, 9, 21)
+
 
         Returns:
             List[Dict[str, Any]]: metadata of tasking requests
         """
-        return get_tasking_requests(*tasking_request_ids, session=self._sesh, for_org=for_org, status=status)
+        return get_tasking_requests(*tasking_request_ids, session=self._sesh, for_org=for_org, **kwargs)
 
     def get_task(self, tasking_request_id: str) -> Dict[str, Any]:
         """

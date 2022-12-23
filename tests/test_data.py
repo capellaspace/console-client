@@ -1,5 +1,4 @@
 from typing import Dict, Any
-from copy import deepcopy
 
 import pytest
 
@@ -27,55 +26,55 @@ TASK_1 = {
     "type": "Feature",
     "geometry": {"type": "Point", "coordinates": [-100.0000, 40.0000]},
     "properties": {
-        "submissionTime": "2021-04-21T21:20:54.385Z",
+        "submissionTime": "2020-04-21T21:20:54.385Z",
         "taskingrequestId": "abc",
         "taskingrequestName": "TASKING_REQUEST_NAME",
         "taskingrequestDescription": "TASKING_REQUEST_DESCRIPTION",
         "userId": "MOCK_ID",
         "repeatrequestId": None,
-        "windowOpen": "2021-01-21T22:18:57.936Z",
+        "windowOpen": "2020-04-21T22:18:57.936Z",
         "windowDuration": 604800,
-        "windowClose": "2021-01-28T22:18:57.936Z",
+        "windowClose": "2020-04-28T22:18:57.936Z",
         "collectionTier": "7_day",
         "archiveHoldback": "none",
         "statusHistory": [
             {
-                "time": "2021-02-03T13:03:21.532Z",
+                "time": "2020-04-23T13:03:21.532Z",
                 "code": "completed",
                 "message": "Tasking request has been completed.",
             },
             {
-                "time": "2021-01-25T15:30:08.756Z",
+                "time": "2020-04-22T15:30:08.756Z",
                 "code": "accepted",
                 "message": "Request can be completely satisfied during validity window.",
             },
             {
-                "time": "2021-01-25T15:25:32.213Z",
+                "time": "2020-04-22T15:25:32.213Z",
                 "code": "submitted",
                 "message": "Request approved and submitted for scheduling",
             },
             {
-                "time": "2021-01-22T03:06:55.485Z",
+                "time": "2020-04-22T03:06:55.485Z",
                 "code": "completed",
                 "message": "Tasking request has been completed.",
             },
             {
-                "time": "2021-01-21T23:25:08.190Z",
+                "time": "2020-04-21T23:25:08.190Z",
                 "code": "accepted",
                 "message": "Request can be completely satisfied during validity window.",
             },
             {
-                "time": "2021-01-21T23:21:26.214Z",
+                "time": "2020-04-21T23:21:26.214Z",
                 "code": "submitted",
                 "message": "Request submitted through automatic approval",
             },
             {
-                "time": "2021-01-21T23:21:24.491Z",
+                "time": "2020-04-21T23:21:24.491Z",
                 "code": "review",
                 "message": "Tasking request ready for review.",
             },
             {
-                "time": "2021-01-21T23:20:54.385Z",
+                "time": "2020-04-21T23:20:54.385Z",
                 "code": "received",
                 "message": "Request created",
             },
@@ -118,7 +117,7 @@ TASK_2 = {
     "type": "Feature",
     "geometry": {"type": "Point", "coordinates": [-100.0000, 40.0000]},
     "properties": {
-        "submissionTime": "2021-04-21T21:20:54.385Z",
+        "submissionTime": "2021-01-21T21:20:54.385Z",
         "taskingrequestId": "def",
         "taskingrequestName": "TASKING_REQUEST_NAME",
         "taskingrequestDescription": "TASKING_REQUEST_DESCRIPTION",
