@@ -7,7 +7,7 @@ formats:
   - pdf
 
 sphinx:
-  fail_on_warning: true
+  fail_on_warning: false
 
 python:
   version: 3.8
