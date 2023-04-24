@@ -1,4 +1,3 @@
-import logging
 from typing import List
 from dataclasses import dataclass
 
@@ -6,11 +5,10 @@ import httpx
 
 from capella_console_client.exceptions import (
     CapellaConsoleClientError,
-    handle_error_response,
+    handle_error_response_and_raise,
     NON_RETRYABLE_ERROR_CODES,
 )
-
-logger = logging.getLogger()
+from capella_console_client.logconf import logger
 
 
 @dataclass
@@ -24,8 +22,8 @@ SILENCE_REQUESTS: List[RequestMeta] = []
 
 
 def translate_error_to_exception(response):
-    if response.status_code >= 500:
-        handle_error_response(response)
+    if response.status_code >= 400:
+        handle_error_response_and_raise(response)
 
 
 def log_on_4xx_5xx(response):
@@ -36,10 +34,15 @@ def log_on_4xx_5xx(response):
         cur = RequestMeta(request.method, request.url)
         if cur in SILENCE_REQUESTS:
             return
+        if not response.is_stream_consumed:
+            response.read()
 
-        logger.error(
-            f"Request: {request.method} {request.url} - Status {response.status_code} - Response: {response.json()}"
-        )
+        msg = f"Request: {request.method} {request.url} - Status: {response.status_code}"
+        resp_json = response.json()
+        if resp_json:
+            msg += f" - Response: {resp_json}"
+
+        logger.error(msg)
         return True
 
 

@@ -1,5 +1,5 @@
 from capella_console_client.exceptions import (
-    handle_error_response,
+    handle_error_response_and_raise,
     CollectionAccessDeniedError,
     OrderExpiredError,
     CapellaConsoleClientError,
@@ -19,7 +19,7 @@ def create_mock_response(resp):
     "error_response,expected_error_class",
     [
         (
-            {"error": {"message": "Unknown error", "data": "NONONO"}},
+            {"error": {"message": "Unknown error", "data": {"cause": "NONONO"}}},
             CapellaConsoleClientError,
         ),
         (
@@ -31,10 +31,10 @@ def create_mock_response(resp):
         ({"error": "order expired"}, OrderExpiredError),
     ],
 )
-def test_handle_error_response(error_response, expected_error_class):
+def test_handle_error_response_and_raise(error_response, expected_error_class):
     resp = create_mock_response(error_response)
     with pytest.raises(expected_error_class) as excinfo:
-        handle_error_response(resp)
+        handle_error_response_and_raise(resp)
 
     if isinstance(error_response["error"], str):
         assert excinfo.value.message == error_response["error"]
