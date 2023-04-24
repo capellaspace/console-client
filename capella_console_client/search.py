@@ -4,8 +4,6 @@ from collections import defaultdict
 from urllib.parse import urlparse
 from dataclasses import dataclass, field
 
-from retrying import retry  # type: ignore
-
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.config import (
@@ -18,7 +16,6 @@ from capella_console_client.config import (
     CATALOG_DEFAULT_PAGE_SIZE,
     CATALOG_DEFAULT_MAX_FEATURE_COUNT,
 )
-from capella_console_client.hooks import retry_if_http_status_error, log_attempt_delay
 
 
 @dataclass
@@ -218,12 +215,6 @@ def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
     return next_href
 
 
-@retry(
-    retry_on_exception=retry_if_http_status_error,
-    wait_func=log_attempt_delay,
-    wait_exponential_multiplier=1000,
-    stop_max_delay=16000,
-)
 def _page_search(session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str = None) -> Dict[str, Any]:
     if next_href:
         # STAC API to return normalized asset hrefs, not api gateway - fixing this here ...

@@ -64,7 +64,7 @@ class CapellaConsoleSession(httpx.Client):
                 self._basic_auth(email, password)  # type: ignore
             elif auth_method == AuthMethod.TOKEN:
                 self._token_auth_check(token, no_token_check)  # type: ignore
-        except httpx.HTTPStatusError:
+        except (httpx.HTTPStatusError, CapellaConsoleClientError):
             message = {
                 AuthMethod.BASIC: "please check your credentials",
                 AuthMethod.TOKEN: "provided token invalid",
