@@ -2,6 +2,11 @@
 History
 =======
 
+0.10.2 (2023-04-24)
+-------------------
+* hardened exception handling
+* bump certifi
+
 0.10.1 (2022-12-23)
 -------------------
 * paginated GET tasking requests in dedicated module
@@ -38,7 +43,7 @@ History
 
 0.8.2 (2022-03-11)
 ------------------
-* optional flags for get_presigned_assets: 
+* optional flags for get_presigned_assets:
     * sort_by: sort presigned assets by provided STAC ID list,
     * assets_only (default==True): return only assets of stac items
 
