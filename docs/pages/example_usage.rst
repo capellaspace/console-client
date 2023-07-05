@@ -29,7 +29,7 @@ provide user credentials
 .. code:: python3
 
     from getpass import getpass
-    
+
     # user credentials on console.capellaspace.com
     email = input("your email on console.capellaspace.com:").strip()
     pw = getpass("your password on console.capellaspace.com:").strip()
@@ -54,7 +54,7 @@ token refresh with auto retry
 *****************************
 
 .. code:: python3
-    
+
     # issued access tokens have an expiration of 1h
     client = CapellaConsoleClient(email=email, password=pw, verbose=True)
 
@@ -73,7 +73,7 @@ Output
 
 .. code:: sh
 
-    2021-10-07 11:00:24,590 - 🛰️  Capella Space 🐐 - INFO - successfully authenticated as user@capellaspace.com 
+    2021-10-07 11:00:24,590 - 🛰️  Capella Space 🐐 - INFO - successfully authenticated as user@capellaspace.com
     2021-10-07 11:00:24,690 - root - ERROR - Request: GET https://api.capellaspace.com/user - Status 401 - Response: {'error': {'message': 'Invalid token.', 'code': 'INVALID_TOKEN'}}
     2021-10-07 11:00:24,690 - 🛰️  Capella Space 🐐 - INFO - refreshing access token
     All good
@@ -82,7 +82,7 @@ Output
 search
 ######
 
-searches are run against Capella Space's Catalog and a List of `STAC items <https://stacspec.org/>`_ matching the search criteria is returned. 
+searches are run against Capella Space's Catalog and a List of `STAC items <https://stacspec.org/>`_ matching the search criteria is returned.
 
 .. code:: python3
 
@@ -96,8 +96,8 @@ searches are run against Capella Space's Catalog and a List of `STAC items <http
 
     # spotlight
     capella_spotlight = client.search(
-        constellation="capella", 
-        instrument_mode="spotlight", 
+        constellation="capella",
+        instrument_mode="spotlight",
         limit=1
     )[0]
 
@@ -106,7 +106,7 @@ searches are run against Capella Space's Catalog and a List of `STAC items <http
 
     capella_spotlight_olympic_NP_geo = client.search(
         constellation="capella",
-        instrument_mode="spotlight", 
+        instrument_mode="spotlight",
         bbox=olympic_NP_bbox,
         product_type="GEO"
     )
@@ -158,8 +158,12 @@ search fields
       - mid time of collect in Zulu format
       - ``str``
       - ``"2020-02-12T00:00:00Z"``
+    * - ``epsg``
+      - EPSG code of the datasource
+      - ``int``
+      - ``32648``
     * - ``frequency_band``
-      - frequency band, one of ``"P"``, ``"L"``, ``"S"``, ``"C"``, ``"X"``, ``"Ku"``, ``"K"``, ``"Ka"``
+      - frequency band
       - ``str``
       - ``"X"``
     * - ``ids``
@@ -179,9 +183,22 @@ search fields
       - ``List[str]``
       - ``["capella-radar-5"]``
     * - ``instrument_mode``
-      - instrument mode, one of ``"spotlight"``, ``"stripmap"``, ``"sliding_spotlight"``
+      - | instrument mode, one of
+        | ``"spotlight"``, ``"stripmap"``, ``"sliding_spotlight"``
       - ``str``
       - ``"spotlight"``
+    * - ``local_datetime``
+      - local datetime
+      - ``str``
+      - ``2022-12-12TT07:37:42.324551+0800``
+    * - ``local_time``
+      - local time
+      - ``str``
+      - ``07:37:42.324551``
+    * - ``local_timezone``
+      - time zone
+      - ``str``
+      - ``Asia/Shanghai``
     * - ``look_angle``
       - look angle
       - ``Union[int, float]``
@@ -199,7 +216,8 @@ search fields
       - ``int``
       - ``1``
     * - ``observation_direction``
-      - antenna pointing direction, one of ``"right"``, ``"left"``
+      - | antenna pointing direction, one of
+        | ``"right"``, ``"left"``
       - ``str``
       - ``"left"``
     * - ``orbit_state``
@@ -207,7 +225,8 @@ search fields
       - ``str``
       - ``"ascending"``
     * - ``orbital_plane``
-      - Orbital Plane, inclination angle of orbit, one of ``45``, ``53``, ``97``
+      - | Orbital Plane, inclination angle of orbit, one of
+        | ``45``, ``53``, ``97``
       - ``int``
       - ``45``
     * - ``pixel_spacing_azimuth``
@@ -227,11 +246,14 @@ search fields
       - ``List[str]``
       - ``["HH"]``
     * - ``product_category``
-      - product category, one of ``"standard"``, ``"custom"``, ``"extended"``
+      - | product category, one of
+        | ``"standard"``, ``"custom"``, ``"extended"``
       - ``str``
       - ``"standard"``
     * - ``product_type``
-      - product type str, one of ``"SLC"``, ``"GEO"``, ``"GEC"``, ``"SICD"``, ``"SIDD"``
+      - | product type str, one of
+        | ``"SLC"``, ``"GEO"``, ``"GEC"``, ``"SICD"``, ``"SIDD"``, ``"CPHD"``
+        | ``"VS"``, ``"ACD"```
       - ``str``
       - ``"SLC"``
     * - ``resolution_azimuth``
@@ -269,22 +291,22 @@ advanced search
         polarizations="VV",
         platform="capella-2",
         sortby=["-datetime", "+id"]
-    ) 
+    )
 
-    # get up to 10 SLC stripmap collected in 06/2021 
+    # get up to 10 SLC stripmap collected in 06/2021
     capella_sm_01_2021 = client.search(
         instrument_mode="stripmap",
         datetime__gt="2021-06-01T00:00:00Z",
         datetime__lt="2021-07-01T00:00:00Z",
         product_type="SLC",
-        limit=10, 
+        limit=10,
     )
 
-    # get up to 10 GEO stripmap OR spotlight 
+    # get up to 10 GEO stripmap OR spotlight
     capella_sm_or_sp = client.search(
         instrument_mode=["stripmap", "spotlight"],
         product_type="GEO",
-        limit=10, 
+        limit=10,
     )
 
     # get up to 10 items with azimuth resolution <= 0.5 AND range resolution between 0.3 and 0.5
@@ -292,7 +314,7 @@ advanced search
         resolution_azimuth__lte=0.5,
         resolution_range__gte=0.3,
         resolution_range__lte=0.5,
-        limit=10, 
+        limit=10,
     )
 
     # get up to 10 GEO sliding spotlight with look angle > 35
@@ -309,6 +331,15 @@ advanced search
         collect_id=collect_id
     )
 
+    # get GEO items by local time window within certain EPSG
+    night_items = client.search(
+        product_type="GEO",
+        local_time__gte="03:00:00",
+        local_time__lte="04:00:00",
+        epsg=32648,
+    )
+
+
     # take it to the max - get GEO spotlight items over SF downtown with many filters sorted by datetime
 
     sanfran_dt_bbox = [-122.4, 37.8, -122.3, 37.7]
@@ -316,6 +347,8 @@ advanced search
         bbox=sanfran_dt_bbox,
         datetime__gt="2021-05-01T00:00:00Z",
         datetime__lt="2021-07-01T00:00:00Z"
+        local_time__gte="09:00:00",
+        local_time__lte="18:00:00",
         instrument_mode="spotlight",
         product_type="GEO",
         look_angle__gt=25,
@@ -352,27 +385,27 @@ advanced search
    * - ``in``
      - contains
      - .. code:: python3
-     
+
          product_type__in=["SLC", "GEO", "GEC"] ( == product_type=["SLC", "GEO", "GEC"])
    * - ``gt``
      - greater than
      - .. code:: python3
-     
+
          datetime__gt="2021-01-01T00:00:00Z"
    * - ``lt``
      - lower than
      - .. code:: python3
-     
+
          datetime__lt="2021-02-01T00:00:00Z"
    * - ``gte``
      - greater than equal
      - .. code:: python3
-     
+
          resolution_range__gte=0.3
    * - ``lte``
      - lower than equal
      - .. code:: python3
-     
+
          resolution_azimuth__lte=0.5
 
 The API for advanced filtering operations was inspired by `Django's ORM <https://docs.djangoproject.com/en/3.2/topics/db/queries/#chaining-filters>`_
@@ -448,7 +481,7 @@ Download assets of previously ordered products to local disk.
         show_progress=True,
     )
 
-    # the client is respectful of your local files and does not override them by default 
+    # the client is respectful of your local files and does not override them by default
     # but can be instructed to do so
     local_thumb_path = client.download_products(
         order_id=order_id,
@@ -526,7 +559,7 @@ download products filtered by asset type
 
     # 'include' / 'exclude' can also be a string if only one provided
     product_paths = client.download_products(
-       order_id=order_id, 
+       order_id=order_id,
        include="thumbnail"
     )
 
@@ -558,7 +591,7 @@ Requirement: you have previously issued a tasking request that is in 'completed'
 .. code:: python3
 
     tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # NOTE: provide valid tasking_request_id
-    
+
     # download ALL products
     product_paths = client.download_products(
         tasking_request_id=tasking_request_id,
@@ -577,7 +610,7 @@ order and download products of a collect
 .. code:: python3
 
     collect_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # NOTE: provide valid collect_id
-    
+
     # download ALL products
     product_paths = client.download_products(
         collect_id=collect_id,
@@ -618,7 +651,7 @@ In order to directly load assets (imagery or metadata) into memory you need to r
 
     # sort presigned assets by list of stac ids
     sorted_stac_ids = sorted([s['id'] for s in capella_spotlight_olympic_NP_geo])
-    items_presigned_sorted = client.get_presigned_items(order_id, 
+    items_presigned_sorted = client.get_presigned_items(order_id,
                                                         sort_by=sorted_stac_ids)
 
 See `read imagery`_  or `read metadata`_ for more information.
@@ -631,7 +664,7 @@ download single product
 
     # download a specific product with download_product (SINGULAR)
     product_paths = client.download_product(assets_presigned[0], local_dir="/tmp", override=True)
-    
+
 
 
 download single asset
@@ -640,7 +673,7 @@ download single asset
 single assets can be downloaded to gven paths
 
 .. code:: python3
-    
+
     # download thumbnail
     thumb_presigned_href = assets_presigned[0]["thumbnail"]["href"]
     dest_path = "/tmp/thumb.png"
@@ -649,8 +682,8 @@ single assets can be downloaded to gven paths
     # assets are saved into OS specific temp directory if `local_path` not provided
     raster_presigned_href = assets_presigned[0]["HH"]["href"]
     local_raster_path = client.download_asset(raster_presigned_href)
-    
-    
+
+
     from pathlib import Path
     assert local_thumb_path == Path(dest_path)
 
@@ -669,7 +702,7 @@ Issue the following snippet to view the ordering history
     # list all active orders
     all_active_orders = client.list_orders(is_active=True)
 
-    # list specific order(s) by order id 
+    # list specific order(s) by order id
     specific_order_id = all_orders[0]["orderId"]
     specific_orders = client.list_orders(order_ids=[specific_order_id])
 
@@ -698,13 +731,13 @@ advanced tasking request search
 
     # get all COMPLETED tasking requests of ORG (requires org manager/ admin role)
     org+completed_trs = client.list_tasking_requests(
-        for_org=True, 
+        for_org=True,
         status="completed"
     )
 
     # get all completed tasking requests of org SUBMITTED AFTER 2022-12-01 (UTC)
     org_completed_trs_submitted_dec_22 = client.list_tasking_requests(
-        for_org=True, 
+        for_org=True,
         status="completed",
         submission_time__gt=datetime.datetime(2022, 12, 1)
     )
@@ -717,7 +750,7 @@ advanced tasking request search
 read imagery
 ############
 
-Given a presigned asset href (see `presigned assets`_) load imagery into memory
+Given a presigned asset href (see `presigned items`_) load imagery into memory
 
 NOTE: requires `rasterio <https://pypi.org/project/rasterio/>`_ (not part of this package)
 
@@ -732,9 +765,9 @@ NOTE: requires `rasterio <https://pypi.org/project/rasterio/>`_ (not part of thi
 
     # read chunk of raster
     with rasterio.open(raster_presigned_href) as ds:
-        chunk = ds.read(1, window=rasterio.windows.Window(2000, 2000, 7000, 7000)) 
+        chunk = ds.read(1, window=rasterio.windows.Window(2000, 2000, 7000, 7000))
     print(chunk.shape)
-        
+
     # read thumbnail
     thumb_presigned_href = assets_presigned[0]["thumbnail"]["href"]
     with rasterio.open(thumb_presigned_href) as ds:
@@ -748,7 +781,7 @@ read metadata
 #############
 
 .. code:: python3
-  
+
   import httpx
 
   # read extended metadata .json

@@ -725,6 +725,7 @@ class CapellaConsoleClient:
          • collect_id: str, capella internal collect-uuid, e.g. '78616ccc-0436-4dc2-adc8-b0a1e316b095'
          • constellation: str, e.g. "capella"
          • datetime: str, e.g. "2020-02-12T00:00:00Z"
+         • epsg: int, e.g. 32648
          • frequency_band: str, Frequency band, one of "P", "L", "S", "C", "X", "Ku", "K", "Ka"
          • ids: List[str], e.g. `["CAPELLA_C02_SP_GEO_HH_20201109060434_20201109060437"]`
          • intersects: geometry component of the GeoJSON, e.g. {'type': 'Point', 'coordinates': [-113.1, 51.1]}
@@ -732,6 +733,9 @@ class CapellaConsoleClient:
          • instruments: List[str], leveraged instruments, e.g. ["capella-radar-5"]
          • instrument_mode: str, Instrument mode, one of "spotlight", "stripmap", "sliding_spotlight"
          • limit: int, default: 500
+         • local_timezone: str, local timezone, e.g. Asia/Shanghai
+         • local_datetime: str, local datetime, e.g. 2022-12-12TT07:37:42.324551+0800
+         • local_time: str, local time, e.g. 07:37:42.324551
          • look_angle: Union[int, float], e.g. 28.4
          • looks_azimuth: int, e.g. 5
          • looks_equivalent_number: int, Equivalent number of looks (ENL), e.g. 3

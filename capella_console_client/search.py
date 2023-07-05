@@ -68,6 +68,10 @@ class SearchResult:
     def stac_ids(self):
         return [item["id"] for item in self._features]
 
+    @property
+    def collect_ids(self):
+        return [item["properties"].get("capella:collect_id", "N/A") for item in self._features]
+
     def merge(self, other: "SearchResult", keep_duplicates: bool = False) -> "SearchResult":
         copy = deepcopy(self)
         for page in other._pages:
