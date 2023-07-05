@@ -41,6 +41,11 @@ SUPPORTED_QUERY_FIELDS = {
     "squint_angle",
     "orbital_plane",
     "billable_area",
+    "hash",
+    "local_timezone",
+    "local_datetime",
+    "local_time",
+    "epsg",
 }
 
 ALL_SUPPORTED_FIELDS = SUPPORTED_SEARCH_FIELDS | SUPPORTED_QUERY_FIELDS
@@ -83,4 +88,9 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "look_angle": "view:look_angle",
     "orbital_plane": "capella:orbital_plane",
     "billable_area": "capella:billable_area",
+    "hash": "capella:hash",
+    "local_timezone": "locale:timezone",
+    "local_datetime": "locale:datetime",
+    "local_time": "locale:time",
+    "epsg": "proj:epsg",
 }

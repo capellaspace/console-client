@@ -128,5 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-driver.py
+driver*.py
 .vscode
