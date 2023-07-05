@@ -346,7 +346,7 @@ advanced search
     hefty_query_SF_sorted = client.search(
         bbox=sanfran_dt_bbox,
         datetime__gt="2021-05-01T00:00:00Z",
-        datetime__lt="2021-07-01T00:00:00Z"
+        datetime__lt="2021-07-01T00:00:00Z",
         local_time__gte="09:00:00",
         local_time__lte="18:00:00",
         instrument_mode="spotlight",

@@ -733,9 +733,9 @@ class CapellaConsoleClient:
          • instruments: List[str], leveraged instruments, e.g. ["capella-radar-5"]
          • instrument_mode: str, Instrument mode, one of "spotlight", "stripmap", "sliding_spotlight"
          • limit: int, default: 500
-         • local_timezone: str, local timezone, e.g. Asia/Shanghai
          • local_datetime: str, local datetime, e.g. 2022-12-12TT07:37:42.324551+0800
          • local_time: str, local time, e.g. 07:37:42.324551
+         • local_timezone: str, local timezone, e.g. Asia/Shanghai
          • look_angle: Union[int, float], e.g. 28.4
          • looks_azimuth: int, e.g. 5
          • looks_equivalent_number: int, Equivalent number of looks (ENL), e.g. 3

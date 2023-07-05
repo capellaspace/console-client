@@ -2,6 +2,13 @@
 History
 =======
 
+
+0.10.3 (2023-07-04)
+-------------------
+* local time search filters
+* epsg search filter
+* SearchResult.collect_ids property
+
 0.10.2 (2023-04-24)
 -------------------
 * hardened exception handling
