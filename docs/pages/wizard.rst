@@ -1,7 +1,7 @@
 .. _wizard:
 
 **********************
-capella-console-wizard 
+capella-console-wizard
 **********************
 
 Starting with ``capella-console-client>=0.8.0`` this package ships with an interactive wizard-like CLI
@@ -15,7 +15,7 @@ Installation
     $ pip install capella-console-client[wizard]
 
 
-.. code:: 
+.. code::
 
     capella-console-wizard --help
 
@@ -28,7 +28,7 @@ Configure
     2021-10-07 15:01:22,936 - 🛰️  Capella Space 🐐 - INFO - let's get you all setup using capella-console-wizard:
     2021-10-07 15:01:22,936 - 🛰️  Capella Space 🐐 - INFO - 		Press Ctrl + C anytime to quit
 
-    ? User on console.capellaspace.com (user@email.com): thomas.beyer@capellaspace.com
+    ? User on api.capellaspace.com (user@email.com): thomas.beyer@capellaspace.com
     updated user for Capella Console
     ? Specify the default location for downloads and .json STAC exports: (press <tab>) /data/stuff/things/here/
     updated default output path for .json STAC exports
@@ -43,7 +43,7 @@ Configure
 Workflows
 =========
 
-``capella-console-wizard`` exposes common interactive workflows (search, order, download). 
+``capella-console-wizard`` exposes common interactive workflows (search, order, download).
 
 
 The following sections describe a subset of those
@@ -62,7 +62,7 @@ you will be prompted for search 1 to many search filter (e.g. ``datetime`` , ``b
 
 .. code:: console
 
-    ? What are you looking for today? (Use arrow keys to move, <space> to select, <a> to toggle, <i> to invert)                                                                                                                         
+    ? What are you looking for today? (Use arrow keys to move, <space> to select, <a> to toggle, <i> to invert)
    ● bbox
    ○ billable_area
    ○ center_frequency
@@ -98,12 +98,12 @@ you will be prompted for search 1 to many search filter (e.g. ``datetime`` , ``b
 Checkout
 ========
 
-Interactively search, order and download products. 
+Interactively search, order and download products.
 
 .. code:: console
 
     $ capella-console-wizard workflows checkout
-    ? What would you like to do? (Use arrow keys)                                                                                                                                                      
+    ? What would you like to do? (Use arrow keys)
     new search
       use previously saved search results
     » provide a collect id
@@ -115,19 +115,19 @@ Given collect id
 .. code:: console
 
     ? provide a collect id: <collect_id>
-    ? product type(s): (Use arrow keys to move, <space> to select, <a> to toggle, <i> to invert)                                                                                                       
+    ? product type(s): (Use arrow keys to move, <space> to select, <a> to toggle, <i> to invert)
       ○ SLC
       ● GEO
       ○ SICD
     » ● GEC
       ○ SIDD
       ○ CPHD
-    ? asset type: (Use arrow keys to move, <space> to select, <a> to toggle, <i> to invert)                                                                                                            
+    ? asset type: (Use arrow keys to move, <space> to select, <a> to toggle, <i> to invert)
     » ○ all
       ● raster
       ○ metadata
       ○ thumbnail
-    ? download location: /Users/thomas.beyer/data/new_stuff 
+    ? download location: /Users/thomas.beyer/data/new_stuff
     2021-11-17 14:00:53,144 - 🛰️  Capella Space 🐐 - INFO - searching catalog with payload {'query': {'capella:collect_id': {'in': ['<collect_id>']}, 'sar:product_type': {'in': ['GEO', 'GEC']}}}
     2021-11-17 14:00:53,145 - 🛰️  Capella Space 🐐 - INFO - 	page 1 (0 - 500)
     2021-11-17 14:00:53,477 - 🛰️  Capella Space 🐐 - INFO - found 2 STAC items
@@ -143,18 +143,18 @@ Given collect id
     2021-11-17 14:00:59,543 - 🛰️  Capella Space 🐐 - INFO - Only including assets HH, VV
     ...
 
-    ? Want to open any product directories? Yes                                                                                                                                                        
-    ? select which product directories you want to open done (2 selections)   
+    ? Want to open any product directories? Yes
+    ? select which product directories you want to open done (2 selections)
 
 
 New search
 
 .. code:: console
 
-    ? What would you like to do? new search                                                                                                                                                            
-    ? Select your search filters: done (2 selections)                                                                                                                                                  
-    ? collections [=]: capella-open-data                                                                                                                                                               
-    ? limit [=]: 1                                                                                                                                                                                     
+    ? What would you like to do? new search
+    ? Select your search filters: done (2 selections)
+    ? collections [=]: capella-open-data
+    ? limit [=]: 1
     2021-11-17 14:10:53,289 - 🛰️  Capella Space 🐐 - INFO - searching catalog with payload {'collections': ['capella-open-data'], 'limit': 1, 'query': {'constellation': {'eq': 'capella'}}}
     2021-11-17 14:10:53,289 - 🛰️  Capella Space 🐐 - INFO - 	page 1 (0 - 1)
     2021-11-17 14:10:53,473 - 🛰️  Capella Space 🐐 - INFO - Using https://0r1mdcwa5c.execute-api.us-west-2.amazonaws.com/prod/search for searches
@@ -166,12 +166,12 @@ New search
     ╘═════╧═════════════════════════════════════════════════════╧═══════════════════╧════════════════╧════════════════════════════╧═══════════════════╧════════════════════╧═════════════════╛
 
 
-    ? Anything you'd like to do now? refine search                                                                                                                                                     
+    ? Anything you'd like to do now? refine search
     Refining
         {"collections": [["=", ["capella-open-data"]]], "limit": [["=", 1]]}
-    ? Select your search filters: done (2 selections)                                                                                                                                                  
-    ? collections [=]: ['capella-open-data']                                                                                                                                                           
-    ? limit [=]: 2                                                                                                                                                                                     
+    ? Select your search filters: done (2 selections)
+    ? collections [=]: ['capella-open-data']
+    ? limit [=]: 2
     2021-11-17 14:11:05,597 - 🛰️  Capella Space 🐐 - INFO - searching catalog with payload {'collections': ['capella-open-data'], 'limit': 2, 'query': {'constellation': {'eq': 'capella'}}}
     2021-11-17 14:11:05,597 - 🛰️  Capella Space 🐐 - INFO - 	page 1 (0 - 2)
     2021-11-17 14:11:05,759 - 🛰️  Capella Space 🐐 - INFO - found 2 STAC items
@@ -184,9 +184,9 @@ New search
     ╘═════╧═════════════════════════════════════════════════════╧═══════════════════╧════════════════╧════════════════════════════╧═══════════════════╧════════════════════╧═════════════════╛
 
 
-    ? Anything you'd like to do now? continue                                                                                                                                                          
-    ? asset type: [thumbnail]                                                                                                                                                                          
-    ? download location: /Users/thomas.beyer/data/new_stuff                                                                                                                                            
+    ? Anything you'd like to do now? continue
+    ? asset type: [thumbnail]
+    ? download location: /Users/thomas.beyer/data/new_stuff
     2021-11-17 14:11:12,876 - 🛰️  Capella Space 🐐 - INFO - reviewing order for CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918, CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928
     2021-11-17 14:11:14,565 - 🛰️  Capella Space 🐐 - INFO - submitting order for CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918, CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928
     2021-11-17 14:11:16,409 - 🛰️  Capella Space 🐐 - INFO - successfully submitted order 48128100-47f3-11ec-8308-5bb8546cd9f5

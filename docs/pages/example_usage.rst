@@ -30,9 +30,9 @@ provide user credentials
 
     from getpass import getpass
 
-    # user credentials on console.capellaspace.com
-    email = input("your email on console.capellaspace.com:").strip()
-    pw = getpass("your password on console.capellaspace.com:").strip()
+    # user credentials on api.capellaspace.com
+    email = input("your email on api.capellaspace.com:").strip()
+    pw = getpass("your password on api.capellaspace.com:").strip()
 
     # authenticate with user and password
     client = CapellaConsoleClient(email=email, password=pw)

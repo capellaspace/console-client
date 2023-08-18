@@ -81,9 +81,9 @@ class CapellaConsoleSession(httpx.Client):
             logger.info(f"successfully authenticated as {self.email} {suffix}")
 
     def _prompt_user_creds(self, email: str, password: str) -> Tuple[str, str]:
-        """user credentials on console.capellaspace.com"""
+        """user credentials on console"""
         if not email:
-            email = input("user on console.capellaspace.com (user@email.com): ").strip()
+            email = input(f"user on {self.base_url} (user@email.com): ").strip()
         if not password:
             password = getpass("password: ").strip()
         return (email, password)
