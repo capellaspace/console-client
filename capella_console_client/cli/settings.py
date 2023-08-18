@@ -88,7 +88,7 @@ def user():
     set user for Capella Console
     """
     console_user = questionary.path(
-        "User on console.capellaspace.com (user@email.com):",
+        "User on console (user@email.com):",
         default=CURRENT_SETTINGS.get("console_user", ""),
         validate=_validate_email,
     ).ask()
