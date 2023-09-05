@@ -29,7 +29,7 @@ for more detail see the :ref:`installation` page
 Requirements
 ============
 
-* ``python >= 3.7``
+* ``python >= 3.8``
 * ``capella-console-client`` requires an active account on `console.capellaspace.com <https://console.capellaspace.com>`_. Sign up for an account on `the community page <https://www.capellaspace.com/community/>`_.
 
 
@@ -59,7 +59,7 @@ License
 
 .. toctree::
    :hidden:
- 
+
    pages/installation
    pages/quickstart
    pages/example_usage
