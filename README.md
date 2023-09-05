@@ -18,7 +18,7 @@ pip install capella-console-client
 
 ## Requirements
 
-* python >= 3.7
+* python >= 3.8
 * `capella-console-client` requires an active account on [console.capellaspace.com](https://console.capellaspace.com/). Sign up for an account at [https://www.capellaspace.com/community/](https://www.capellaspace.com/community/).
 
 
@@ -47,7 +47,7 @@ order_id = client.submit_order(items=stac_items, omit_search=True)
 
 # download
 product_paths = client.download_products(
-    order_id=order_id, 
+    order_id=order_id,
     local_dir='/tmp',
     show_progress=True
 )
@@ -59,7 +59,7 @@ product_paths = client.download_products(
 The documentation for `capella-console-client` can be found [here](https://capella-console-client.readthedocs.io).
 
 ## 🧙‍ capella-console-wizard 🧙‍♂️
-starting with `capella-console-client>=0.8.0` the SDK ships with an interactive wizard-like CLI: `capella-console-wizard` 
+starting with `capella-console-client>=0.8.0` the SDK ships with an interactive wizard-like CLI: `capella-console-wizard`
 
 ### Installation
 ```
@@ -71,7 +71,7 @@ pip install capella-console-client[wizard]
 capella-console-wizard --help
 ```
 
-see 
+see
 
 
 ## Support
