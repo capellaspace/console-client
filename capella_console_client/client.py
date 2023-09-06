@@ -29,7 +29,7 @@ from capella_console_client.assets import (
     _filter_items_by_product_types,
 )
 from capella_console_client.search import StacSearch, SearchResult
-from capella_console_client.tasking import get_tasking_requests, _task_contains_status
+from capella_console_client.tasking import get_tasking_requests, _task_contains_status, create_tasking_request
 from capella_console_client.validate import (
     _validate_uuid,
     _validate_stac_id_or_stac_items,
@@ -100,6 +100,10 @@ class CapellaConsoleClient:
         return resp.json()
 
     # TASKING
+    def create_tasking_request(self, **kwargs):
+        """_summary_"""
+        create_tasking_request(session=self._sesh, **kwargs)
+
     def list_tasking_requests(
         self, *tasking_request_ids: Optional[str], for_org: Optional[bool] = False, **kwargs: Optional[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:

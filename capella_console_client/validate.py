@@ -71,3 +71,8 @@ def _validate_and_filter_stac_ids(stac_ids: Optional[List[str]]) -> List[str]:
         logger.warning(f"filtered {','.join(duplicates)} (duplicate)")
 
     return valid_stac_ids
+
+
+def _snake_to_camel(snake):
+    REG = r"(.*?)_([a-zA-Z])"
+    return re.sub(REG, lambda x: x.group(1) + x.group(2).upper(), snake, 0)

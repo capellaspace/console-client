@@ -1,13 +1,89 @@
-from typing import Optional, Dict, Any, List
-from datetime import datetime
+from typing import Optional, Dict, Any, List, Union
+from datetime import datetime, timedelta
 
 import dateutil.parser
+import geojson
 
 from capella_console_client.session import CapellaConsoleSession
-from capella_console_client.validate import _validate_uuid
+from capella_console_client.validate import _validate_uuid, _snake_to_camel
 from capella_console_client.config import TASKING_REQUEST_DEFAULT_PAGE_SIZE
 from capella_console_client.logconf import logger
-from capella_console_client.enumerations import TaskingRequestStatus
+from capella_console_client.enumerations import (
+    TaskingRequestStatus,
+    ObservationDirection,
+    OrbitState,
+    ProductType,
+    ProductClass,
+    OrbitalPlane,
+    CollectionTier,
+    InstrumentMode,
+)
+
+COLLECT_CONSTRAINTS_KEYS = set(["look_direction", "asc_dsc", "orbital_planes", "local_time", "collect_mode"])
+
+
+def create_tasking_request(
+    session: CapellaConsoleSession,
+    geometry: geojson.geometry.Geometry,
+    name: str,
+    description: Optional[str] = "",
+    collection_tier: Optional[Union[str, CollectionTier]] = CollectionTier.low,
+    window_open: Optional[Union[datetime, str]] = None,
+    window_close: Optional[Union[datetime, str]] = None,
+    # collect constraints
+    collect_mode: Optional[Union[str, InstrumentMode]] = InstrumentMode.spotlight,
+    look_direction: Optional[Union[str, ObservationDirection]] = ObservationDirection.either,
+    asc_dsc: Optional[Union[str, OrbitState]] = OrbitState.either,
+    orbital_planes: Optional[List[Union[int, OrbitalPlane]]] = None,
+    local_time: Optional[List[int]] = None,
+    product_class: Optional[Union[str, ProductClass]] = None,
+    product_types: Optional[List[Union[str, ProductType]]] = None
+    #     "offNadirMin": 0,
+    #     "offNadirMax": 0,
+    #     "elevationMin": 0,
+    #     "elevationMax": 0,
+    #     "imageLength": 0,
+    #     "imageWidth": 0,
+    #     "azimuth": 0,
+    #     "grrMin": 0,
+    #     "grrMax": 0,
+    #     "srrMin": 0,
+    #     "srrMax": 0,
+    #     "azrMin": 0,
+    #     "azrMax": 0,
+    #     "neszMax": 0,
+    #     "numLooks": 0,
+    #     "polarization": "HH",
+    # }
+) -> Dict[str, Any]:
+
+    if not window_open:
+        window_open = datetime.utcnow().isoformat(timespec="milliseconds") + "Z"
+    if not window_close:
+        window_open = datetime.utcnow() + timedelta(days=7)
+
+    loc = locals()
+    collect_constraints = {_snake_to_camel(k): loc[k] for k in COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k]}
+
+    payload = dict(
+        type="Feature",
+        geometry=geometry,
+        properties=dict(
+            taskingrequestName=name,
+            taskingrequestDescription=description,
+            windowOpen=window_open,
+            windowClose=window_close,
+            collectionTier=collection_tier,
+            archiveHoldback="none",
+            collectConstraints=collect_constraints,
+            processingConfig={
+                "productTypes": ["VS"],
+            },
+        ),
+    )
+
+    resp = session.post("/task", json=payload)
+    return resp
 
 
 def get_tasking_requests(

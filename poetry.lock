@@ -335,6 +335,17 @@ files = [
 test = ["pytest (>=6)"]
 
 [[package]]
+name = "geojson"
+version = "3.0.1"
+description = "Python bindings and utilities for GeoJSON"
+optional = false
+python-versions = ">=3.7, <3.12"
+files = [
+    {file = "geojson-3.0.1-py3-none-any.whl", hash = "sha256:e49df982b204ed481e4c1236c57f587adf71537301cf8faf7120ab27d73c7568"},
+    {file = "geojson-3.0.1.tar.gz", hash = "sha256:ff3d75acab60b1e66504a11f7ea12c104bad32ff3c410a807788663b966dee4a"},
+]
+
+[[package]]
 name = "h11"
 version = "0.14.0"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
@@ -1292,5 +1303,5 @@ wizard = ["questionary", "tabulate", "typer"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.8"
-content-hash = "e5fc299e9e127df6dd2ff1b9b2c5db370bb508ff8ab7cb259cabaa0eae0b7c0e"
+python-versions = ">=3.8,<3.12"
+content-hash = "4df4c3ee51d3e3f966c46ede83f61663942aa0f49ce3900b0452d83693c65a31"

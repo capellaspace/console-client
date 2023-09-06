@@ -57,11 +57,13 @@ class ProductClass(str, BaseEnum):
 class OrbitState(str, BaseEnum):
     ascending = "ascending"
     descending = "descending"
+    either = "either"
 
 
 class ObservationDirection(str, BaseEnum):
     left = "left"
     right = "right"
+    either = "either"
 
 
 class OrbitalPlane(str, BaseEnum):
@@ -89,3 +91,11 @@ class TaskingRequestStatus(str, BaseEnum):
     canceled = "canceled"
     error = "error"
     failed = "failed"
+
+
+class CollectionTier(str, BaseEnum):
+    high = "1_day"
+    medium = ("3_day",)
+    low = ("7_day",)
+    background = ("background",)
+    internal = "internal"
