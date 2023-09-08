@@ -66,7 +66,7 @@ class ObservationDirection(str, BaseEnum):
     either = "either"
 
 
-class OrbitalPlane(str, BaseEnum):
+class OrbitalPlane(int, BaseEnum):
     fortyfive = 45
     fiftythree = 53
     ninetyseven = 97
@@ -95,7 +95,19 @@ class TaskingRequestStatus(str, BaseEnum):
 
 class CollectionTier(str, BaseEnum):
     high = "1_day"
-    medium = ("3_day",)
-    low = ("7_day",)
-    background = ("background",)
+    medium = "3_day"
+    low = "7_day"
+    background = "background"
     internal = "internal"
+
+
+class ArchiveHoldback(str, BaseEnum):
+    none = "none"
+    one_year = "1 year"
+    thirty_day = "30 day"
+    permanent = "permanent"
+
+
+class Polarization(str, BaseEnum):
+    HH = "HH"
+    VV = "VV"

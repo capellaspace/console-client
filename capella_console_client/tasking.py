@@ -1,8 +1,8 @@
 from typing import Optional, Dict, Any, List, Union
 from datetime import datetime, timedelta
 
-import dateutil.parser
 import geojson
+from dateutil.parser import parse, ParserError
 
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.validate import _validate_uuid, _snake_to_camel
@@ -17,73 +17,119 @@ from capella_console_client.enumerations import (
     OrbitalPlane,
     CollectionTier,
     InstrumentMode,
+    Polarization,
+    ArchiveHoldback,
 )
 
-COLLECT_CONSTRAINTS_KEYS = set(["look_direction", "asc_dsc", "orbital_planes", "local_time", "collect_mode"])
+COLLECT_CONSTRAINTS_KEYS = set(
+    [
+        "collect_mode",
+        "look_direction",
+        "asc_dsc",
+        "orbital_planes",
+        "local_time",
+        "off_nadir_min",
+        "off_nadir_max",
+        "elevation_min",
+        "elevation_max",
+        "image_length",
+        "image_width",
+        "azimuth",
+        "grr_min",
+        "grr_max",
+        "srr_min",
+        "srr_max",
+        "azr_min",
+        "azr_max",
+        "nesz_max",
+        "num_looks",
+        "polarization",
+    ]
+)
 
 
 def create_tasking_request(
     session: CapellaConsoleSession,
     geometry: geojson.geometry.Geometry,
-    name: str,
+    name: Optional[str] = "",
     description: Optional[str] = "",
-    collection_tier: Optional[Union[str, CollectionTier]] = CollectionTier.low,
     window_open: Optional[Union[datetime, str]] = None,
     window_close: Optional[Union[datetime, str]] = None,
-    # collect constraints
+    collection_tier: Optional[Union[str, CollectionTier]] = CollectionTier.low,
+    product_category: Optional[Union[str, ProductClass]] = ProductClass.standard,
+    archive_holdback: Optional[Union[str, ArchiveHoldback]] = ArchiveHoldback.none,
+    custom_attribute_1: Optional[str] = None,
+    custom_attribute_2: Optional[str] = None,
+    product_types: Optional[List[Union[str, ProductType]]] = None,
+    # Collect constraints
     collect_mode: Optional[Union[str, InstrumentMode]] = InstrumentMode.spotlight,
     look_direction: Optional[Union[str, ObservationDirection]] = ObservationDirection.either,
     asc_dsc: Optional[Union[str, OrbitState]] = OrbitState.either,
     orbital_planes: Optional[List[Union[int, OrbitalPlane]]] = None,
     local_time: Optional[List[int]] = None,
-    product_class: Optional[Union[str, ProductClass]] = None,
-    product_types: Optional[List[Union[str, ProductType]]] = None
-    #     "offNadirMin": 0,
-    #     "offNadirMax": 0,
-    #     "elevationMin": 0,
-    #     "elevationMax": 0,
-    #     "imageLength": 0,
-    #     "imageWidth": 0,
-    #     "azimuth": 0,
-    #     "grrMin": 0,
-    #     "grrMax": 0,
-    #     "srrMin": 0,
-    #     "srrMax": 0,
-    #     "azrMin": 0,
-    #     "azrMax": 0,
-    #     "neszMax": 0,
-    #     "numLooks": 0,
-    #     "polarization": "HH",
-    # }
+    off_nadir_min: Optional[int] = None,
+    off_nadir_max: Optional[int] = None,
+    elevation_min: Optional[int] = None,
+    elevation_max: Optional[int] = None,
+    image_length: Optional[int] = None,
+    image_width: Optional[int] = None,
+    azimuth: Optional[int] = None,
+    grr_min: Optional[int] = None,
+    grr_max: Optional[int] = None,
+    srr_min: Optional[int] = None,
+    srr_max: Optional[int] = None,
+    azr_min: Optional[int] = None,
+    azr_max: Optional[int] = None,
+    nesz_max: Optional[int] = None,
+    num_looks: Optional[int] = None,
+    polarization: Optional[Union[str, Polarization]] = None,
 ) -> Dict[str, Any]:
 
+    if isinstance(window_open, str):
+        try:
+            window_open = parse(window_open)
+        except ParserError:
+            raise ValueError("Could not parse window_open string into a useable datetime")
+    if isinstance(window_close, str):
+        try:
+            window_close = parse(window_close)
+        except ParserError:
+            raise ValueError("Could not parse window_close string into a useable datetime")
+    
     if not window_open:
-        window_open = datetime.utcnow().isoformat(timespec="milliseconds") + "Z"
+        window_open = datetime.utcnow()
     if not window_close:
-        window_open = datetime.utcnow() + timedelta(days=7)
+        window_close = window_open + timedelta(days=7)
+
+    window_open = window_open.isoformat(timespec="milliseconds") + "Z"
+    window_close = window_close.isoformat(timespec="milliseconds") + "Z"
 
     loc = locals()
     collect_constraints = {_snake_to_camel(k): loc[k] for k in COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k]}
 
-    payload = dict(
-        type="Feature",
-        geometry=geometry,
-        properties=dict(
-            taskingrequestName=name,
-            taskingrequestDescription=description,
-            windowOpen=window_open,
-            windowClose=window_close,
-            collectionTier=collection_tier,
-            archiveHoldback="none",
-            collectConstraints=collect_constraints,
-            processingConfig={
-                "productTypes": ["VS"],
-            },
-        ),
-    )
+    payload = {
+        "type": "Feature",
+        "geometry": geometry,
+        "properties": {
+            "taskingrequestName": name,
+            "taskingrequestDescription": description,
+            "windowOpen": window_open,
+            "windowClose": window_close,
+            "collectionTier": collection_tier,
+            "productCategory": product_category,
+            "archiveHoldback": archive_holdback,
+            "customAttribute1": custom_attribute_1,
+            "customAttribute2": custom_attribute_2,
+            "collectConstraints": collect_constraints
+        },
+    }
 
-    resp = session.post("/task", json=payload)
-    return resp
+    if product_types is not None:
+        payload["properties"]["processingConfig"] = {
+            "productTypes": product_types
+        }
+
+    return session.post("/task", json=payload).json()
 
 
 def get_tasking_requests(
@@ -165,7 +211,7 @@ def _filter_by_submission_time(tasking_requests: List[Dict[str, Any]], submissio
 
 
 def _is_greater_than_submission_time(tasking_request: Dict[str, Any], submission_time__gt: datetime) -> bool:
-    return dateutil.parser.parse(tasking_request["properties"]["submissionTime"], ignoretz=True) > submission_time__gt
+    return parse(tasking_request["properties"]["submissionTime"], ignoretz=True) > submission_time__gt
 
 
 REGISTERED_FILTERS = {"status": _filter_by_status, "submission_time__gt": _filter_by_submission_time}
