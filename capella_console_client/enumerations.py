@@ -101,6 +101,12 @@ class CollectionTier(str, BaseEnum):
     internal = "internal"
 
 
+class RepeatCollectionTier(str, BaseEnum):
+    background = "background"
+    routine = "routine"
+    internal = "internal"
+
+
 class ArchiveHoldback(str, BaseEnum):
     none = "none"
     one_year = "1 year"

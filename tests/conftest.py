@@ -142,6 +142,16 @@ def authed_tasking_request_mock(auth_httpx_mock):
 
 
 @pytest.fixture
+def authed_repeat_request_mock(auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/repeat-requests",
+        json=post_mock_responses("/repeat-requests"),
+    )
+
+    yield auth_httpx_mock
+
+
+@pytest.fixture
 def download_client(test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
     yield test_client
