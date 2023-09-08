@@ -95,7 +95,7 @@ def create_tasking_request(
             window_close = parse(window_close)
         except ParserError:
             raise ValueError("Could not parse window_close string into a useable datetime")
-    
+
     if not window_open:
         window_open = datetime.utcnow()
     if not window_close:
@@ -120,14 +120,12 @@ def create_tasking_request(
             "archiveHoldback": archive_holdback,
             "customAttribute1": custom_attribute_1,
             "customAttribute2": custom_attribute_2,
-            "collectConstraints": collect_constraints
+            "collectConstraints": collect_constraints,
         },
     }
 
     if product_types is not None:
-        payload["properties"]["processingConfig"] = {
-            "productTypes": product_types
-        }
+        payload["properties"]["processingConfig"] = {"productTypes": product_types}
 
     return session.post("/task", json=payload).json()
 

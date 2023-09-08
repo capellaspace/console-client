@@ -11,6 +11,7 @@ from .test_data import get_mock_responses, post_mock_responses, TASK_2
 
 mock_geojson = {"coordinates": [-105.120360, 39.965330], "type": "Point"}
 
+
 def test_list_all_tasking_requests(test_client, authed_tasking_request_mock):
     tasking_requests = test_client.list_tasking_requests()
     assert tasking_requests == get_mock_responses("/tasks/paged?page=1&limit=100&customerId=MOCK_ID")["results"]
@@ -106,14 +107,17 @@ def test_get_collects_for_task_not_completed(test_client, auth_httpx_mock):
     with pytest.raises(TaskNotCompleteError):
         test_client.get_collects_for_task("def")
 
+
 def test_create_task_returns_new_task(test_client, authed_tasking_request_mock):
     tasking_requests = test_client.create_tasking_request(geometry=mock_geojson)
     assert tasking_requests == post_mock_responses("/task")
 
+
 def test_create_task_invalid_window_open(test_client):
     with pytest.raises(ValueError):
-        test_client.create_tasking_request(geometry=mock_geojson, window_open='PANDA')
+        test_client.create_tasking_request(geometry=mock_geojson, window_open="PANDA")
+
 
 def test_create_task_invalid_window_close(test_client):
     with pytest.raises(ValueError):
-        test_client.create_tasking_request(geometry=mock_geojson, window_close='PANDA')
+        test_client.create_tasking_request(geometry=mock_geojson, window_close="PANDA")

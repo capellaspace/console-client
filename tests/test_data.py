@@ -433,7 +433,7 @@ def post_mock_responses(endpoint: str) -> Dict[str, Any]:
             "organizationId": "MOCK_ORG_ID1",
             "orderStatus": "rejected",
         },
-        "/task": TASK_1
+        "/task": TASK_1,
     }[endpoint]
 
 
