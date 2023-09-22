@@ -4,7 +4,7 @@ from datetime import datetime
 from collections import Counter
 from dateutil.parser import parse, ParserError
 
-from typing import no_type_check, Optional, List, Dict, Any, Union
+from typing import no_type_check, Optional, List, Dict, Tuple, Any, Union
 
 from capella_console_client.enumerations import ProductType, AssetType
 from capella_console_client.logconf import logger
@@ -82,7 +82,7 @@ def _snake_to_camel(snake):
 
 def _datetime_to_iso8601_str(
     default_value: Optional[datetime], dt: Optional[Union[datetime, str]] = None
-) -> tuple[datetime, str]:
+) -> Tuple[datetime, str]:
     if not dt:
         dt = default_value
     elif isinstance(dt, str):
