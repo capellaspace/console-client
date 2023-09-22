@@ -58,8 +58,8 @@ def create_tasking_request(
     num_looks: Optional[int] = None,
     polarization: Optional[Union[str, Polarization]] = None,
 ) -> Dict[str, Any]:
-    window_open = _datetime_to_iso8601_str(datetime.utcnow(), window_open) # type: ignore
-    window_close = _datetime_to_iso8601_str(window_open[0] + timedelta(days=7), window_close) # type: ignore
+    window_open = _datetime_to_iso8601_str(datetime.utcnow(), window_open)  # type: ignore
+    window_close = _datetime_to_iso8601_str(window_open[0] + timedelta(days=7), window_close)  # type: ignore
 
     loc = locals()
     collect_constraints = {
@@ -72,8 +72,8 @@ def create_tasking_request(
         "properties": {
             "taskingrequestName": name,
             "taskingrequestDescription": description,
-            "windowOpen": window_open[1], # type: ignore
-            "windowClose": window_close[1], # type: ignore
+            "windowOpen": window_open[1],  # type: ignore
+            "windowClose": window_close[1],  # type: ignore
             "collectionTier": collection_tier,
             "productCategory": product_category,
             "archiveHoldback": archive_holdback,
