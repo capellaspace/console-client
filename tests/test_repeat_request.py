@@ -6,6 +6,7 @@ import pytest
 
 from capella_console_client import CapellaConsoleClient
 from .test_data import post_mock_responses
+from capella_console_client.exceptions import RepeatRequestPayloadValidationError
 
 mock_geojson = {"coordinates": [-105.120360, 39.965330], "type": "Point"}
 
@@ -23,3 +24,8 @@ def test_create_repeat_request_invalid_repeat_start(test_client):
 def test_create_repeat_request_invalid_repeat_end(test_client):
     with pytest.raises(ValueError):
         test_client.create_repeat_request(geometry=mock_geojson, repeat_end="PANDA")
+
+
+def test_create_repeat_request_end_and_count_defined(test_client):
+    with pytest.raises(RepeatRequestPayloadValidationError):
+        test_client.create_repeat_request(geometry=mock_geojson, repeat_end="PANDA", repetition_count=12345)

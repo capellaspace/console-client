@@ -5,6 +5,7 @@ import geojson
 from dateutil.parser import parse, ParserError
 
 from capella_console_client.session import CapellaConsoleSession
+from capella_console_client.exceptions import RepeatRequestPayloadValidationError
 from capella_console_client.validate import _snake_to_camel, _datetime_to_iso8601_str
 from capella_console_client.config import (
     REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS,
@@ -64,9 +65,12 @@ def create_repeat_request(
     num_looks: Optional[int] = None,
     polarization: Optional[Union[str, Polarization]] = None,
 ) -> Dict[str, Any]:
-    repeat_start = _datetime_to_iso8601_str(datetime.utcnow(), repeat_start)
+    if repeat_end is not None and repetition_count is not None:
+        raise RepeatRequestPayloadValidationError("Only one of 'repeat_end' and 'repetition_count' can be defined. Please remove one of those values from your request and try again.")
+    
+    repeat_start = _datetime_to_iso8601_str(datetime.utcnow(), repeat_start)[1]
     if repeat_end is not None:
-        repeat_end = _datetime_to_iso8601_str(None, repeat_end)
+        repeat_end = _datetime_to_iso8601_str(None, repeat_end)[1]
 
     loc = locals()
     collect_constraints = {
@@ -84,8 +88,6 @@ def create_repeat_request(
         "properties": {
             "repeatrequestName": name,
             "repeatrequestDescription": description,
-            "windowOpen": repeat_start,
-            "windowClose": repeat_end,
             "collectionTier": collection_tier,
             "productCategory": product_category,
             "archiveHoldback": archive_holdback,
