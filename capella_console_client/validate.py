@@ -1,6 +1,8 @@
 import uuid
 import re
+from datetime import datetime
 from collections import Counter
+from dateutil.parser import parse, ParserError
 
 from typing import no_type_check, Optional, List, Dict, Any, Union
 
@@ -76,3 +78,14 @@ def _validate_and_filter_stac_ids(stac_ids: Optional[List[str]]) -> List[str]:
 def _snake_to_camel(snake):
     REG = r"(.*?)_([a-zA-Z])"
     return re.sub(REG, lambda x: x.group(1) + x.group(2).upper(), snake, 0)
+
+
+def _datetime_to_iso8601_str(default_value: datetime, dt: Optional[Union[datetime, str]] = None) -> str:
+    if not dt:
+        dt = default_value
+    elif isinstance(dt, str):
+        try:
+            dt = parse(dt)
+        except ParserError:
+            raise ValueError(f"Could not parse {dt} string into a datetime")
+    return dt.isoformat(timespec="milliseconds") + "Z"

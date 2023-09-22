@@ -9,7 +9,7 @@ from capella_console_client import client as capella_client_module
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from capella_console_client import client
-from capella_console_client import tasking as tasking_modules
+from capella_console_client import tasking_request as tasking_modules
 
 from .test_data import (
     post_mock_responses,

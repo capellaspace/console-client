@@ -130,3 +130,4 @@ dmypy.json
 
 driver*.py
 .vscode
+*.DS_Store

@@ -29,8 +29,8 @@ from capella_console_client.assets import (
     _filter_items_by_product_types,
 )
 from capella_console_client.search import StacSearch, SearchResult
-from capella_console_client.tasking import get_tasking_requests, _task_contains_status, create_tasking_request
-from capella_console_client.repeat_requests import create_repeat_request
+from capella_console_client.tasking_request import get_tasking_requests, _task_contains_status, create_tasking_request
+from capella_console_client.repeat_request import create_repeat_request
 from capella_console_client.validate import (
     _validate_uuid,
     _validate_stac_id_or_stac_items,

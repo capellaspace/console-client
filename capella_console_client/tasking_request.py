@@ -4,10 +4,10 @@ from datetime import datetime, timedelta
 import geojson
 from dateutil.parser import parse, ParserError
 
-from capella_console_client.session import CapellaConsoleSession
-from capella_console_client.validate import _validate_uuid, _snake_to_camel
-from capella_console_client.config import TASKING_REQUEST_DEFAULT_PAGE_SIZE
 from capella_console_client.logconf import logger
+from capella_console_client.session import CapellaConsoleSession
+from capella_console_client.validate import _validate_uuid, _snake_to_camel, _datetime_to_iso8601_str
+from capella_console_client.config import TASKING_REQUEST_DEFAULT_PAGE_SIZE, TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS
 from capella_console_client.enumerations import (
     TaskingRequestStatus,
     ObservationDirection,
@@ -21,39 +21,13 @@ from capella_console_client.enumerations import (
     ArchiveHoldback,
 )
 
-COLLECT_CONSTRAINTS_KEYS = set(
-    [
-        "collect_mode",
-        "look_direction",
-        "asc_dsc",
-        "orbital_planes",
-        "local_time",
-        "off_nadir_min",
-        "off_nadir_max",
-        "elevation_min",
-        "elevation_max",
-        "image_length",
-        "image_width",
-        "azimuth",
-        "grr_min",
-        "grr_max",
-        "srr_min",
-        "srr_max",
-        "azr_min",
-        "azr_max",
-        "nesz_max",
-        "num_looks",
-        "polarization",
-    ]
-)
-
 
 def create_tasking_request(
     session: CapellaConsoleSession,
     geometry: geojson.geometry.Geometry,
     name: Optional[str] = "",
     description: Optional[str] = "",
-    window_open: Optional[Union[datetime, str]] = None,
+    window_open: Optional[Union[datetime, str]] = datetime.utcnow(),
     window_close: Optional[Union[datetime, str]] = None,
     collection_tier: Optional[Union[str, CollectionTier]] = CollectionTier.low,
     product_category: Optional[Union[str, ProductClass]] = ProductClass.standard,
@@ -84,28 +58,13 @@ def create_tasking_request(
     num_looks: Optional[int] = None,
     polarization: Optional[Union[str, Polarization]] = None,
 ) -> Dict[str, Any]:
-
-    if isinstance(window_open, str):
-        try:
-            window_open = parse(window_open)
-        except ParserError:
-            raise ValueError("Could not parse window_open string into a useable datetime")
-    if isinstance(window_close, str):
-        try:
-            window_close = parse(window_close)
-        except ParserError:
-            raise ValueError("Could not parse window_close string into a useable datetime")
-
-    if not window_open:
-        window_open = datetime.utcnow()
-    if not window_close:
-        window_close = window_open + timedelta(days=7)
-
-    window_open = window_open.isoformat(timespec="milliseconds") + "Z"
-    window_close = window_close.isoformat(timespec="milliseconds") + "Z"
+    window_open_string = _datetime_to_iso8601_str(datetime.utcnow(), window_open)
+    window_close_string = _datetime_to_iso8601_str(window_open + timedelta(days=7), window_close)
 
     loc = locals()
-    collect_constraints = {_snake_to_camel(k): loc[k] for k in COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k]}
+    collect_constraints = {
+        _snake_to_camel(k): loc[k] for k in TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k] is not None
+    }
 
     payload = {
         "type": "Feature",
@@ -113,8 +72,8 @@ def create_tasking_request(
         "properties": {
             "taskingrequestName": name,
             "taskingrequestDescription": description,
-            "windowOpen": window_open,
-            "windowClose": window_close,
+            "windowOpen": window_open_string,
+            "windowClose": window_close_string,
             "collectionTier": collection_tier,
             "productCategory": product_category,
             "archiveHoldback": archive_holdback,

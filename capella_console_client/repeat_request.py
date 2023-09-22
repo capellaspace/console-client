@@ -5,7 +5,11 @@ import geojson
 from dateutil.parser import parse, ParserError
 
 from capella_console_client.session import CapellaConsoleSession
-from capella_console_client.validate import _snake_to_camel
+from capella_console_client.validate import _snake_to_camel, _datetime_to_iso8601_str
+from capella_console_client.config import (
+    REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS,
+    REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS,
+)
 from capella_console_client.enumerations import (
     ObservationDirection,
     OrbitState,
@@ -16,43 +20,6 @@ from capella_console_client.enumerations import (
     InstrumentMode,
     Polarization,
     ArchiveHoldback,
-)
-
-COLLECT_CONSTRAINTS_KEYS = set(
-    [
-        "collect_mode",
-        "look_direction",
-        "asc_dsc",
-        "orbital_planes",
-        "local_time",
-        "off_nadir_min",
-        "off_nadir_max",
-        "elevation_min",
-        "elevation_max",
-        "image_length",
-        "image_width",
-        "azimuth",
-        "grr_min",
-        "grr_max",
-        "srr_min",
-        "srr_max",
-        "azr_min",
-        "azr_max",
-        "nesz_max",
-        "num_looks",
-        "polarization",
-    ]
-)
-
-REPETITION_PROPERTIES_KEYS = set(
-    [
-        "repeat_start",
-        "repeat_end",
-        "repetition_interval",
-        "repetition_count",
-        "maintain_scene_framing",
-        "look_angle_tolerance",
-    ]
 )
 
 
@@ -97,28 +64,17 @@ def create_repeat_request(
     num_looks: Optional[int] = None,
     polarization: Optional[Union[str, Polarization]] = None,
 ) -> Dict[str, Any]:
-
-    if isinstance(repeat_start, str):
-        try:
-            repeat_start = parse(repeat_start)
-        except ParserError:
-            raise ValueError("Could not parse repeat_start string into a useable datetime")
-    if isinstance(repeat_end, str):
-        try:
-            repeat_end = parse(repeat_end)
-        except ParserError:
-            raise ValueError("Could not parse repeat_end string into a useable datetime")
-
-    if not repeat_start:
-        repeat_start = datetime.utcnow()
-
-    repeat_start = repeat_start.isoformat(timespec="milliseconds") + "Z"
+    repeat_start = _datetime_to_iso8601_str(datetime.utcnow(), repeat_start)
     if repeat_end is not None:
-        repeat_end = repeat_end.isoformat(timespec="milliseconds") + "Z"
+        repeat_end = _datetime_to_iso8601_str(None, repeat_end)
 
     loc = locals()
-    collect_constraints = {_snake_to_camel(k): loc[k] for k in COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k]}
-    repetition_properties = {_snake_to_camel(k): loc[k] for k in REPETITION_PROPERTIES_KEYS if k in loc and loc[k]}
+    collect_constraints = {
+        _snake_to_camel(k): loc[k] for k in REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k] is not None
+    }
+    repetition_properties = {
+        _snake_to_camel(k): loc[k] for k in REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS if k in loc and loc[k] is not None
+    }
 
     payload = {
         "type": "Feature",
@@ -138,7 +94,6 @@ def create_repeat_request(
         },
     }
 
-    print(payload)
     if product_types is not None:
         payload["properties"]["processingConfig"] = {"productTypes": product_types}
 

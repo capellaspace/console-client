@@ -189,11 +189,11 @@ REPEAT_REQUEST = {
     "geometry": {"type": "Point", "coordinates": [-110.390625, 35.17380800000001]},
     "properties": {
         "submissionTime": "2023-09-08T17:35:26.171Z",
-        "repeatrequestId": "7668f135-63d5-4dab-9954-bf4c0cb85ccf",
+        "repeatrequestId": "PANDA",
         "repeatrequestName": "",
         "repeatrequestDescription": "",
-        "orgId": "e7669e89-523c-4aba-928f-e383cd8a1dee",
-        "userId": "cbdce044-2ca2-4cee-a3cf-793ba570406c",
+        "orgId": "PANDA_ORG",
+        "userId": "PANDA_USER",
         "windowDuration": 604800,
         "repetitionProperties": {
             "repeatStart": "2023-09-08T17:25:26.000Z",
