@@ -73,7 +73,9 @@ def create_repeat_request(
         _snake_to_camel(k): loc[k] for k in REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k] is not None
     }
     repetition_properties = {
-        _snake_to_camel(k): loc[k] for k in REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS if k in loc and loc[k] is not None
+        _snake_to_camel(k): loc[k]
+        for k in REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS
+        if k in loc and loc[k] is not None
     }
 
     payload = {
