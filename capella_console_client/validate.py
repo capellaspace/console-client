@@ -90,4 +90,4 @@ def _datetime_to_iso8601_str(
             dt = parse(dt)
         except ParserError:
             raise ValueError(f"Could not parse {dt} string into a datetime")
-    return (dt, dt.isoformat(timespec="milliseconds") + "Z")
+    return (dt, dt.isoformat(timespec="milliseconds") + "Z")  # type: ignore
