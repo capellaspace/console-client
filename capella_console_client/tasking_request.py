@@ -27,7 +27,7 @@ def create_tasking_request(
     geometry: geojson.geometry.Geometry,
     name: Optional[str] = "",
     description: Optional[str] = "",
-    window_open: Optional[Union[datetime, str]] = datetime.utcnow(),
+    window_open: Optional[Union[datetime, str]] = None,
     window_close: Optional[Union[datetime, str]] = None,
     collection_tier: Optional[Union[str, CollectionTier]] = CollectionTier.low,
     product_category: Optional[Union[str, ProductClass]] = ProductClass.standard,
