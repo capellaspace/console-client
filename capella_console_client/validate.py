@@ -80,7 +80,9 @@ def _snake_to_camel(snake):
     return re.sub(REG, lambda x: x.group(1) + x.group(2).upper(), snake, 0)
 
 
-def _datetime_to_iso8601_str(default_value: Optional[datetime], dt: Optional[Union[datetime, str]] = None) -> tuple[datetime, str]:
+def _datetime_to_iso8601_str(
+    default_value: Optional[datetime], dt: Optional[Union[datetime, str]] = None
+) -> tuple[datetime, str]:
     if not dt:
         dt = default_value
     elif isinstance(dt, str):

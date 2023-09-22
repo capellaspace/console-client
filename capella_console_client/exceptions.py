@@ -59,6 +59,7 @@ class AuthorizationError(CapellaConsoleClientError):
 class NoRefreshTokenError(CapellaConsoleClientError):
     pass
 
+
 class RepeatRequestPayloadValidationError(CapellaConsoleClientError):
     pass
 

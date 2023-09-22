@@ -66,8 +66,10 @@ def create_repeat_request(
     polarization: Optional[Union[str, Polarization]] = None,
 ) -> Dict[str, Any]:
     if repeat_end is not None and repetition_count is not None:
-        raise RepeatRequestPayloadValidationError("Only one of 'repeat_end' and 'repetition_count' can be defined. Please remove one of those values from your request and try again.")
-    
+        raise RepeatRequestPayloadValidationError(
+            "Only one of 'repeat_end' and 'repetition_count' can be defined. Please remove one of those values from your request and try again."
+        )
+
     repeat_start = _datetime_to_iso8601_str(datetime.utcnow(), repeat_start)[1]
     if repeat_end is not None:
         repeat_end = _datetime_to_iso8601_str(None, repeat_end)[1]
