@@ -117,3 +117,9 @@ class ArchiveHoldback(str, BaseEnum):
 class Polarization(str, BaseEnum):
     HH = "HH"
     VV = "VV"
+
+
+class LocalTimeOption(str, BaseEnum):
+    day = "day"
+    night = "night"
+    anytime = "anytime"

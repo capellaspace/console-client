@@ -123,7 +123,7 @@ class CapellaConsoleClient:
             look_direction: Constraint on view angle. One of "right", "left", "either". Default: "either"
             asc_dsc: Constraint on ascending/descending pass. One of "ascending", "descending", "either". Default: "either"
             orbital_planes: List of orbital planes allowed to service request. If empty any spacecraft in any plane can service request. One of 45, 53, 97. Default: None
-            local_time: Times, in the timezone of the area where the image will be collected, during which the collect can be taken. Represented by a list of time ranges as seconds in the day. For example, [[21600, 64800]] would allow collects between 6 AM and 6 PM; [[0, 21600], [64800, 86400]] would allow collects between 6 PM and 12 AM as well as from 12 AM to 6 AM. Default: None
+            local_time: Times, in the timezone of the area where the image will be collected, during which the collect can be taken. Represented by a list of time ranges as seconds in the day. For example, [[21600, 64800]] would allow collects between 6 AM and 6 PM; [[0, 21600], [64800, 86400]] would allow collects between 6 PM and 12 AM as well as from 12 AM to 6 AM. Alternatively, you can pass string values of "day", "night", or "anytime" which are parsed to [[21600, 64800]], [[0, 21600], [64800, 86400]], and [[0, 86400]] respectively. Default: None
             off_nadir_min: Minimum off-nadir angle permitted. Must be less than off_nadir_max. Default: None
             off_nadir_max: Maximum off-nadir angle permitted. Must be greater than off_nadir_min. Default: None
             elevation_min: Minimum elevation angle permitted. Default: None
@@ -234,7 +234,7 @@ class CapellaConsoleClient:
             look_direction: Constraint on view angle. One of "right", "left", "either". Default: "either"
             asc_dsc: Constraint on ascending/descending pass. One of "ascending", "descending", "either". Default: "either"
             orbital_planes: List of orbital planes allowed to service request. If empty any spacecraft in any plane can service request. One of 45, 53, 97. Default: None
-            local_time: Times, in the timezone of the area where the image will be collected, during which the collect can be taken. Represented by a list of time ranges as seconds in the day. For example, [[21600, 64800]] would allow collects between 6 AM and 6 PM; [[0, 21600], [64800, 86400]] would allow collects between 6 PM and 12 AM as well as from 12 AM to 6 AM. Default: None
+            local_time: Times, in the timezone of the area where the image will be collected, during which the collect can be taken. Represented by a list of time ranges as seconds in the day. For example, [[21600, 64800]] would allow collects between 6 AM and 6 PM; [[0, 21600], [64800, 86400]] would allow collects between 6 PM and 12 AM as well as from 12 AM to 6 AM. Alternatively, you can pass string values of "day", "night", or "anytime" which are parsed to [[21600, 64800]], [[0, 21600], [64800, 86400]], and [[0, 86400]] respectively. Default: None
             off_nadir_min: Minimum off-nadir angle permitted. Must be less than off_nadir_max. Default: None
             off_nadir_max: Maximum off-nadir angle permitted. Must be greater than off_nadir_min. Default: None
             elevation_min: Minimum elevation angle permitted. Default: None
