@@ -110,7 +110,6 @@ def test_asset_download_does_override(download_client):
 
 
 def test_product_download_dir_exists(download_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
@@ -172,7 +171,6 @@ def test_download_products_missing_input(test_client):
 
 
 def test_products_download_threaded_within_dir(download_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
@@ -191,7 +189,6 @@ def test_products_download_threaded_within_dir(download_client):
 
 
 def test_product_download_asset_include(download_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
@@ -202,7 +199,6 @@ def test_product_download_asset_include(download_client):
 
 
 def test_product_download_asset_include_str(download_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
@@ -215,7 +211,6 @@ def test_product_download_asset_include_str(download_client):
 
 
 def test_product_download_exclude(test_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
@@ -230,7 +225,6 @@ def test_product_download_exclude(test_client):
 
 
 def test_product_download_exclude_str(download_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
@@ -239,7 +233,6 @@ def test_product_download_exclude_str(download_client):
 
 
 def test_product_download_exclude_raster(download_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         assert temp_dir.exists()
@@ -248,7 +241,6 @@ def test_product_download_exclude_raster(download_client):
 
 
 def test_product_download_exclude_overrides_include(test_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         paths_by_key = test_client.download_product(
@@ -331,7 +323,6 @@ def test_download_products_for_collect_id(verbose_download_multiple_client, auth
 
 
 def test_download_products_with_product_types_filter(download_client):
-
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
         items_presigned = [MOCK_ITEM_PRESIGNED, MOCK_ITEM_PRESIGNED]

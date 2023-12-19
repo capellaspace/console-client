@@ -3,6 +3,9 @@ from typing import Any, Dict, Tuple, DefaultDict, Optional, List
 from collections import defaultdict
 from urllib.parse import urlparse
 from dataclasses import dataclass, field
+from math import ceil
+from concurrent.futures import ThreadPoolExecutor
+from itertools import repeat
 
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
@@ -13,14 +16,13 @@ from capella_console_client.config import (
     SUPPORTED_QUERY_FIELDS,
     STAC_PREFIXED_BY_QUERY_FIELDS,
     OPERATOR_SUFFIXES,
-    CATALOG_DEFAULT_PAGE_SIZE,
-    CATALOG_DEFAULT_MAX_FEATURE_COUNT,
+    CATALOG_MAX_PAGE_SIZE,
+    CATALOG_DEFAULT_LIMIT,
 )
 
 
 @dataclass
 class SearchResult:
-
     request_body: Dict[str, Any] = field(default_factory=dict)
     _pages: List[Dict[str, Any]] = field(default_factory=list)
     _features: List[Dict[str, Any]] = field(default_factory=list)
@@ -47,6 +49,21 @@ class SearchResult:
             page["features"] = [p for p in page["features"] if p["id"] not in dupes]
 
         return page
+
+    def _truncate(self):
+        len_features = len(self)
+        requested_limit = self.request_body.get("limit")
+        if requested_limit and len_features > requested_limit:
+            self._features = self._features[:requested_limit]
+
+    def _report(self):
+        len_results = len(self)
+        if not len_results:
+            message = "found no STAC items matching your query"
+        else:
+            multiple_suffix = "s" if len_results > 1 else ""
+            message = f"found {len_results} STAC item{multiple_suffix}"
+        logger.info(message)
 
     # backwards compability
     def __getitem__(self, key):
@@ -85,14 +102,18 @@ class StacSearch:
         cur_kwargs = deepcopy(kwargs)
         self.session = session
         self.payload: Dict[str, Any] = {}
+        self.threaded = cur_kwargs.pop("threaded", False)
 
         sortby = cur_kwargs.pop("sortby", None)
+        if sortby:
+            self.payload["sortby"] = self._get_sort_payload(sortby)
+
         query_payload = self._get_query_payload(cur_kwargs)
         if query_payload:
             self.payload["query"] = dict(query_payload)
 
-        if sortby:
-            self.payload["sortby"] = self._get_sort_payload(sortby)
+        if "limit" not in self.payload:
+            self.payload["limit"] = CATALOG_DEFAULT_LIMIT
 
     def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
         query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
@@ -153,26 +174,28 @@ class StacSearch:
 
     def fetch_all(self) -> SearchResult:
         logger.info(f"searching catalog with payload {self.payload}")
+        if not self.threaded:
+            return self._fetch_all_sync()
+        else:
+            return self._fetch_all_threaded()
 
-        requested_limit = self.payload.get("limit", CATALOG_DEFAULT_MAX_FEATURE_COUNT)
+    def _fetch_all_sync(self):
+        search_result = SearchResult(request_body=self.payload)
+        cur_payload = deepcopy(self.payload)
 
-        if "limit" not in self.payload:
-            self.payload["limit"] = CATALOG_DEFAULT_MAX_FEATURE_COUNT
-
-        # ensure CATALOG_DEFAULT_PAGE_SIZE if requested limit > CATALOG_DEFAULT_PAGE_SIZE
-        self.payload["limit"] = min(CATALOG_DEFAULT_PAGE_SIZE, self.payload["limit"])
+        # limit page size
+        cur_payload["limit"] = min(CATALOG_MAX_PAGE_SIZE, self.payload["limit"])
 
         page_cnt = 1
-        search_result = SearchResult(request_body=self.payload)
         next_href = None
 
         while True:
-            _log_page_query(page_cnt, len(search_result), self.payload["limit"])
-            page_data = _page_search(self.session, self.payload, next_href)
+            _log_page_query(page_cnt, len(search_result), cur_payload["limit"])
+            page_data = _page_search(self.session, cur_payload, next_href)
             number_matched = page_data["numberMatched"]
             items_added = search_result.add(page_data)
 
-            limit_reached = len(search_result) >= requested_limit or len(search_result) >= number_matched
+            limit_reached = len(search_result) >= self.payload["limit"] or len(search_result) >= number_matched
 
             # all dupes
             size_unchanged = items_added == 0
@@ -186,22 +209,44 @@ class StacSearch:
             if page_cnt == 1:
                 logger.info(f"Matched a total of {number_matched} stac items")
 
-            self.payload["limit"] = CATALOG_DEFAULT_PAGE_SIZE
             page_cnt += 1
-            self.payload["page"] = page_cnt
+            cur_payload["page"] = page_cnt
 
-        # truncate to limit
-        len_features = len(search_result)
-        if len_features > requested_limit:
-            search_result._features = search_result._features[:requested_limit]
-
-        if not len_features:
-            logger.info("found no STAC items matching your query")
-        else:
-            multiple_suffix = "s" if len_features > 1 else ""
-            logger.info(f"found {len(search_result)} STAC item{multiple_suffix}")
-
+        search_result._truncate()
+        search_result._report()
         return search_result
+
+    def _fetch_all_threaded(self):
+        search_result = SearchResult(request_body=self.payload)
+        page_payloads = self._get_page_payloads()
+
+        # TODO: configurable max threads
+        with ThreadPoolExecutor(max_workers=len(page_payloads)) as executor:
+            results = executor.map(_page_search, repeat(self.session), page_payloads)
+
+        for page in results:
+            search_result.add(page)
+
+        search_result._truncate()
+        search_result._report()
+        return search_result
+
+    def _get_page_payloads(self) -> List[Dict[str, Any]]:
+        # ping for how many matches in total
+        cur_payload = {**self.payload, "limit": 1}
+        single_match_page = _page_search(self.session, cur_payload)
+        number_matched = single_match_page["numberMatched"]
+
+        num_pages = ceil(min(number_matched, self.payload["limit"]) / CATALOG_MAX_PAGE_SIZE)
+        logger.info(
+            f"Matched a total of {number_matched} stac items - fetching in {num_pages} parallel requests (page size {CATALOG_MAX_PAGE_SIZE})"
+        )
+
+        payloads = [
+            {**self.payload, "limit": min(CATALOG_MAX_PAGE_SIZE, self.payload["limit"]), "page": i}
+            for i in range(1, num_pages + 1)
+        ]
+        return payloads
 
 
 def _log_page_query(page_cnt: int, len_feat: int, limit: int):

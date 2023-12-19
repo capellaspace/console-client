@@ -147,7 +147,6 @@ def _perform_download(
     threaded: bool,
     show_progress: bool = False,
 ) -> Dict[str, Path]:
-
     local_paths_by_key = {}
 
     with progress_bar as progress:

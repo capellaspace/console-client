@@ -34,7 +34,6 @@ def _load_and_prompt(
     search_entity: SearchEntity,
     multiple: bool = True,
 ) -> Tuple[Dict[str, Any], List[str]]:
-
     saved = _get_load_fct(search_entity)()
 
     if not saved:
