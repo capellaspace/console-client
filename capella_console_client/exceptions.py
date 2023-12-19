@@ -110,7 +110,6 @@ def handle_error_response_and_raise(response):
     # try to assign some more meaningful exception class by message
     if code == DEFAULT_ERROR_CODE and message:
         try:
-            print(message)
             code = next(v for k, v in ERROR_CODES_BY_MESSAGE_SNIP.items() if k in message.lower())
         except StopIteration:
             pass

@@ -579,7 +579,6 @@ class CapellaConsoleClient:
         collect_id: Optional[str] = None,
         product_types: List[str] = None,
     ) -> List[Dict[str, Any]]:
-
         stac_ids = None
 
         # 1 - resolve assets_presigned from order_id
@@ -763,7 +762,7 @@ class CapellaConsoleClient:
          • lte: lower than equal
 
         sorting:
-        • sortby: List[str] - must be supported fields, e.g. ["+datetime"]
+         • sortby: List[str] - must be supported fields, e.g. ["+datetime"]
 
         Returns:
             List[Dict[str, Any]]: STAC items matched

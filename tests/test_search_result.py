@@ -1,6 +1,11 @@
 from capella_console_client.search import SearchResult
 
-from .test_data import get_canned_search_results_single_page
+from .test_data import (
+    get_canned_search_results_single_page,
+    get_canned_search_results_with_collect_id,
+    get_canned_search_results_multi_page_page1,
+    get_canned_search_results_multi_page_page2,
+)
 
 
 def test_search_result_add_drops_dupes():
@@ -32,7 +37,7 @@ def test_search_result_merge_dupes():
     result1.add(page)
 
     result2 = SearchResult()
-    result1.add(page)
+    result2.add(page)
 
     orig_len1 = len(result1)
     orig_len2 = len(result2)
@@ -49,7 +54,7 @@ def test_search_result_merge_keep():
     result1.add(page)
 
     result2 = SearchResult()
-    result1.add(page)
+    result2.add(page)
 
     orig_len1 = len(result1)
     orig_len2 = len(result2)
@@ -58,3 +63,10 @@ def test_search_result_merge_keep():
     assert len(merged) == len(result1) + len(result2)
     assert orig_len1 == len(result1)
     assert orig_len2 == len(result2)
+
+
+def test_search_result_has_collect_ids():
+    result1 = SearchResult()
+    page = get_canned_search_results_with_collect_id()
+    result1.add(page)
+    assert len(result1.collect_ids) == len(page["features"])

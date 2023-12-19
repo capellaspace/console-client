@@ -1,5 +1,7 @@
 from typing import Dict, Any
 
+from capella_console_client.config import CATALOG_DEFAULT_LIMIT
+
 import pytest
 
 
@@ -183,6 +185,7 @@ TASK_2 = {
         },
     },
 }
+
 
 # GET
 def get_mock_responses(endpoint: str) -> Dict[str, Any]:
@@ -399,6 +402,25 @@ def get_canned_search_results_multi_page_page2() -> Dict[str, Any]:
     }
 
 
+def get_canned_search_results_with_collect_id() -> Dict[str, Any]:
+    return {
+        "features": [
+            {
+                "id": "CAPELLA_C02_SP_GEO_HH_20210422052305_20210422052329",
+                "collection": "capella-archive",
+                "properties": {"capella:collect_id": "0a4722dc-ff2a-4553-9f71-42dfdb99a39e"},
+            },
+            {
+                "id": "CAPELLA_C02_SP_SICD_HH_20210422052316_20210422052318",
+                "collection": "capella-archive",
+                "properties": {"capella:collect_id": "0a4722dc-ff2a-4553-9f71-42dfdb99a39e"},
+            },
+        ],
+        "numberMatched": 2,
+        "links": [],
+    }
+
+
 def post_mock_responses(endpoint: str) -> Dict[str, Any]:
     return {
         "/token": {
@@ -441,10 +463,10 @@ def get_search_test_cases():
     return [
         pytest.param(
             dict(constellation="capella"),
-            {"query": {"constellation": {"eq": "capella"}}},
+            {"query": {"constellation": {"eq": "capella"}}, "limit": CATALOG_DEFAULT_LIMIT},
             id="constellation",
         ),
-        pytest.param(dict(bbox=[1, 2, 3, 4]), {"bbox": [1, 2, 3, 4]}, id="bbox"),
+        pytest.param(dict(bbox=[1, 2, 3, 4]), {"bbox": [1, 2, 3, 4], "limit": CATALOG_DEFAULT_LIMIT}, id="bbox"),
         pytest.param(
             dict(
                 constellation="capella",
@@ -466,12 +488,12 @@ def get_search_test_cases():
         ),
         pytest.param(
             dict(constellation="other", doesnot="exist", nerf="!"),
-            {"query": {"constellation": {"eq": "other"}}},
+            {"query": {"constellation": {"eq": "other"}}, "limit": CATALOG_DEFAULT_LIMIT},
             id="filter_invalid_kwargs",
         ),
         pytest.param(
             dict(constellation__INVALID="other"),
-            {},
+            {"limit": CATALOG_DEFAULT_LIMIT},
             id="invalid_op",
         ),
         pytest.param(
@@ -482,6 +504,7 @@ def get_search_test_cases():
                 "query": {
                     "sar:product_type": {"in": ["SLC", "GEO"]},
                 },
+                "limit": CATALOG_DEFAULT_LIMIT,
             },
             id="in_implicit",
         ),
@@ -493,6 +516,7 @@ def get_search_test_cases():
                 "query": {
                     "sar:product_type": {"in": ["SLC", "GEO"]},
                 },
+                "limit": CATALOG_DEFAULT_LIMIT,
             },
             id="in_explicit",
         ),
@@ -500,6 +524,7 @@ def get_search_test_cases():
             dict(look_angle__gte=0.9, look_angle__lte=12.0),
             {
                 "query": {"view:look_angle": {"gte": 0.9, "lte": 12.0}},
+                "limit": CATALOG_DEFAULT_LIMIT,
             },
             id="gte_lte",
         ),
@@ -510,6 +535,7 @@ def get_search_test_cases():
                     "capella:resolution_ground_range": {"gt": 1},
                     "view:look_angle": {"lt": 10},
                 },
+                "limit": CATALOG_DEFAULT_LIMIT,
             },
             id="gt_lt",
         ),
@@ -522,6 +548,7 @@ def get_search_test_cases():
             dict(sortby="id"),
             {
                 "sortby": [{"field": "id", "direction": "asc"}],
+                "limit": CATALOG_DEFAULT_LIMIT,
             },
             id="singleSortby",
         ),
@@ -529,6 +556,7 @@ def get_search_test_cases():
             dict(sortby="-id"),
             {
                 "sortby": [{"field": "id", "direction": "desc"}],
+                "limit": CATALOG_DEFAULT_LIMIT,
             },
             id="singleSortbyDesc",
         ),
@@ -539,6 +567,7 @@ def get_search_test_cases():
                     {"field": "properties.datetime", "direction": "desc"},
                     {"field": "id", "direction": "asc"},
                 ],
+                "limit": CATALOG_DEFAULT_LIMIT,
             },
             id="multiSortby",
         ),
@@ -549,6 +578,7 @@ def get_search_test_cases():
                     {"field": "properties.datetime", "direction": "desc"},
                     {"field": "id", "direction": "asc"},
                 ],
+                "limit": CATALOG_DEFAULT_LIMIT,
             },
             id="multiSortbyOmits",
         ),
