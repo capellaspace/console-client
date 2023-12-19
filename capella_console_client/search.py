@@ -18,6 +18,7 @@ from capella_console_client.config import (
     OPERATOR_SUFFIXES,
     CATALOG_MAX_PAGE_SIZE,
     CATALOG_DEFAULT_LIMIT,
+    STAC_MAX_ITEM_RETURN,
 )
 
 
@@ -115,6 +116,12 @@ class StacSearch:
         if "limit" not in self.payload:
             self.payload["limit"] = CATALOG_DEFAULT_LIMIT
 
+        if self.payload["limit"] > STAC_MAX_ITEM_RETURN:
+            logger.warning(
+                f"Capella's STAC server can return up to {STAC_MAX_ITEM_RETURN} items ({self.payload['limit']} requested), limiting to that"
+            )
+            self.payload["limit"] = STAC_MAX_ITEM_RETURN
+
     def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
         query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
 
@@ -190,7 +197,20 @@ class StacSearch:
         next_href = None
 
         while True:
-            _log_page_query(page_cnt, len(search_result), cur_payload["limit"])
+            start = len(search_result)
+            end = min(start + cur_payload["limit"], self.payload["limit"])
+            _log_page_query(page_cnt=page_cnt, start=start, end=end)
+
+            # safeguard to not step over 10000
+            if start + cur_payload["limit"] > STAC_MAX_ITEM_RETURN:
+                # translate limit/ page for last request
+                missing = STAC_MAX_ITEM_RETURN - len(search_result)
+                if not missing:
+                    break
+
+                cur_payload["limit"] = missing
+                cur_payload["page"] = int(len(search_result) / missing) + 1
+
             page_data = _page_search(self.session, cur_payload, next_href)
             number_matched = page_data["numberMatched"]
             items_added = search_result.add(page_data)
@@ -207,7 +227,7 @@ class StacSearch:
                 break
 
             if page_cnt == 1:
-                logger.info(f"Matched a total of {number_matched} stac items")
+                logger.info(f"Matched a total of {number_matched} stac items - returning up to {self.payload['limit']}")
 
             page_cnt += 1
             cur_payload["page"] = page_cnt
@@ -239,19 +259,28 @@ class StacSearch:
 
         num_pages = ceil(min(number_matched, self.payload["limit"]) / CATALOG_MAX_PAGE_SIZE)
         logger.info(
-            f"Matched a total of {number_matched} stac items - fetching in {num_pages} parallel requests (page size {CATALOG_MAX_PAGE_SIZE})"
+            f"Matched a total of {number_matched} stac items - fetching in {num_pages} parallel requests (page size {CATALOG_MAX_PAGE_SIZE}) - returning up to {self.payload['limit']}"
         )
 
         payloads = [
             {**self.payload, "limit": min(CATALOG_MAX_PAGE_SIZE, self.payload["limit"]), "page": i}
             for i in range(1, num_pages + 1)
         ]
+
+        # safeguard to not step over 10000
+        overflow = payloads[-1]["limit"] * payloads[-1]["page"] > STAC_MAX_ITEM_RETURN
+        if overflow:
+            offset = payloads[-1]["limit"] * payloads[-2]["page"]
+            missing = STAC_MAX_ITEM_RETURN - offset
+            payloads[-1]["limit"] = missing
+            payloads[-1]["page"] = int(offset / missing) + 1
+
         return payloads
 
 
-def _log_page_query(page_cnt: int, len_feat: int, limit: int):
+def _log_page_query(page_cnt: int, start: int, end: int):
     if page_cnt != 1:
-        logger.info(f"\tpage {page_cnt} ({len_feat} - {len_feat + limit})")
+        logger.info(f"\tpage {page_cnt} ({start} - {end})")
 
 
 def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
