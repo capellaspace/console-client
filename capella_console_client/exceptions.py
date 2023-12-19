@@ -67,6 +67,8 @@ COLLECTION_ACCESS_DENIED_ERROR_CODE = "COLLECTION_ACCESS_DENIED"
 NOT_AUTHORIZED_ERROR_CODE = "NOT_AUTHORIZED"
 ORDER_VALIDATION_ERROR_CODE = "ORDER_VALIDATION_ERROR"
 
+UNAUTHORIZED_MESSAGE = "unauthorized"
+
 ERROR_CODES = {
     INVALID_TOKEN_ERROR_CODE: AuthenticationError,
     ORDER_EXPIRED_ERROR_CODE: OrderExpiredError,
@@ -106,6 +108,9 @@ def handle_error_response_and_raise(response):
         message = error
         code = DEFAULT_ERROR_CODE
         data = {}
+
+    if message is not None and message.lower() == UNAUTHORIZED_MESSAGE and code == DEFAULT_ERROR_CODE:
+        code = INVALID_TOKEN_ERROR_CODE
 
     # try to assign some more meaningful exception class by message
     if code == DEFAULT_ERROR_CODE and message:
