@@ -154,6 +154,7 @@ class CapellaConsoleSession(httpx.Client):
             # retry request
             orig_request = fct_args[0]
             orig_request.headers["authorization"] = self.headers["authorization"]
+            logger.info(f"retrying {fct_args[0]}")
             ret = super().send(*fct_args, **kwargs)
         return ret
 
