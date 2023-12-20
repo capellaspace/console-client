@@ -3,6 +3,15 @@ History
 =======
 
 
+0.11.0 (2023-12-19)
+-------------------
+* safeguards to return up to max allowed (10000) items upon searches
+* handle and refresh expired access token
+* opt in threaded flag for client.search (#53)
+* Bump urllib3 from 2.0.4 to 2.0.7 (#50)
+* enforcing python >= 3.8 (dropping 3.7)
+
+
 0.10.3 (2023-07-04)
 -------------------
 * local time search filters
