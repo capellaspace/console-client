@@ -55,7 +55,7 @@ For more detail see :ref:`wizard`
 
 License
 =======
-• Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_ • 2022 • Capella Space •
+• Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_ • 2023 • Capella Space •
 
 .. toctree::
    :hidden:
