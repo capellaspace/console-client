@@ -96,7 +96,7 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
 }
 
 
-TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset(
+COMMON_COLLECT_CONSTRAINTS_KEYS = frozenset(
     [
         "collect_mode",
         "look_direction",
@@ -121,33 +121,9 @@ TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset(
         "polarization",
     ]
 )
+TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset([*COMMON_COLLECT_CONSTRAINTS_KEYS])
+REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset([*COMMON_COLLECT_CONSTRAINTS_KEYS])
 
-
-REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset(
-    [
-        "collect_mode",
-        "look_direction",
-        "asc_dsc",
-        "orbital_planes",
-        "local_time",
-        "off_nadir_min",
-        "off_nadir_max",
-        "elevation_min",
-        "elevation_max",
-        "image_length",
-        "image_width",
-        "azimuth",
-        "grr_min",
-        "grr_max",
-        "srr_min",
-        "srr_max",
-        "azr_min",
-        "azr_max",
-        "nesz_max",
-        "num_looks",
-        "polarization",
-    ]
-)
 
 REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS = frozenset(
     [

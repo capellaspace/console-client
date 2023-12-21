@@ -80,14 +80,10 @@ def _snake_to_camel(snake):
     return re.sub(REG, lambda x: x.group(1) + x.group(2).upper(), snake, 0)
 
 
-def _datetime_to_iso8601_str(
-    default_value: Optional[datetime], dt: Optional[Union[datetime, str]] = None
-) -> Tuple[datetime, str]:
-    if not dt:
-        dt = default_value
-    elif isinstance(dt, str):
+def _datetime_to_iso8601_str(dt: Union[datetime, str]) -> str:
+    if isinstance(dt, str):
         try:
             dt = parse(dt)
         except ParserError:
             raise ValueError(f"Could not parse {dt} string into a datetime")
-    return (dt, dt.isoformat(timespec="milliseconds") + "Z")  # type: ignore
+    return dt.isoformat(timespec="milliseconds") + "Z"

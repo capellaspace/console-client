@@ -94,15 +94,15 @@ class TaskingRequestStatus(str, BaseEnum):
 
 
 class CollectionTier(str, BaseEnum):
-    high = "1_day"
-    medium = "3_day"
-    low = "7_day"
-    background = "background"
+    urgent = "urgent"
+    priority = "priority"
+    standard = "standard"
+    flexible = "flexible"
     internal = "internal"
 
 
 class RepeatCollectionTier(str, BaseEnum):
-    background = "background"
+    flexible = "flexible"
     routine = "routine"
     internal = "internal"
 

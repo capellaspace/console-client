@@ -29,7 +29,7 @@ def create_tasking_request(
     description: Optional[str] = "",
     window_open: Optional[Union[datetime, str]] = None,
     window_close: Optional[Union[datetime, str]] = None,
-    collection_tier: Optional[Union[str, CollectionTier]] = CollectionTier.low,
+    collection_tier: Optional[Union[str, CollectionTier]] = CollectionTier.standard,
     product_category: Optional[Union[str, ProductClass]] = ProductClass.standard,
     archive_holdback: Optional[Union[str, ArchiveHoldback]] = ArchiveHoldback.none,
     custom_attribute_1: Optional[str] = None,
@@ -58,8 +58,15 @@ def create_tasking_request(
     num_looks: Optional[int] = None,
     polarization: Optional[Union[str, Polarization]] = None,
 ) -> Dict[str, Any]:
-    window_open = _datetime_to_iso8601_str(datetime.utcnow(), window_open)  # type: ignore
-    window_close = _datetime_to_iso8601_str(window_open[0] + timedelta(days=7), window_close)  # type: ignore
+    if window_open is None:
+        window_open = datetime.utcnow()
+    if window_close is None:
+        if isinstance(window_open, str):
+            window_open = parse(window_open)
+        window_close = window_open + timedelta(days=7)
+
+    window_open = _datetime_to_iso8601_str(window_open)
+    window_close = _datetime_to_iso8601_str(window_close)
 
     loc = locals()
     collect_constraints = {

@@ -113,7 +113,7 @@ class CapellaConsoleClient:
             description: Can be used along with name to help characterize and describe the tasking request. Default: ""
             window_open: Earliest time (in UTC) that you would like data to be collected. Default: Now
             window_close: Latest time (in UTC) that you would like data to be collected. Default: Seven days after window_open
-            collection_tier: Preference for data to be collected within a certain time after window_open. Can be one of "high", "medium", "low", or "background"; these correspond respectively to one day, three days, seven days, and background. Default: "low"
+            collection_tier: Preference for data to be collected within a certain time after window_open. Can be one of "urgent", "priority", "standard", and "flexible". Default: "standard"
             product_category: Category used to define image collection. "Extended" has broader look angles and "Custom" allows specifying advanced image acquisition parameters. More information on the specifics of each can be found at https://support.capellaspace.com/hc/en-us/articles/360049110852-SAR-Imagery-Product-Tasking-Categories. One of "standard", "extended", and "custom". Default: "standard"
             product_types: List of analytics to add to the order along with the imagery. Currently available analytics are Amplitude Change Detection and Vessel Detection. One of "ACD", "VS". Default: None
             archive_holdback: If defined will specify a time period during which the resulting imagery will be kept from the publicly accessible archive. One of "none", "one_year", "thirty_day", "permanent". Default: "none"
@@ -218,7 +218,7 @@ class CapellaConsoleClient:
             geometry: A GeoJSON representation of the area/point of interest. Must be either a polygon or point
             name: Can be used along with description to help characterize and describe the tasking request. Default: ""
             description: Can be used along with name to help characterize and describe the tasking request. Default: ""
-            collection_tier: Preference for data to be collected within a certain time after window_open. Can be one of "high", "medium", "low", or "background"; these correspond respectively to one day, three days, seven days, and background. Default: "low"
+            collection_tier: Preference for data to be collected within a certain time after window_open. Can be either "flexible" or "routine". Default: "routine"
             product_category: Category used to define image collection. "Extended" has broader look angles and "Custom" allows specifying advanced image acquisition parameters. More information on the specifics of each can be found at https://support.capellaspace.com/hc/en-us/articles/360049110852-SAR-Imagery-Product-Tasking-Categories. One of "standard", "extended", and "custom". Default: "standard"
             archive_holdback: If defined will specify a time period during which the resulting imagery will be kept from the publicly accessible archive. One of "none", "one_year", "thirty_day", "permanent". Default: "none"
             custom_attribute_1: Can be used along with custom_attribute_2 to help you track a Capella task with your own metadata or internal systems. Default: None
