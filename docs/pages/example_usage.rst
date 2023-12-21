@@ -119,6 +119,14 @@ By default **up to 500** STAC items are returned. This can be increased by provi
     many_products = client.search(constellation="capella", limit=1000)
 
 
+Expensive searches (time is $$)  can be sped up by providing `threaded=True`:
+
+.. code:: python3
+
+    many_products = client.search(constellation="capella", limit=9999, threaded=True)
+
+
+
 search fields
 *************
 
