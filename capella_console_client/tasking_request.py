@@ -19,6 +19,7 @@ from capella_console_client.enumerations import (
     InstrumentMode,
     Polarization,
     ArchiveHoldback,
+    LocalTimeOption,
 )
 
 
@@ -40,7 +41,7 @@ def create_tasking_request(
     look_direction: Optional[Union[str, ObservationDirection]] = ObservationDirection.either,
     asc_dsc: Optional[Union[str, OrbitState]] = OrbitState.either,
     orbital_planes: Optional[List[Union[int, OrbitalPlane]]] = None,
-    local_time: Optional[List[int]] = None,
+    local_time: Optional[Union[List[int], LocalTimeOption]] = None,
     off_nadir_min: Optional[int] = None,
     off_nadir_max: Optional[int] = None,
     elevation_min: Optional[int] = None,
