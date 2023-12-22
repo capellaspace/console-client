@@ -146,7 +146,6 @@ def test_submit_order_invalid_stac_id(test_client, httpx_mock):
 
 
 def test_submit_order_rejected(order_client_unsuccessful, httpx_mock):
-
     httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         method="POST",

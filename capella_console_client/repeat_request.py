@@ -71,9 +71,13 @@ def create_repeat_request(
             "Only one of 'repeat_end' and 'repetition_count' can be defined. Please remove one of those values from your request and try again."
         )
 
-    repeat_start = _datetime_to_iso8601_str(datetime.utcnow(), repeat_start)[1]
+    if repeat_start is None:
+        repeat_start = datetime.utcnow()
+
+    repeat_start = _datetime_to_iso8601_str(repeat_start)
+
     if repeat_end is not None:
-        repeat_end = _datetime_to_iso8601_str(None, repeat_end)[1]
+        repeat_end = _datetime_to_iso8601_str(repeat_end)
 
     loc = locals()
     collect_constraints = {

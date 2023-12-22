@@ -1,8 +1,9 @@
 CONSOLE_API_URL = "https://api.capellaspace.com"
 DEFAULT_TIMEOUT = 60
-CATALOG_DEFAULT_PAGE_SIZE = 1000
-CATALOG_DEFAULT_MAX_FEATURE_COUNT = 500
+CATALOG_MAX_PAGE_SIZE = 900
+CATALOG_DEFAULT_LIMIT = 500
 TASKING_REQUEST_DEFAULT_PAGE_SIZE = 100
+STAC_MAX_ITEM_RETURN = 10000
 
 
 SUPPORTED_SEARCH_FIELDS = {
@@ -96,7 +97,7 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
 }
 
 
-TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset(
+COMMON_COLLECT_CONSTRAINTS_KEYS = frozenset(
     [
         "collect_mode",
         "look_direction",
@@ -121,33 +122,9 @@ TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset(
         "polarization",
     ]
 )
+TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset([*COMMON_COLLECT_CONSTRAINTS_KEYS])
+REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset([*COMMON_COLLECT_CONSTRAINTS_KEYS])
 
-
-REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset(
-    [
-        "collect_mode",
-        "look_direction",
-        "asc_dsc",
-        "orbital_planes",
-        "local_time",
-        "off_nadir_min",
-        "off_nadir_max",
-        "elevation_min",
-        "elevation_max",
-        "image_length",
-        "image_width",
-        "azimuth",
-        "grr_min",
-        "grr_max",
-        "srr_min",
-        "srr_max",
-        "azr_min",
-        "azr_max",
-        "nesz_max",
-        "num_looks",
-        "polarization",
-    ]
-)
 
 REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS = frozenset(
     [

@@ -119,6 +119,14 @@ By default **up to 500** STAC items are returned. This can be increased by provi
     many_products = client.search(constellation="capella", limit=1000)
 
 
+Expensive searches (time is $$)  can be sped up by providing `threaded=True`:
+
+.. code:: python3
+
+    many_products = client.search(constellation="capella", limit=9999, threaded=True)
+
+
+
 search fields
 *************
 
@@ -787,3 +795,103 @@ read metadata
   # read extended metadata .json
   metadata_presigned_href = assets_presigned[0]["metadata"]["href"]
   metadata = httpx.get(metadata_presigned_href).json()
+
+
+create tasking request
+##############
+
+Create a tasking request with basic parameters
+
+.. code:: python3
+
+    # Create basic tasking request with a geometry (only required parameter)
+    client.create_tasking_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        )
+    )
+
+    # Add a couple of parameters to help you track/identify it better
+    client.create_tasking_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        ),
+        name="I<3SAR",
+        description="My first tasking request"
+    )
+
+
+create repeating tasking request
+##############
+
+Create a repeating tasking request with basic parameters
+
+.. code:: python3
+
+    # Create basic repeating tasking request with a geometry (only required parameter)
+    client.create_repeat_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        )
+    )
+
+    # Add a couple of parameters to help you track/identify it better
+    client.create_repeat_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        ),
+        name="I<3SAR",
+        description="My first tasking request"
+    )
+
+    # Note that you can only define either repeat_end OR repetition_count, not both. The following request will fail:
+    client.create_repeat_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        ),
+        name="I<3SAR",
+        description="My first tasking request",
+        repeat_start="2023-12-24 3:30 PM"
+        repeat_end="2023-12-31 3:30 PM",
+        repetition_count=23
+    )
