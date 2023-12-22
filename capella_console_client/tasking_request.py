@@ -80,8 +80,8 @@ def create_tasking_request(
         "properties": {
             "taskingrequestName": name,
             "taskingrequestDescription": description,
-            "windowOpen": window_open[1],  # type: ignore
-            "windowClose": window_close[1],  # type: ignore
+            "windowOpen": window_open,
+            "windowClose": window_close,
             "collectionTier": collection_tier,
             "productCategory": product_category,
             "archiveHoldback": archive_holdback,
