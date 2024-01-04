@@ -7,7 +7,7 @@
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/capella-console-client.svg)](https://pypi.org/project/capella-console-client/)
 [![Documentation](https://readthedocs.org/projects/capella-console-client/badge/?version=main)](https://capella-console-client.readthedocs.io)
 
-Python SDK for api.capellaspace.com (search, order, download)
+Python SDK for api.capellaspace.com (task, search, order, download)
 
 
 ## Installation
@@ -87,4 +87,4 @@ Contributions are very much welcomed and appreciated. See [how to contribute](ht
 
 
 ## License
-• Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE) • Copyright 2023 • Capella Space •
+• Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE) • Copyright 2024 • Capella Space •

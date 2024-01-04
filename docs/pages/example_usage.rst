@@ -715,10 +715,108 @@ Issue the following snippet to view the ordering history
     specific_orders = client.list_orders(order_ids=[specific_order_id])
 
 
-tasking requests
-################
+create tasking request
+######################
 
-search for tasking requests
+Create a tasking request with basic parameters
+
+.. code:: python3
+
+    # Create basic tasking request with a geometry (only required parameter)
+    client.create_tasking_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        )
+    )
+
+    # Add a couple of parameters to help you track/identify it better
+    client.create_tasking_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        ),
+        name="I<3SAR",
+        description="My first tasking request"
+    )
+
+
+create repeating tasking request
+################################
+
+Create a repeating tasking request with basic parameters
+
+.. code:: python3
+
+    # Create basic repeating tasking request with a geometry (only required parameter)
+    client.create_repeat_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        )
+    )
+
+    # Add a couple of parameters to help you track/identify it better
+    client.create_repeat_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        ),
+        name="I<3SAR",
+        description="My first repeat request"
+    )
+
+    # Note that you can only define either repeat_end OR repetition_count, not both. The following request will fail:
+    client.create_repeat_request(
+        geometry=geojson.Polygon(
+            [
+                [
+                    [11.148216220469152, 49.59672249842626],
+                    [11.148216220469152, 49.55415435337187],
+                    [11.219621049225651, 49.55415435337187],
+                    [11.219621049225651, 49.59672249842626],
+                    [11.148216220469152, 49.59672249842626],
+                ]
+            ]
+        ),
+        name="I<3SAR",
+        description="My first repeat request",
+        repeat_start="2023-12-24 3:30 PM"
+        repeat_end="2023-12-31 3:30 PM",
+        repetition_count=23
+    )
+
+search tasking request
+######################
+
 
 .. code:: python3
 
@@ -795,103 +893,3 @@ read metadata
   # read extended metadata .json
   metadata_presigned_href = assets_presigned[0]["metadata"]["href"]
   metadata = httpx.get(metadata_presigned_href).json()
-
-
-create tasking request
-##############
-
-Create a tasking request with basic parameters
-
-.. code:: python3
-
-    # Create basic tasking request with a geometry (only required parameter)
-    client.create_tasking_request(
-        geometry=geojson.Polygon(
-            [
-                [
-                    [11.148216220469152, 49.59672249842626],
-                    [11.148216220469152, 49.55415435337187],
-                    [11.219621049225651, 49.55415435337187],
-                    [11.219621049225651, 49.59672249842626],
-                    [11.148216220469152, 49.59672249842626],
-                ]
-            ]
-        )
-    )
-
-    # Add a couple of parameters to help you track/identify it better
-    client.create_tasking_request(
-        geometry=geojson.Polygon(
-            [
-                [
-                    [11.148216220469152, 49.59672249842626],
-                    [11.148216220469152, 49.55415435337187],
-                    [11.219621049225651, 49.55415435337187],
-                    [11.219621049225651, 49.59672249842626],
-                    [11.148216220469152, 49.59672249842626],
-                ]
-            ]
-        ),
-        name="I<3SAR",
-        description="My first tasking request"
-    )
-
-
-create repeating tasking request
-##############
-
-Create a repeating tasking request with basic parameters
-
-.. code:: python3
-
-    # Create basic repeating tasking request with a geometry (only required parameter)
-    client.create_repeat_request(
-        geometry=geojson.Polygon(
-            [
-                [
-                    [11.148216220469152, 49.59672249842626],
-                    [11.148216220469152, 49.55415435337187],
-                    [11.219621049225651, 49.55415435337187],
-                    [11.219621049225651, 49.59672249842626],
-                    [11.148216220469152, 49.59672249842626],
-                ]
-            ]
-        )
-    )
-
-    # Add a couple of parameters to help you track/identify it better
-    client.create_repeat_request(
-        geometry=geojson.Polygon(
-            [
-                [
-                    [11.148216220469152, 49.59672249842626],
-                    [11.148216220469152, 49.55415435337187],
-                    [11.219621049225651, 49.55415435337187],
-                    [11.219621049225651, 49.59672249842626],
-                    [11.148216220469152, 49.59672249842626],
-                ]
-            ]
-        ),
-        name="I<3SAR",
-        description="My first tasking request"
-    )
-
-    # Note that you can only define either repeat_end OR repetition_count, not both. The following request will fail:
-    client.create_repeat_request(
-        geometry=geojson.Polygon(
-            [
-                [
-                    [11.148216220469152, 49.59672249842626],
-                    [11.148216220469152, 49.55415435337187],
-                    [11.219621049225651, 49.55415435337187],
-                    [11.219621049225651, 49.59672249842626],
-                    [11.148216220469152, 49.59672249842626],
-                ]
-            ]
-        ),
-        name="I<3SAR",
-        description="My first tasking request",
-        repeat_start="2023-12-24 3:30 PM"
-        repeat_end="2023-12-31 3:30 PM",
-        repetition_count=23
-    )

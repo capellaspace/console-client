@@ -15,7 +15,7 @@
   :alt: Supported Python Versions
 
 
-**capella-console-client** is the Python SDK for `api.capellaspace.com <https://api.capellaspace.com>`_ (search, order, download - `see API docs <https://docs.capellaspace.com/api/data-access>`_)
+**capella-console-client** is the Python SDK for `api.capellaspace.com <https://api.capellaspace.com>`_ (task, search, order, download - `see API docs <https://docs.capellaspace.com/api/data-access>`_)
 
 Installation
 ============
@@ -55,7 +55,7 @@ For more detail see :ref:`wizard`
 
 License
 =======
-• Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_ • 2023 • Capella Space •
+• Licensed under the `MIT License <https://github.com/capellaspace/console-client/blob/master/LICENSE>`_ • 2024 • Capella Space •
 
 .. toctree::
    :hidden:
