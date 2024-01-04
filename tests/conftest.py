@@ -9,7 +9,7 @@ from capella_console_client import client as capella_client_module
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from capella_console_client import client
-from capella_console_client import tasking as tasking_modules
+from capella_console_client import tasking_request as tasking_modules
 
 from .test_data import (
     post_mock_responses,
@@ -135,6 +135,18 @@ def authed_tasking_request_mock(auth_httpx_mock):
             url=f"{CONSOLE_API_URL}{mock_id}",
             json=get_mock_responses(mock_id),
         )
+
+    auth_httpx_mock.add_response(url=f"{CONSOLE_API_URL}/task", method="POST", json=post_mock_responses("/task"))
+
+    yield auth_httpx_mock
+
+
+@pytest.fixture
+def authed_repeat_request_mock(auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/repeat-requests",
+        json=post_mock_responses("/repeat-requests"),
+    )
 
     yield auth_httpx_mock
 

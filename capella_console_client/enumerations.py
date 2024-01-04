@@ -57,14 +57,16 @@ class ProductClass(str, BaseEnum):
 class OrbitState(str, BaseEnum):
     ascending = "ascending"
     descending = "descending"
+    either = "either"
 
 
 class ObservationDirection(str, BaseEnum):
     left = "left"
     right = "right"
+    either = "either"
 
 
-class OrbitalPlane(str, BaseEnum):
+class OrbitalPlane(int, BaseEnum):
     fortyfive = 45
     fiftythree = 53
     ninetyseven = 97
@@ -89,3 +91,35 @@ class TaskingRequestStatus(str, BaseEnum):
     canceled = "canceled"
     error = "error"
     failed = "failed"
+
+
+class CollectionTier(str, BaseEnum):
+    urgent = "urgent"
+    priority = "priority"
+    standard = "standard"
+    flexible = "flexible"
+    internal = "internal"
+
+
+class RepeatCollectionTier(str, BaseEnum):
+    flexible = "flexible"
+    routine = "routine"
+    internal = "internal"
+
+
+class ArchiveHoldback(str, BaseEnum):
+    none = "none"
+    one_year = "1 year"
+    thirty_day = "30 day"
+    permanent = "permanent"
+
+
+class Polarization(str, BaseEnum):
+    HH = "HH"
+    VV = "VV"
+
+
+class LocalTimeOption(str, BaseEnum):
+    day = "day"
+    night = "night"
+    anytime = "anytime"

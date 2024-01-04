@@ -186,6 +186,73 @@ TASK_2 = {
     },
 }
 
+REPEAT_REQUEST = {
+    "type": "Feature",
+    "geometry": {"type": "Point", "coordinates": [-110.390625, 35.17380800000001]},
+    "properties": {
+        "submissionTime": "2023-09-08T17:35:26.171Z",
+        "repeatrequestId": "PANDA",
+        "repeatrequestName": "",
+        "repeatrequestDescription": "",
+        "orgId": "PANDA_ORG",
+        "userId": "PANDA_USER",
+        "windowDuration": 604800,
+        "repetitionProperties": {
+            "repeatStart": "2023-09-08T17:25:26.000Z",
+            "repeatEnd": None,
+            "repetitionInterval": 7,
+            "repetitionCount": None,
+            "maintainSceneFraming": False,
+            "lookAngleTolerance": 10,
+        },
+        "collectionTier": "routine",
+        "archiveHoldback": "1_year",
+        "statusHistory": [{"time": "2023-09-08T17:35:26.172Z", "code": "received", "message": "Request created"}],
+        "collectConstraints": {
+            "lookDirection": "either",
+            "ascDsc": "either",
+            "orbitalPlanes": [],
+            "localTime": [[0, 86400]],
+            "offNadirMin": 25,
+            "offNadirMax": 50,
+            "elevationMin": 0,
+            "elevationMax": 90,
+            "imageLength": 5000,
+            "imageWidth": 5000,
+            "collectMode": "spotlight",
+            "azimuth": None,
+            "grrMin": 0.4,
+            "grrMax": 0.7,
+            "srrMin": 0.1,
+            "srrMax": 10,
+            "azrMin": 0.5,
+            "azrMax": 0.5,
+            "neszMax": -10,
+            "numLooks": 9,
+            "polarization": "HH",
+            "prfMin": 5000,
+            "radarParameters": {
+                "prf": None,
+                "bandwidth": 500000000,
+                "centerFrequency": None,
+                "upchirp": True,
+                "method": "onboard",
+                "ground_poly": None,
+                "mode": None,
+            },
+            "duration": None,
+            "prescribedCollectMidtime": None,
+        },
+        "billingEnvironment": "default",
+        "parentRepeatrequest": None,
+        "sandbox": True,
+        "costPerImageEstimate": "$3,000.00",
+        "processingConfig": None,
+        "customAttribute1": None,
+        "customAttribute2": None,
+    },
+}
+
 
 # GET
 def get_mock_responses(endpoint: str) -> Dict[str, Any]:
@@ -455,6 +522,8 @@ def post_mock_responses(endpoint: str) -> Dict[str, Any]:
             "organizationId": "MOCK_ORG_ID1",
             "orderStatus": "rejected",
         },
+        "/task": TASK_1,
+        "/repeat-requests": REPEAT_REQUEST,
     }[endpoint]
 
 
