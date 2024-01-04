@@ -1,12 +1,18 @@
-import os
-import sys
+import importlib
+from datetime import date
 
-sys.path.insert(0, os.path.abspath("../"))
-from capella_console_client.version import __version__
+# import os
+# import toml
+# from pathlib import Path
+
+# pyproject = toml.load(Path(__file__).parent.parent / "pyproject.toml")
+# __version__ = pyproject["tool"]["poetry"]["version"]
 
 project = "capella-console-client"
-copyright = "2022, Capella Space"
+__version__ = importlib.metadata.version(project)
+
 author = "Capella Space"
+copyright = f"{date.today().year}, {author}"
 
 version = __version__
 release = __version__
