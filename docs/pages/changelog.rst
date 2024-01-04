@@ -3,6 +3,12 @@ History
 =======
 
 
+0.12.0 (2024-01-04)
+-------------------
+* create tasking request
+* create repeat request
+
+
 0.11.0 (2023-12-19)
 -------------------
 * safeguards to return up to max allowed (10000) items upon searches
