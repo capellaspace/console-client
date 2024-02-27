@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from dataclasses import dataclass
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Union, Dict, Any
+from typing import List, Union, Dict, Any
 import re
 
 import httpx
@@ -21,6 +21,7 @@ from capella_console_client.exceptions import ConnectError
 STAC_ID_REGEX = re.compile("^.*(CAPELLA_\\w+_\\w+_\\w+_\\d{14}_\\d{14}).*$")
 PRODUCT_TYPE_REGEX = re.compile("^.*CAPELLA_\\w+_\\w+_(\\w+)_\\w+_\\d{14}_\\d{14}.*$")
 MAIN_ASSET_KEY_OPTIONS = {"HH", "VV", "analytic_product", "changemap"}
+ASSET_KEYS_NOT_DOWNLOADABLE = {"license"}
 
 
 @dataclass
@@ -78,6 +79,9 @@ def _gather_download_requests(
     # gather up paths
     download_requests = []
     for key, asset in assets_presigned.items():
+        if key in ASSET_KEYS_NOT_DOWNLOADABLE:
+            continue
+
         # white-listing asset
         if include and key not in include:
             continue
