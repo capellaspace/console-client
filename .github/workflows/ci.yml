@@ -18,20 +18,20 @@ jobs:
 
     steps:
     - name: Checkout git repository 🕝
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up python3.11 🐍
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.11
 
     - name: Install poetry 🦄
-      uses: Gr1N/setup-poetry@v8
+      uses: Gr1N/setup-poetry@v9
       with:
         poetry-version: 1.6.1
 
     - name: Load poetry cached libs ⬇
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pypoetry
         key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
@@ -57,20 +57,20 @@ jobs:
 
     steps:
     - name: Checkout git repository 🕝
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up python ${{ matrix.python-version }} 🐍
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install poetry 🦄
-      uses: Gr1N/setup-poetry@v8
+      uses: Gr1N/setup-poetry@v9
       with:
-        poetry-version: 1.2.2
+        poetry-version: 1.6.1
 
     - name: Load poetry cached libs ⬇
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pypoetry
         key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
@@ -96,17 +96,17 @@ jobs:
 
     steps:
     - name: Checkout git repository 🕝
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python3.11 🐍
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.11
 
     - name: Install poetry 🦄
-      uses: Gr1N/setup-poetry@v8
+      uses: Gr1N/setup-poetry@v9
       with:
-        poetry-version: 1.2.2
+        poetry-version: 1.6.1
 
     - name: Install dependencies 🖥
       run: poetry install --no-interaction --extras "docs"
@@ -126,17 +126,17 @@ jobs:
 
   #   steps:
   #   - name: Checkout git repository 🕝
-  #     uses: actions/checkout@v3
+  #     uses: actions/checkout@v4
 
   #   - name: Set up python3.8 🐍
-  #     uses: actions/setup-python@v4
+  #     uses: actions/setup-python@v5
   #     with:
   #       python-version: 3.8
 
   #   - name: Install poetry 🦄
   #     uses: Gr1N/setup-poetry@v7
   #     with:
-  #       poetry-version: 1.2.2
+  #       poetry-version: 1.6.1
 
   #   - name: Build ⚒️ distributions
   #     run: |
