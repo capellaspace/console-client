@@ -67,7 +67,7 @@ jobs:
     - name: Install poetry 🦄
       uses: Gr1N/setup-poetry@v8
       with:
-        poetry-version: 1.2.2
+        poetry-version: 1.8.1
 
     - name: Load poetry cached libs ⬇
       uses: actions/cache@v3
