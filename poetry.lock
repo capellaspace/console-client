@@ -1329,5 +1329,5 @@ wizard = ["questionary", "tabulate", "typer"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.8,<=3.12.2"
-content-hash = "60f0d70c49f2421c4becfeec48cb2076df631dcf39779d349999bd44ebfe1896"
+python-versions = ">=3.8,<4.0"
+content-hash = "e1b78fc9eb646c46352f8df6936f8c099f5a32f83eefbe5479856949cc3d5f78"
