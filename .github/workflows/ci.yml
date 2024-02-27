@@ -20,10 +20,10 @@ jobs:
     - name: Checkout git repository 🕝
       uses: actions/checkout@v3
 
-    - name: Set up python3.11 🐍
+    - name: Set up python3.12 🐍
       uses: actions/setup-python@v4
       with:
-        python-version: 3.11
+        python-version: 3.12
 
     - name: Install poetry 🦄
       uses: Gr1N/setup-poetry@v8
