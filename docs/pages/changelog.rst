@@ -3,11 +3,15 @@ History
 =======
 
 
+0.13.0 (2024-01-04)
+-------------------
+* python = ">=3.8,<4.0"
+* ensure license href is not downloaded
+
 0.12.0 (2024-01-04)
 -------------------
 * create tasking request
 * create repeat request
-
 
 0.11.0 (2023-12-19)
 -------------------
@@ -16,7 +20,6 @@ History
 * opt in threaded flag for client.search (#53)
 * Bump urllib3 from 2.0.4 to 2.0.7 (#50)
 * enforcing python >= 3.8 (dropping 3.7)
-
 
 0.10.3 (2023-07-04)
 -------------------
