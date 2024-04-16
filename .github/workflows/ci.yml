@@ -20,15 +20,15 @@ jobs:
     - name: Checkout git repository 🕝
       uses: actions/checkout@v4
 
-    - name: Set up python3.12 🐍
+    - name: Set up python3.11 🐍
       uses: actions/setup-python@v5
       with:
-        python-version: 3.12
+        python-version: 3.11
 
     - name: Install poetry 🦄
       uses: Gr1N/setup-poetry@v9
       with:
-        poetry-version: 1.6.1
+        poetry-version: 1.8.1
 
     - name: Load poetry cached libs ⬇
       uses: actions/cache@v4
@@ -106,7 +106,7 @@ jobs:
     - name: Install poetry 🦄
       uses: Gr1N/setup-poetry@v9
       with:
-        poetry-version: 1.6.1
+        poetry-version: 1.8.1
 
     - name: Install dependencies 🖥
       run: poetry install --no-interaction --extras "docs"
