@@ -44,8 +44,7 @@ test:
 	poetry run pytest --cov capella_console_client --cov-report=html -sv
 
 types:
-	poetry run mypy --install-types --non-interactive capella_console_client
-
+	poetry run mypy --install-types --non-interactive capella_console_client --tb
 docs:
 	poetry run make -C docs html
 

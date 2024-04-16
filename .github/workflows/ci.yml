@@ -28,7 +28,7 @@ jobs:
     - name: Install poetry 🦄
       uses: Gr1N/setup-poetry@v9
       with:
-        poetry-version: 1.6.1
+        poetry-version: 1.8.1
 
     - name: Load poetry cached libs ⬇
       uses: actions/cache@v4
@@ -84,7 +84,7 @@ jobs:
       run: make test
 
     - name: Send Coverage Report 📊
-      if: matrix.python-version == 3.11 && matrix.os == 'ubuntu-latest'
+      if: matrix.python-version == 3.12 && matrix.os == 'ubuntu-latest'
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_SERVICE_NAME: github
@@ -106,7 +106,7 @@ jobs:
     - name: Install poetry 🦄
       uses: Gr1N/setup-poetry@v9
       with:
-        poetry-version: 1.6.1
+        poetry-version: 1.8.1
 
     - name: Install dependencies 🖥
       run: poetry install --no-interaction --extras "docs"
