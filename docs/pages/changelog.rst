@@ -3,7 +3,13 @@ History
 =======
 
 
-0.13.0 (2024-01-04)
+0.13.1 (2024-04-16)
+-------------------
+* vulnerability updates (idna, black)
+* dependency update (rich, mypy)
+
+
+0.13.0 (2024-02-28)
 -------------------
 * python = ">=3.8,<4.0"
 * ensure license href is not downloaded
