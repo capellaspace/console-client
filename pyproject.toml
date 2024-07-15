@@ -30,7 +30,7 @@ capella-console-wizard = 'capella_console_client.cli.wizard:main'
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
-setuptools = ">=69.0.2,<=69.5.1"
+setuptools = ">=69.0.2,<=70.0.0"
 python-dateutil = "^2.8.2"
 httpx = "^0.23.0"
 retrying = "^1.3.3"
