@@ -1,3 +1,3 @@
-import pkg_resources
+import importlib
 
-__version__ = pkg_resources.get_distribution("capella-console-client").version
+__version__ = importlib.metadata.version("capella-console-client")
