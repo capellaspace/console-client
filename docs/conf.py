@@ -1,13 +1,6 @@
 import importlib
 from datetime import date
 
-# import os
-# import toml
-# from pathlib import Path
-
-# pyproject = toml.load(Path(__file__).parent.parent / "pyproject.toml")
-# __version__ = pyproject["tool"]["poetry"]["version"]
-
 project = "capella-console-client"
 __version__ = importlib.metadata.version(project)
 
