@@ -3,6 +3,12 @@ History
 =======
 
 
+0.13.2 (2024-10-31)
+-------------------
+* vulnerability updates (jinja2, qtornado, urllib3, certifi, zipp, setuptools)
+* drop pkg_resources, declare python3.13 support
+
+
 0.13.1 (2024-04-16)
 -------------------
 * vulnerability updates (idna, black)
