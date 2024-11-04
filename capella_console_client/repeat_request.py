@@ -4,7 +4,7 @@ from datetime import datetime
 import geojson
 
 from capella_console_client.session import CapellaConsoleSession
-from capella_console_client.exceptions import RepeatRequestPayloadValidationError
+from capella_console_client.exceptions import RepeatRequestPayloadValidationError, ContractNotFoundError
 from capella_console_client.validate import _snake_to_camel, _datetime_to_iso8601_str, _set_squint_default
 from capella_console_client.config import (
     REPEAT_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
@@ -52,6 +52,7 @@ def create_repeat_request(
     azimuth_angle_max: Optional[int] = None,
     squint: Optional[Union[SquintMode, str]] = None,
     max_squint_angle: Optional[int] = None,
+    contract_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     repeat_start, repeat_end = _set_repetition_start_end(repeat_start, repeat_end, repetition_count)
 
@@ -86,6 +87,15 @@ def create_repeat_request(
 
     if product_types is not None:
         payload["properties"]["processingConfig"] = {"productTypes": product_types}
+
+    if contract_id:
+        organization = session.get("/organization").json()
+        contracts = organization.get("contracts") or []
+
+        if not any(contract.get("id") == contract_id for contract in contracts):
+            raise ContractNotFoundError(f"Contract {contract_id} not found")
+
+        payload["contract_id"] = contract_id
 
     return session.post("/repeat-requests", json=payload).json()
 
