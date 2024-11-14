@@ -3,6 +3,11 @@ History
 =======
 
 
+0.13.3 (2024-11-14)
+-------------------
+* importlib.metadata import
+
+
 0.13.2 (2024-10-31)
 -------------------
 * vulnerability updates (jinja2, qtornado, urllib3, certifi, zipp, setuptools)
