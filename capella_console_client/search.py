@@ -19,6 +19,9 @@ from capella_console_client.config import (
     CATALOG_MAX_PAGE_SIZE,
     CATALOG_DEFAULT_LIMIT,
     STAC_MAX_ITEM_RETURN,
+    ALL_SUPPORTED_GROUPBY_FIELDS,
+    ROOT_LEVEL_GROUPBY_FIELDS,
+    UNKNOWN_GROUPBY_FIELD,
 )
 
 
@@ -96,6 +99,43 @@ class SearchResult:
             copy.add(page=page, keep_duplicates=keep_duplicates)
 
         return copy
+
+    def groupby(self, field: str) -> Dict[str, Any]:
+        """
+        group matched features by provided field name
+
+        * STAC items not containing the respective field will returned as part of 'unknown' key
+        * non-hashable fields (lists, sets) are '-'.joined (e.g. polarizations = ["HH", "HV"] -> "HH-HV")
+        """
+
+        if field not in ALL_SUPPORTED_GROUPBY_FIELDS:
+            logger.warning(
+                f"groupby(field='{field}') not supported - using '{UNKNOWN_GROUPBY_FIELD}' as value - supported: {', '.join(ALL_SUPPORTED_GROUPBY_FIELDS)}"
+            )
+
+        features_by_field = defaultdict(list)
+        for feature in self._features:
+            value = _get_safe_field_value(field=field, stac_item=feature)
+            features_by_field[value].append(feature)
+
+        return dict(features_by_field)
+
+
+def _get_safe_field_value(field: str, stac_item: Dict[str, Any]):
+    if field in ROOT_LEVEL_GROUPBY_FIELDS:
+        return stac_item[field]
+
+    target_field = STAC_PREFIXED_BY_QUERY_FIELDS.get(field, field)
+    try:
+        value = stac_item["properties"][target_field]
+    except KeyError:
+        value = UNKNOWN_GROUPBY_FIELD
+
+    try:
+        hash(value)
+    except TypeError:
+        value = "-".join(value)
+    return value
 
 
 class StacSearch:

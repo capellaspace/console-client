@@ -428,7 +428,7 @@ visualize search results
     import json
 
     results = client.search(
-        instrument_mode="spotligh",
+        instrument_mode="spotlight",
         product_type="GEO",
         sortby="-datetime"
     )
@@ -440,6 +440,28 @@ visualize search results
     feature_collection_path.write_text(json.dumps(feature_collection))
 
     # open e.g. in QGIS
+
+
+group search results
+####################
+
+.. code:: python3
+
+    results = client.search(
+        instrument_mode="spotlight",
+        product_type="GEO",
+        sortby="-datetime"
+    )
+
+    by_stac_id = results.groupby(field="id")
+
+    by_collect_id = results.groupby(field="collect_id")
+
+    by_stac_collection = results.groupby(field="collection")
+
+    by_instrument_mode = results.groupby(field="instrument_mode")
+
+    by_instrument = res.groupby(field="instruments").keys()
 
 
 order products

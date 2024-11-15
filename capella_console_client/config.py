@@ -94,10 +94,16 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "local_datetime": "locale:datetime",
     "local_time": "locale:time",
     "epsg": "proj:epsg",
+    "image_formation_algorithm": "capella:image_formation_algorithm",
 }
 
+ROOT_LEVEL_GROUPBY_FIELDS = {"id", "collection"}
 
-COMMON_COLLECT_CONSTRAINTS_KEYS = frozenset(
+ALL_SUPPORTED_GROUPBY_FIELDS = ROOT_LEVEL_GROUPBY_FIELDS | SUPPORTED_QUERY_FIELDS
+UNKNOWN_GROUPBY_FIELD = "unknown"
+
+
+_COMMON_COLLECT_CONSTRAINTS_FIELDS = frozenset(
     [
         "collect_mode",
         "look_direction",
@@ -122,11 +128,11 @@ COMMON_COLLECT_CONSTRAINTS_KEYS = frozenset(
         "polarization",
     ]
 )
-TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset([*COMMON_COLLECT_CONSTRAINTS_KEYS])
-REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS = frozenset([*COMMON_COLLECT_CONSTRAINTS_KEYS])
+TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS = _COMMON_COLLECT_CONSTRAINTS_FIELDS.copy()
+REPEAT_REQUEST_COLLECT_CONSTRAINTS_FIELDS = _COMMON_COLLECT_CONSTRAINTS_FIELDS.copy()
 
 
-REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS = frozenset(
+REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS = frozenset(
     [
         "repeat_start",
         "repeat_end",

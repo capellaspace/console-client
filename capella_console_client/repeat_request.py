@@ -8,8 +8,8 @@ from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.exceptions import RepeatRequestPayloadValidationError
 from capella_console_client.validate import _snake_to_camel, _datetime_to_iso8601_str
 from capella_console_client.config import (
-    REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS,
-    REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS,
+    REPEAT_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
+    REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS,
 )
 from capella_console_client.enumerations import (
     ObservationDirection,
@@ -81,11 +81,11 @@ def create_repeat_request(
 
     loc = locals()
     collect_constraints = {
-        _snake_to_camel(k): loc[k] for k in REPEAT_REQUEST_COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k] is not None
+        _snake_to_camel(k): loc[k] for k in REPEAT_REQUEST_COLLECT_CONSTRAINTS_FIELDS if k in loc and loc[k] is not None
     }
     repetition_properties = {
         _snake_to_camel(k): loc[k]
-        for k in REPEAT_REQUESTS_REPETITION_PROPERTIES_KEYS
+        for k in REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS
         if k in loc and loc[k] is not None
     }
 
