@@ -7,7 +7,7 @@ from dateutil.parser import parse, ParserError
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.validate import _validate_uuid, _snake_to_camel, _datetime_to_iso8601_str
-from capella_console_client.config import TASKING_REQUEST_DEFAULT_PAGE_SIZE, TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS
+from capella_console_client.config import TASKING_REQUEST_DEFAULT_PAGE_SIZE, TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS
 from capella_console_client.enumerations import (
     TaskingRequestStatus,
     ObservationDirection,
@@ -71,7 +71,9 @@ def create_tasking_request(
 
     loc = locals()
     collect_constraints = {
-        _snake_to_camel(k): loc[k] for k in TASKING_REQUEST_COLLECT_CONSTRAINTS_KEYS if k in loc and loc[k] is not None
+        _snake_to_camel(k): loc[k]
+        for k in TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS
+        if k in loc and loc[k] is not None
     }
 
     payload = {

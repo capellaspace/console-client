@@ -1,10 +1,14 @@
+import pytest
+
 from capella_console_client.search import SearchResult
+from capella_console_client.config import (
+    ROOT_LEVEL_GROUPBY_FIELDS,
+)
 
 from .test_data import (
     get_canned_search_results_single_page,
     get_canned_search_results_with_collect_id,
-    get_canned_search_results_multi_page_page1,
-    get_canned_search_results_multi_page_page2,
+    MOCK_GROUPBY_STAC_ITEM,
 )
 
 
@@ -70,3 +74,32 @@ def test_search_result_has_collect_ids():
     page = get_canned_search_results_with_collect_id()
     result1.add(page)
     assert len(result1.collect_ids) == len(page["features"])
+
+
+def test_search_result_groupby_empty():
+    empty = SearchResult()
+    assert empty.groupby(field="id") == {}
+
+
+@pytest.mark.parametrize("field", ["email", "pw", "other", "field", "that", "does", "not", "exist"])
+def test_search_result_groupby_invalid_field(field):
+    result = SearchResult(_features=get_canned_search_results_with_collect_id()["features"])
+    ret = result.groupby(field=field)
+    assert list(ret.keys()) == ["unknown"]
+
+
+@pytest.mark.parametrize("field", [*ROOT_LEVEL_GROUPBY_FIELDS, *MOCK_GROUPBY_STAC_ITEM["properties"].keys()])
+def test_search_result_groupby_known_field(field):
+    result = SearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])
+    ret = result.groupby(field=field)
+    assert len(ret) == 1
+    assert isinstance(ret, dict)
+    assert list(ret.values()) == [[MOCK_GROUPBY_STAC_ITEM]]
+
+
+@pytest.mark.parametrize("field", ["epsg", "billable_area"])
+def test_search_result_groupby_missing_field(field):
+    result = SearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])
+    ret = result.groupby(field=field)
+    assert list(ret.keys()) == ["unknown"]
+    assert list(ret.values()) == [[MOCK_GROUPBY_STAC_ITEM]]
