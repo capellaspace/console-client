@@ -347,6 +347,12 @@ advanced search
         epsg=32648,
     )
 
+    # use ownership filters
+
+    ownedGEOItems = client.search(
+        product_type="GEO",
+        ownership="ownedByOrganization"
+    )
 
     # take it to the max - get GEO spotlight items over SF downtown with many filters sorted by datetime
 

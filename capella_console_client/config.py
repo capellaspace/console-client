@@ -49,6 +49,13 @@ SUPPORTED_QUERY_FIELDS = {
     "epsg",
 }
 
+SUPPORTED_OWNERSHIP_OPTIONS = {
+  "ownedByOrganization",
+  "sharedWithOrganization",
+  "availableForPurchase",
+  "publiclyAvailable",
+}
+
 ALL_SUPPORTED_FIELDS = SUPPORTED_SEARCH_FIELDS | SUPPORTED_QUERY_FIELDS
 
 ALL_SUPPORTED_SORTBY = ALL_SUPPORTED_FIELDS | {"id"}

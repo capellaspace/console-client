@@ -22,6 +22,7 @@ from capella_console_client.config import (
     ALL_SUPPORTED_GROUPBY_FIELDS,
     ROOT_LEVEL_GROUPBY_FIELDS,
     UNKNOWN_GROUPBY_FIELD,
+    SUPPORTED_OWNERSHIP_OPTIONS,
 )
 
 
@@ -149,6 +150,10 @@ class StacSearch:
         if sortby:
             self.payload["sortby"] = self._get_sort_payload(sortby)
 
+        ownership = self._get_ownership_payload(cur_kwargs)
+        if ownership:
+            self.payload["ownership"] = ownership
+
         query_payload = self._get_query_payload(cur_kwargs)
         if query_payload:
             self.payload["query"] = dict(query_payload)
@@ -186,6 +191,17 @@ class StacSearch:
 
         return query_payload
 
+    def _get_ownership_payload(self, kwargs) -> Optional[str]:
+      ownership = kwargs.pop("ownership", None)
+      if not ownership:
+          return
+
+      if ownership not in SUPPORTED_OWNERSHIP_OPTIONS:
+          logger.warning(f"ownership option {ownership} not supported ... omitting")
+          return
+      
+      return ownership
+      
     def _split_op(self, cur_field: str) -> Tuple[str, str]:
         parts = cur_field.split("__")
         if len(parts) == 2:
