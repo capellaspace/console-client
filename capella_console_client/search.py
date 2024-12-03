@@ -194,11 +194,11 @@ class StacSearch:
     def _get_ownership_payload(self, kwargs) -> Optional[str]:
         ownership = kwargs.pop("ownership", None)
         if not ownership:
-            return
+            return None
 
         if ownership not in SUPPORTED_OWNERSHIP_OPTIONS:
             logger.warning(f"ownership option {ownership} not supported ... omitting")
-            return
+            return None
 
         return ownership
 
