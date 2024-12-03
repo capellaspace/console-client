@@ -50,10 +50,10 @@ SUPPORTED_QUERY_FIELDS = {
 }
 
 SUPPORTED_OWNERSHIP_OPTIONS = {
-  "ownedByOrganization",
-  "sharedWithOrganization",
-  "availableForPurchase",
-  "publiclyAvailable",
+    "ownedByOrganization",
+    "sharedWithOrganization",
+    "availableForPurchase",
+    "publiclyAvailable",
 }
 
 ALL_SUPPORTED_FIELDS = SUPPORTED_SEARCH_FIELDS | SUPPORTED_QUERY_FIELDS

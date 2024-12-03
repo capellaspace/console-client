@@ -859,7 +859,7 @@ class CapellaConsoleClient:
 
         sorting:
          • sortby: List[str] - must be supported fields, e.g. ["+datetime"]
-         
+
         filtering by ownership (optional):
          • ownership: str, one of "ownedByOrganization", "sharedWithOrganization", "availableForPurchase", "publiclyAvailable"
 

@@ -192,16 +192,16 @@ class StacSearch:
         return query_payload
 
     def _get_ownership_payload(self, kwargs) -> Optional[str]:
-      ownership = kwargs.pop("ownership", None)
-      if not ownership:
-          return
+        ownership = kwargs.pop("ownership", None)
+        if not ownership:
+            return
 
-      if ownership not in SUPPORTED_OWNERSHIP_OPTIONS:
-          logger.warning(f"ownership option {ownership} not supported ... omitting")
-          return
-      
-      return ownership
-      
+        if ownership not in SUPPORTED_OWNERSHIP_OPTIONS:
+            logger.warning(f"ownership option {ownership} not supported ... omitting")
+            return
+
+        return ownership
+
     def _split_op(self, cur_field: str) -> Tuple[str, str]:
         parts = cur_field.split("__")
         if len(parts) == 2:
