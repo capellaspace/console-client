@@ -23,6 +23,7 @@ from capella_console_client.config import (
     ROOT_LEVEL_GROUPBY_FIELDS,
     UNKNOWN_GROUPBY_FIELD,
 )
+from capella_console_client.enumerations import OwnershipOption
 
 
 @dataclass
@@ -69,7 +70,7 @@ class SearchResult:
             message = f"found {len_results} STAC item{multiple_suffix}"
         logger.info(message)
 
-    # backwards compability
+    # backwards compatibility
     def __getitem__(self, key):
         return self._features.__getitem__(key)
 
@@ -149,6 +150,11 @@ class StacSearch:
         if sortby:
             self.payload["sortby"] = self._get_sort_payload(sortby)
 
+        input_ownership = kwargs.pop("ownership", None)
+        ownership_payload = self._get_ownership_payload(input_ownership)
+        if ownership_payload:
+            self.payload["ownership"] = ownership_payload
+
         query_payload = self._get_query_payload(cur_kwargs)
         if query_payload:
             self.payload["query"] = dict(query_payload)
@@ -185,6 +191,13 @@ class StacSearch:
                 query_payload[target_field][op] = value
 
         return query_payload
+
+    def _get_ownership_payload(self, ownership) -> Optional[str]:
+        if ownership not in list(OwnershipOption):
+            logger.warning(f"ownership option {ownership} not supported ... omitting")
+            return None
+
+        return ownership
 
     def _split_op(self, cur_field: str) -> Tuple[str, str]:
         parts = cur_field.split("__")
