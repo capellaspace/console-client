@@ -123,7 +123,8 @@ class LocalTimeOption(str, BaseEnum):
     day = "day"
     night = "night"
     anytime = "anytime"
-    
+
+
 class OwnershipOption(str, BaseEnum):
     owned_by_organization = "ownedByOrganization"
     publicly_available = "publiclyAvailable"

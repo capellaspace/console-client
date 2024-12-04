@@ -851,7 +851,7 @@ class CapellaConsoleClient:
 
         filtering by ownership (optional):
          • ownership: str, one of "ownedByOrganization", "sharedWithOrganization", "availableForPurchase", "publiclyAvailable"
-         
+
         supported operations:
          • eq: equality search
          • in: within group
