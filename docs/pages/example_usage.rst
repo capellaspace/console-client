@@ -349,7 +349,7 @@ advanced search
 
     # use ownership filters
 
-    ownedGEOItems = client.search(
+    owned_geo_items = client.search(
         product_type="GEO",
         ownership="ownedByOrganization"
     )

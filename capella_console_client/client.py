@@ -849,6 +849,9 @@ class CapellaConsoleClient:
          • resolution_range: float, Resolution range (m), e.g. 0.5
          • squint_angle: float, Squint angle, e.g. 30.1
 
+        filtering by ownership (optional):
+         • ownership: str, one of "ownedByOrganization", "sharedWithOrganization", "availableForPurchase", "publiclyAvailable"
+         
         supported operations:
          • eq: equality search
          • in: within group
@@ -860,8 +863,6 @@ class CapellaConsoleClient:
         sorting:
          • sortby: List[str] - must be supported fields, e.g. ["+datetime"]
 
-        filtering by ownership (optional):
-         • ownership: str, one of "ownedByOrganization", "sharedWithOrganization", "availableForPurchase", "publiclyAvailable"
 
         Returns:
             List[Dict[str, Any]]: STAC items matched
