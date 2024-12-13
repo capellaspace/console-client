@@ -29,6 +29,9 @@ class AuthMethodDeprecationWarning(DeprecationWarning):
     pass
 
 
+BASIC_AUTH_DEPRECATION_MSG = "BASIC auth (email, password) is going to be deprecated in 2025"
+
+
 class CapellaConsoleSession(httpx.Client):
     def __init__(self, *args, **kwargs):
         verbose = kwargs.pop("verbose", False)
@@ -102,7 +105,7 @@ class CapellaConsoleSession(httpx.Client):
     def _prompt_user_creds(self, email: Optional[str], password: Optional[str]) -> Tuple[str, str]:
         """user credentials on console"""
         warnings.warn(
-            message="BASIC auth (email, password) is going to be deprecated in 2025",
+            message=BASIC_AUTH_DEPRECATION_MSG,
             category=AuthMethodDeprecationWarning,
             stacklevel=2,
         )
@@ -119,7 +122,7 @@ class CapellaConsoleSession(httpx.Client):
         returns jwt access token
         """
         warnings.warn(
-            message="BASIC auth (email, password) is going to be deprecated in 2025",
+            message=BASIC_AUTH_DEPRECATION_MSG,
             category=AuthMethodDeprecationWarning,
             stacklevel=2,
         )
