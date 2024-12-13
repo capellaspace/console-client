@@ -52,7 +52,7 @@ class CapellaConsoleClient:
         password: password on api.capellaspace.com
         token: valid JWT access token
         verbose: flag to enable verbose logging
-        no_token_check: does not check if provided JWT token is valid
+        no_token_check: do not check if provided JWT token or API KEY is valid
         base_url: Capella console API base URL override
         search_url: Capella catalog/search/ override
         no_auth: bypass authentication
@@ -71,6 +71,7 @@ class CapellaConsoleClient:
         email: Optional[str] = None,
         password: Optional[str] = None,
         token: Optional[str] = None,
+        api_key: Optional[str] = None,
         verbose: bool = False,
         no_token_check: bool = False,
         base_url: Optional[str] = CONSOLE_API_URL,
@@ -81,7 +82,7 @@ class CapellaConsoleClient:
         self._sesh = CapellaConsoleSession(base_url=base_url, search_url=search_url, verbose=verbose)
 
         if not no_auth:
-            self._sesh.authenticate(email, password, token, no_token_check)
+            self._sesh.authenticate(email, password, token, api_key, no_token_check)
 
     def _set_verbosity(self, verbose: bool = False):
         self.verbose = verbose
