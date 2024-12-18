@@ -8,11 +8,36 @@ Example Usage
 
     from capella_console_client import CapellaConsoleClient
 
-authenticate
-############
+authentication
+##############
 
-interactive prompt
-******************
+1) with API key
+****************
+
+.. code:: python3
+
+    client = CapellaConsoleClient(api_key="<api-key>", verbose=True)
+
+    # don't want to validate the api-key (saves an API call)
+    client = CapellaConsoleClient(api_key="<api-key>", no_token_check=True)
+
+
+2) access token
+***************
+
+.. code:: python3
+
+    # already have a valid access token (JWT)? no problem
+    client = CapellaConsoleClient(token="<token>", verbose=True)
+
+    # don't want to validate the token (saves an API call)
+    client = CapellaConsoleClient(token="<token>", no_token_check=True)
+
+3) basic auth (email, password) - TO BE DEPRECATED
+**************************************************
+
+
+**NOTE: BASIC auth (email, password) is going to be deprecated in 2025**
 
 .. code:: python3
 
@@ -38,32 +63,20 @@ provide user credentials
     client = CapellaConsoleClient(email=email, password=pw)
 
 
-JWT
-***
-
-.. code:: python3
-
-    # already have a valid JWT token? no problem
-    token_client = CapellaConsoleClient(token="<token>", verbose=True)
-
-    # don't want to validate the token (saves an API call)
-    bold_token_client = CapellaConsoleClient(token="<token>", no_token_check=True)
-
-
 token refresh with auto retry
 *****************************
 
 .. code:: python3
 
     # issued access tokens have an expiration of 1h
-    client = CapellaConsoleClient(email=email, password=pw, verbose=True)
+    client = CapellaConsoleClient(api_key=api_key, verbose=True)
 
     # DON'T RUN THIS ;)
     import time
     time.sleep(60 * 60)
     # token expired in the interim
 
-    # capella-console-client will refresh your access token and retry the failed request
+    # capella-console-client will refresh your access token and retry the initially failed request
     me = client.whoami()
     assert me is not None
     print("All good")
@@ -112,7 +125,7 @@ searches are run against Capella Space's Catalog and a List of `STAC items <http
     )
 
 
-By default **up to 500** STAC items are returned. This can be increased by providing a custom ``limit``:
+By default **up to 500** STAC items are returned. This can be increased by providing a custom ``limit`` (up to 9999):
 
 .. code:: python3
 

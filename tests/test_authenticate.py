@@ -81,6 +81,30 @@ def test_token_auth_no_check(httpx_mock: HTTPXMock):
     assert len(requests) == 0
 
 
+def test_api_key_auth(httpx_mock: HTTPXMock):
+    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user"))
+    api_key = "MOCK_API_KEY"
+
+    client = CapellaConsoleClient(api_key=api_key)
+    requests = httpx_mock.get_requests()
+
+    assert requests[0].url == f"{CONSOLE_API_URL}/user"
+    assert requests[0].method == "GET"
+
+    assert "Authorization" in client._sesh.headers
+    assert client._sesh.headers["Authorization"] == f"Apikey {api_key}"
+
+
+def test_api_key_auth_no_check(httpx_mock: HTTPXMock):
+    api_key = "MOCK_API_KEY"
+    client = CapellaConsoleClient(api_key=api_key, no_token_check=True)
+    requests = httpx_mock.get_requests()
+
+    assert "Authorization" in client._sesh.headers
+    assert client._sesh.headers["Authorization"] == f"Apikey {api_key}"
+    assert len(requests) == 0
+
+
 @pytest.mark.parametrize(
     "email,pw,token,prompt_count_email,prompt_count_pw",
     [
@@ -99,8 +123,8 @@ def test_authenticate_missing_data_prompts(
     auth_httpx_mock: HTTPXMock,
     monkeypatch,
 ):
-    email_mock = MagicMock()
-    pw_mock = MagicMock()
+    email_mock = MagicMock(return_value="MOCK_EMAIL")
+    pw_mock = MagicMock(return_value="MOCK_PW")
     monkeypatch.setattr("builtins.input", email_mock)
     monkeypatch.setattr(capella_console_client.session, "getpass", pw_mock)
 
