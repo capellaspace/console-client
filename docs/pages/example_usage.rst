@@ -261,7 +261,7 @@ search fields
     * - ``product_type``
       - | product type str, one of
         | ``"SLC"``, ``"GEO"``, ``"GEC"``, ``"SICD"``, ``"SIDD"``, ``"CPHD"``
-        | ``"VS"``, ``"ACD"```
+        | ``"VS"``, ``"ACD"``
       - ``str``
       - ``"SLC"``
     * - ``resolution_azimuth``
@@ -280,6 +280,10 @@ search fields
       - squint angle
       - ``float``
       - ``30.1``
+    * - ``ownership``
+      - one of ``"ownedByOrganization"``, ``"sharedWithOrganization"``, ``"availableForPurchase"``, ``"publiclyAvailable"``
+      - ``str``
+      - ``"ownedByOrganization"``
 
 
 advanced search
@@ -347,6 +351,12 @@ advanced search
         epsg=32648,
     )
 
+    # use ownership filters
+
+    owned_geo_items = client.search(
+        product_type="GEO",
+        ownership="ownedByOrganization"
+    )
 
     # take it to the max - get GEO spotlight items over SF downtown with many filters sorted by datetime
 

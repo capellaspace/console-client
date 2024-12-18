@@ -651,6 +651,16 @@ def get_search_test_cases():
             },
             id="multiSortbyOmits",
         ),
+        pytest.param(
+            dict(ownership="invalidOwnershipOption"),
+            {"limit": CATALOG_DEFAULT_LIMIT},
+            id="filter_invalid_ownership",
+        ),
+        pytest.param(
+            dict(ownership="ownedByOrganization"),
+            {"limit": CATALOG_DEFAULT_LIMIT, "ownership": "ownedByOrganization"},
+            id="filter_valid_ownership",
+        ),
     ]
 
 
