@@ -36,6 +36,10 @@ def auto_auth_callback(ctx: typer.Context):
     if ctx.invoked_subcommand == sys.argv[-1]:
         return
 
+    if "console_api_key" in CURRENT_SETTINGS:
+        CLIENT._sesh.authenticate(api_key=CURRENT_SETTINGS["console_api_key"], no_token_check=False)
+        return
+
     try:
         CLIENT._sesh.authenticate(token=CLICache.load_jwt(), no_token_check=False)
     # first time or expired token

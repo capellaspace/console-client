@@ -9,6 +9,7 @@ from capella_console_client.cli.validate import (
     _must_be_type,
     _validate_dir_exists,
     _validate_email,
+    _validate_optional_api_key,
     _no_selection_bye,
     _at_least_one_selected,
 )
@@ -100,6 +101,26 @@ def user():
 
 
 @app.command()
+def api_key():
+    """
+    set API key for Capella Console
+    """
+    console_api_key = questionary.password(
+        "Console API key:",
+        default=CURRENT_SETTINGS.get("console_api_key", ""),
+        validate=_validate_optional_api_key,
+    ).ask()
+
+    if console_api_key:
+        CLICache.write_user_settings("console_api_key", console_api_key)
+        typer.echo("updated API key for Capella Console")
+        CLICache.JWT.unlink(missing_ok=True)
+        return True
+    else:
+        return False
+
+
+@app.command()
 def output():
     """
     set default output location for downloads and .json STAC exports
@@ -134,7 +155,9 @@ def search_filter_order():
 def configure():
     logger.info(typer.style("let's get you all setup using capella-console-wizard:", bold=True))
     logger.info("\t\tPress Ctrl + C anytime to quit\n")
-    user()
+    # Don't prompt for user if there is an api key
+    if not api_key():
+        user()
     output()
     search_filter_order()
     result_table()

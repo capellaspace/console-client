@@ -159,8 +159,8 @@ class CapellaConsoleSession(httpx.Client):
     def _set_api_key_auth_header(self, api_key: Optional[str]):
         assert isinstance(api_key, str)
         api_key = api_key.strip()
-        if not api_key.startswith("Apikey"):
-            api_key = f"Apikey {api_key}"
+        if not api_key.lower().startswith("apikey"):
+            api_key = f"ApiKey {api_key}"
 
         self.headers["Authorization"] = api_key
 

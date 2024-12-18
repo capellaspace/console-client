@@ -87,6 +87,13 @@ def _validate_datetime(dt_str: str):
     return True
 
 
+def _validate_optional_api_key(api_key: str):
+    err_msg = "please specify a valid api key"
+    if not api_key or len(api_key) == 64:
+        return True
+    return err_msg
+
+
 def _parse_str_collection(list_str):
     _cur = list_str.strip()
     if not _cur.startswith("[") or not _cur.endswith("]"):
