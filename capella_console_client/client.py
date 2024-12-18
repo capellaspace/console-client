@@ -848,8 +848,6 @@ class CapellaConsoleClient:
          • resolution_ground_range: float, Resolution ground range (m), e.g. 0.5
          • resolution_range: float, Resolution range (m), e.g. 0.5
          • squint_angle: float, Squint angle, e.g. 30.1
-
-        filtering by ownership (optional):
          • ownership: str, one of "ownedByOrganization", "sharedWithOrganization", "availableForPurchase", "publiclyAvailable"
 
         supported operations:

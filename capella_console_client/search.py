@@ -150,10 +150,9 @@ class StacSearch:
         if sortby:
             self.payload["sortby"] = self._get_sort_payload(sortby)
 
-        input_ownership = kwargs.pop("ownership", None)
-        ownership_payload = self._get_ownership_payload(input_ownership)
-        if ownership_payload:
-            self.payload["ownership"] = ownership_payload
+        ownership_option = cur_kwargs.pop("ownership", None)
+        if OwnershipOption.is_valid(ownership_option):
+            self.payload["ownership"] = ownership_option
 
         query_payload = self._get_query_payload(cur_kwargs)
         if query_payload:

@@ -126,7 +126,11 @@ class LocalTimeOption(str, BaseEnum):
 
 
 class OwnershipOption(str, BaseEnum):
-    owned_by_organization = "ownedByOrganization"
-    publicly_available = "publiclyAvailable"
-    shared_with_organization = "sharedWithOrganization"
-    available_for_purchase = "availableForPurchase"
+    ORG = "ownedByOrganization"
+    PUBLIC = "publiclyAvailable"
+    SHARED = "sharedWithOrganization"
+    PURCHASABLE = "availableForPurchase"
+
+    @classmethod
+    def is_valid(cls, option_str: str) -> bool:
+        return option_str in list(cls)

@@ -261,7 +261,7 @@ search fields
     * - ``product_type``
       - | product type str, one of
         | ``"SLC"``, ``"GEO"``, ``"GEC"``, ``"SICD"``, ``"SIDD"``, ``"CPHD"``
-        | ``"VS"``, ``"ACD"```
+        | ``"VS"``, ``"ACD"``
       - ``str``
       - ``"SLC"``
     * - ``resolution_azimuth``
@@ -280,6 +280,10 @@ search fields
       - squint angle
       - ``float``
       - ``30.1``
+    * - ``ownership``
+      - one of ``"ownedByOrganization"``, ``"sharedWithOrganization"``, ``"availableForPurchase"``, ``"publiclyAvailable"``
+      - ``str``
+      - ``"ownedByOrganization"``
 
 
 advanced search
