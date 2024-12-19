@@ -3,6 +3,12 @@ History
 =======
 
 
+0.14.0 (2024-12-19)
+-------------------
+* CLI mandatory API key authentication for CLI
+* api key based authentication and basic auth deprecation warning (#90)
+* ownership based search
+
 0.13.3 (2024-11-14)
 -------------------
 * importlib.metadata import
