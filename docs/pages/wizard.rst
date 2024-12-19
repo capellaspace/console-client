@@ -28,8 +28,8 @@ Configure
     2021-10-07 15:01:22,936 - 🛰️  Capella Space 🐐 - INFO - let's get you all setup using capella-console-wizard:
     2021-10-07 15:01:22,936 - 🛰️  Capella Space 🐐 - INFO - 		Press Ctrl + C anytime to quit
 
-    ? User on api.capellaspace.com (user@email.com): thomas.beyer@capellaspace.com
-    updated user for Capella Console
+    ? Console API key: ****************************************************************
+    updated API key for Capella Console
     ? Specify the default location for downloads and .json STAC exports: (press <tab>) /data/stuff/things/here/
     updated default output path for .json STAC exports
     ? Specify the order of search filters to be used in searches: console UI filters on top

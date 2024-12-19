@@ -92,7 +92,7 @@ def test_api_key_auth(httpx_mock: HTTPXMock):
     assert requests[0].method == "GET"
 
     assert "Authorization" in client._sesh.headers
-    assert client._sesh.headers["Authorization"] == f"Apikey {api_key}"
+    assert client._sesh.headers["Authorization"] == f"ApiKey {api_key}"
 
 
 def test_api_key_auth_no_check(httpx_mock: HTTPXMock):
@@ -101,7 +101,7 @@ def test_api_key_auth_no_check(httpx_mock: HTTPXMock):
     requests = httpx_mock.get_requests()
 
     assert "Authorization" in client._sesh.headers
-    assert client._sesh.headers["Authorization"] == f"Apikey {api_key}"
+    assert client._sesh.headers["Authorization"] == f"ApiKey {api_key}"
     assert len(requests) == 0
 
 

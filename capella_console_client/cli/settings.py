@@ -8,7 +8,7 @@ from tabulate import tabulate
 from capella_console_client.cli.validate import (
     _must_be_type,
     _validate_dir_exists,
-    _validate_email,
+    _validate_api_key,
     _no_selection_bye,
     _at_least_one_selected,
 )
@@ -83,20 +83,23 @@ def limit():
 
 
 @app.command()
-def user():
+def api_key():
     """
-    set user for Capella Console
+    set API key for Capella Console
     """
-    console_user = questionary.path(
-        "User on console (user@email.com):",
-        default=CURRENT_SETTINGS.get("console_user", ""),
-        validate=_validate_email,
+    console_api_key = questionary.password(
+        "Console API key:",
+        default=CURRENT_SETTINGS.get("console_api_key", ""),
+        validate=_validate_api_key,
     ).ask()
-    _no_selection_bye(console_user, info_msg="no user provided")
 
-    CLICache.write_user_settings("console_user", console_user)
-    typer.echo("updated user for Capella Console")
-    CLICache.JWT.unlink(missing_ok=True)
+    if console_api_key:
+        CLICache.write_user_settings("console_api_key", console_api_key)
+        typer.echo("updated API key for Capella Console")
+        CLICache.JWT.unlink(missing_ok=True)
+        return True
+    else:
+        return False
 
 
 @app.command()
@@ -134,7 +137,8 @@ def search_filter_order():
 def configure():
     logger.info(typer.style("let's get you all setup using capella-console-wizard:", bold=True))
     logger.info("\t\tPress Ctrl + C anytime to quit\n")
-    user()
+    # Don't prompt for user if there is an api key
+    api_key()
     output()
     search_filter_order()
     result_table()
