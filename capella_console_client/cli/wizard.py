@@ -40,18 +40,6 @@ def auto_auth_callback(ctx: typer.Context):
         CLIENT._sesh.authenticate(api_key=CURRENT_SETTINGS["console_api_key"], no_token_check=False)
         return
 
-    try:
-        CLIENT._sesh.authenticate(token=CLICache.load_jwt(), no_token_check=False)
-    # first time or expired token
-    except (FileNotFoundError, AuthenticationError):
-        auth_kwargs = {}
-        if "console_user" in CURRENT_SETTINGS:
-            auth_kwargs["email"] = CURRENT_SETTINGS["console_user"]
-            logger.info(f"authenticating as {auth_kwargs['email']}")
-        CLIENT._sesh.authenticate(**auth_kwargs)  # type: ignore
-        jwt = CLIENT._sesh.headers["authorization"]
-        CLICache.write_jwt(jwt)
-
 
 app = typer.Typer(
     help="Interactive wizard for api.capellaspace.com",

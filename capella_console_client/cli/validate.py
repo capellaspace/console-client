@@ -68,13 +68,6 @@ def _validate_out_path(path_str: str) -> bool:
     return p.is_absolute() and p.parent.exists() and not p.is_dir()
 
 
-def _validate_email(email: str):
-    err_msg = "please specify a valid email"
-    if EMAIL_REGEX.fullmatch(email):
-        return True
-    return err_msg
-
-
 def _validate_datetime(dt_str: str):
     err_msg = "please specify a valid UTC date(time) (e.g. 2020-08-14 or 2020-08-14 12:00:00)"
     if not dt_str or len(dt_str) < 10:
@@ -87,9 +80,9 @@ def _validate_datetime(dt_str: str):
     return True
 
 
-def _validate_optional_api_key(api_key: str):
+def _validate_api_key(api_key: str):
     err_msg = "please specify a valid api key"
-    if not api_key or len(api_key) == 64:
+    if api_key and len(api_key) == 64:
         return True
     return err_msg
 
