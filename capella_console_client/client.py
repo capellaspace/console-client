@@ -48,9 +48,10 @@ class CapellaConsoleClient:
     API docs: https://docs.capellaspace.com/accessing-data/searching-for-data
 
     Args:
-        email: email on api.capellaspace.com
-        password: password on api.capellaspace.com
-        token: valid JWT access token
+        email: email on api.capellaspace.com [will be deprecated in 2025]
+        password: password on api.capellaspace.com [will be deprecated in 2025]
+        token: JWT access token
+        api_key: api key for api.capellaspace.com
         verbose: flag to enable verbose logging
         no_token_check: do not check if provided JWT token or API KEY is valid
         base_url: Capella console API base URL override
@@ -58,12 +59,13 @@ class CapellaConsoleClient:
         no_auth: bypass authentication
 
     NOTE:
-        not providing either email and password or a jwt token for authentication
-        will prompt you for email and password, which is not what you want in a script
+        not providing either `email` & `password` or `token` or `api_key`
+        will prompt you for email and password, which is not what you want in a script [will be deprecated in 2025]
 
-    NOTE: Precedence order (high to low)
-        1. email and password
+    NOTE: precedence order (high to low)
+        1. email and password [will be deprecated in 2025]
         2. JWT token
+        3. API key
     """
 
     def __init__(
