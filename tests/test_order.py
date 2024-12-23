@@ -38,7 +38,7 @@ def test_list_no_active_orders(order_client):
 def test_list_active_orders_with_order_ids(test_client, monkeypatch, disable_validate_uuid):
     monkeypatch.setattr(
         capella_client_module,
-        "_get_non_expired_orders",
+        "get_non_expired_orders",
         lambda session: get_mock_responses("/orders"),
     )
 
