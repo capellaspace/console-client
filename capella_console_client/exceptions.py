@@ -8,12 +8,14 @@ class CapellaConsoleClientError(Exception):
 
     def __init__(self, message=None, code=None, data={}, response=None):
         self.response = response
-        if message:
-            self.message = message
-        if code:
-            self.code = code
-        if data:
-            self.data = data
+        self.message = message or None
+        self.code = code or None
+        self.data = data or {}
+
+        self.args = self._set_args()
+
+    def _set_args(self):
+        return [cur for cur in (self.message, self.code, self.data) if cur]
 
 
 class AuthenticationError(CapellaConsoleClientError):
@@ -64,12 +66,17 @@ class RepeatRequestPayloadValidationError(CapellaConsoleClientError):
     pass
 
 
+class ContractNotFoundError(CapellaConsoleClientError):
+    pass
+
+
 DEFAULT_ERROR_CODE = "GENERAL_API_ERROR"
 INVALID_TOKEN_ERROR_CODE = "INVALID_TOKEN"
 ORDER_EXPIRED_ERROR_CODE = "ORDER_EXPIRED"
 COLLECTION_ACCESS_DENIED_ERROR_CODE = "COLLECTION_ACCESS_DENIED"
 NOT_AUTHORIZED_ERROR_CODE = "NOT_AUTHORIZED"
 ORDER_VALIDATION_ERROR_CODE = "ORDER_VALIDATION_ERROR"
+CONTRACT_NOT_FOUND = "CONTRACT_NOT_FOUND"
 
 UNAUTHORIZED_MESSAGE = "unauthorized"
 
@@ -79,6 +86,7 @@ ERROR_CODES = {
     COLLECTION_ACCESS_DENIED_ERROR_CODE: CollectionAccessDeniedError,
     NOT_AUTHORIZED_ERROR_CODE: AuthorizationError,
     ORDER_VALIDATION_ERROR_CODE: OrderValidationError,
+    CONTRACT_NOT_FOUND: ContractNotFoundError,
 }
 
 ERROR_CODES_BY_MESSAGE_SNIP = {
@@ -98,6 +106,7 @@ def handle_error_response_and_raise(response):
     if not response.is_stream_consumed:
         response.read()
     error = response.json()
+
     try:
         if "error" in error:
             error = error["error"]
@@ -123,4 +132,4 @@ def handle_error_response_and_raise(response):
         except StopIteration:
             pass
     exc = ERROR_CODES.get(code, CapellaConsoleClientError)(message=message, code=code, data=data, response=response)
-    raise exc
+    raise exc from None

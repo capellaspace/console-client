@@ -48,9 +48,10 @@ class CapellaConsoleClient:
     API docs: https://docs.capellaspace.com/accessing-data/searching-for-data
 
     Args:
-        email: email on api.capellaspace.com
-        password: password on api.capellaspace.com
-        token: valid JWT access token
+        email: email on api.capellaspace.com [will be deprecated in 2025]
+        password: password on api.capellaspace.com [will be deprecated in 2025]
+        token: JWT access token
+        api_key: api key for api.capellaspace.com
         verbose: flag to enable verbose logging
         no_token_check: do not check if provided JWT token or API KEY is valid
         base_url: Capella console API base URL override
@@ -58,12 +59,13 @@ class CapellaConsoleClient:
         no_auth: bypass authentication
 
     NOTE:
-        not providing either email and password or a jwt token for authentication
-        will prompt you for email and password, which is not what you want in a script
+        not providing either `email` & `password` or `token` or `api_key`
+        will prompt you for email and password, which is not what you want in a script [will be deprecated in 2025]
 
-    NOTE: Precedence order (high to low)
-        1. email and password
+    NOTE: precedence order (high to low)
+        1. email and password [will be deprecated in 2025]
         2. JWT token
+        3. API key
     """
 
     def __init__(
@@ -319,6 +321,7 @@ class CapellaConsoleClient:
         self,
         stac_ids: Optional[List[str]] = None,
         items: Optional[Union[List[Dict[str, Any]], SearchResult]] = None,
+        contract_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
 
@@ -332,7 +335,7 @@ class CapellaConsoleClient:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
 
         # review order
-        order_payload = self._construct_order_payload(stac_items)
+        order_payload = self._construct_order_payload(stac_items, contract_id)
         review_order_response = self._sesh.post("/orders/review", json=order_payload).json()
 
         if not review_order_response.get("authorized", False):
@@ -346,6 +349,7 @@ class CapellaConsoleClient:
         check_active_orders: bool = False,
         omit_search: bool = False,
         omit_review: bool = False,
+        contract_id: Optional[str] = None,
     ) -> str:
         """
         submit an order by `stac_ids` or `items`.
@@ -362,6 +366,7 @@ class CapellaConsoleClient:
                 if False: submits a new order and returns new order ID
             omit_search: omit search to ensure provided STAC IDs are valid - only works if `items` are provided
             omit_review: omit review stage
+            contract_id: charge order on explicit contract (if omitted default contract is used)
             Returns:
                 str: order UUID
         """
@@ -386,10 +391,10 @@ class CapellaConsoleClient:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
 
         if not omit_review:
-            self.review_order(items=stac_items)
+            self.review_order(items=stac_items, contract_id=contract_id)
 
         logger.info(f"submitting order for {', '.join(stac_ids)}")
-        order_payload = self._construct_order_payload(stac_items)
+        order_payload = self._construct_order_payload(stac_items, contract_id)
         res_order = self._sesh.post("/orders", json=order_payload)
 
         con = res_order.json()
@@ -400,7 +405,7 @@ class CapellaConsoleClient:
         logger.info(f"successfully submitted order {order_id}")
         return order_id  # type: ignore
 
-    def _construct_order_payload(self, stac_items):
+    def _construct_order_payload(self, stac_items, contract_id: Optional[str] = None):
         by_collect_id = defaultdict(list)
         for item in stac_items:
             by_collect_id[item["collection"]].append(item["id"])
@@ -408,7 +413,12 @@ class CapellaConsoleClient:
         order_items = []
         for collection, stac_ids_of_coll in by_collect_id.items():
             order_items.extend([{"collectionId": collection, "granuleId": stac_id} for stac_id in stac_ids_of_coll])
-        return {"items": order_items}
+
+        payload = {"items": order_items}
+        if contract_id:
+            payload["contractId"] = contract_id  # type: ignore
+
+        return payload
 
     def _find_active_order(self, stac_ids: List[str]) -> Optional[str]:
         """
@@ -568,6 +578,7 @@ class CapellaConsoleClient:
         show_progress: bool = False,
         separate_dirs: bool = True,
         product_types: List[Union[str, ProductType]] = None,
+        contract_id: Optional[str] = None,
     ) -> Dict[str, Dict[str, Path]]:
         """
         download all assets of multiple products
@@ -608,6 +619,7 @@ class CapellaConsoleClient:
                                /tmp/<stac_id_2>.tif
                                ...
             product_types: filter by product type, e.g. ["SLC", "GEO"]
+            contract_id: charge order on explicit contract (if omitted default contract is used)
 
         Returns:
             Dict[str, Dict[str, Path]]: Local paths of downloaded files keyed by STAC id and asset type, e.g.
@@ -634,7 +646,9 @@ class CapellaConsoleClient:
         exclude = _validate_and_filter_asset_types(exclude)
 
         if not items_presigned:
-            items_presigned = self._resolve_items_presigned(order_id, tasking_request_id, collect_id, product_types)
+            items_presigned = self._resolve_items_presigned(
+                order_id, tasking_request_id, collect_id, product_types, contract_id
+            )
 
         len_items_presigned = len(items_presigned)
         suffix = "s" if len_items_presigned > 1 else ""
@@ -675,6 +689,7 @@ class CapellaConsoleClient:
         tasking_request_id: Optional[str] = None,
         collect_id: Optional[str] = None,
         product_types: List[str] = None,
+        contract_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         stac_ids = None
 
@@ -685,18 +700,18 @@ class CapellaConsoleClient:
             # 2 - submit order for tasking_request_id
             if tasking_request_id:
                 _validate_uuid(tasking_request_id)
-                order_id, stac_ids = self._order_products_for_task(tasking_request_id, product_types)  # type: ignore
+                order_id, stac_ids = self._order_products_for_task(tasking_request_id, product_types, contract_id)  # type: ignore
             # 3 - submit order for collect_id
             else:
                 _validate_uuid(collect_id)
                 order_id, stac_ids = self._order_products_for_collect_ids(
-                    collect_ids=[collect_id], product_types=product_types  # type: ignore
+                    collect_ids=[collect_id], product_types=product_types, contract_id=contract_id  # type: ignore
                 )
 
         return self.get_presigned_items(order_id, stac_ids)  # type: ignore
 
     def _order_products_for_task(
-        self, tasking_request_id: str, product_types: List[str] = None
+        self, tasking_request_id: str, product_types: List[str] = None, contract_id: Optional[str] = None
     ) -> Tuple[str, List[str]]:
         """
         order all products associated with a tasking request
@@ -709,7 +724,7 @@ class CapellaConsoleClient:
         return self._order_products_for_collect_ids(collect_ids, product_types)
 
     def _order_products_for_collect_ids(
-        self, collect_ids: List[str], product_types: List[str] = None
+        self, collect_ids: List[str], product_types: List[str] = None, contract_id: Optional[str] = None
     ) -> Tuple[str, List[str]]:
         search_kwargs = dict(
             collect_id__in=collect_ids,
@@ -722,7 +737,7 @@ class CapellaConsoleClient:
             logger.warning("No STAC items found ... aborting")
             sys.exit(0)
 
-        order_id = self.submit_order(items=result, omit_search=True, check_active_orders=True)
+        order_id = self.submit_order(items=result, omit_search=True, check_active_orders=True, contract_id=contract_id)
         return order_id, result.stac_ids
 
     def download_product(
