@@ -21,6 +21,12 @@ def _validate_uuid(uuid_str: str) -> None:
         raise ValueError(f"{uuid_str} is not a valid uuid: {e}")
 
 
+@no_type_check
+def _validate_uuids(uuid_strs: List[str]):
+    for uuid_str in uuid_strs:
+        _validate_uuid(uuid_str)
+
+
 def _validate_stac_id_or_stac_items(
     stac_ids: Optional[List[str]] = None,
     items: Union[Optional[List[Dict[str, Any]]], SearchResult] = None,
