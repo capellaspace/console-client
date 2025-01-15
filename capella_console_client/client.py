@@ -230,7 +230,6 @@ class CapellaConsoleClient:
             archive_holdback: If defined will specify a time period during which the resulting imagery will be kept from the publicly accessible archive. One of "none", "one_year", "thirty_day", "permanent". Default: "none"
             custom_attribute_1: Can be used along with custom_attribute_2 to help you track a Capella task with your own metadata or internal systems. Default: None
             custom_attribute_2: Can be used along with custom_attribute_1 to help you track a Capella task with your own metadata or internal systems. Default: None
-            pre_approval: will skip the tasking request cost review step if set to true. Default: false
             azimuth_angle_min: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
             azimuth_angle_max: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
             squint: Determines if generated collects will be squinted. One of: enabled, forward, backward. Default: enabled for point requests, disabled for area requests

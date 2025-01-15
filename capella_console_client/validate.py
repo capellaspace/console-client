@@ -93,7 +93,7 @@ def _datetime_to_iso8601_str(dt: Union[datetime, str]) -> str:
             dt = parse(dt)
         except ParserError:
             raise ValueError(f"Could not parse {dt} string into a datetime")
-    return dt.isoformat(timespec="milliseconds") + "Z"
+    return dt.replace(tzinfo=None).isoformat(timespec="milliseconds") + "Z"
 
 
 def _set_squint_default(geometry: geojson.geometry.Geometry) -> SquintMode:

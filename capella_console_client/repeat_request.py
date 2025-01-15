@@ -21,6 +21,7 @@ from capella_console_client.enumerations import (
     LocalTimeOption,
     CollectionType,
     SquintMode,
+    RepeatCycle,
 )
 
 
@@ -33,7 +34,7 @@ def create_repeat_request(
     collection_tier: Optional[Union[str, RepeatCollectionTier]] = RepeatCollectionTier.routine,
     repeat_start: Optional[Union[datetime, str]] = None,
     repeat_end: Optional[Union[datetime, str]] = None,
-    repetition_interval: Optional[int] = 7,
+    repetition_interval: Optional[Union[RepeatCycle, int]] = RepeatCycle.WEEKLY,
     repetition_count: Optional[int] = None,
     local_time: Optional[Union[LocalTimeOption, List[int]]] = None,
     product_types: Optional[List[Union[ProductType, str]]] = None,
@@ -47,13 +48,11 @@ def create_repeat_request(
     archive_holdback: Optional[Union[str, ArchiveHoldback]] = ArchiveHoldback.none,
     custom_attribute_1: Optional[str] = None,
     custom_attribute_2: Optional[str] = None,
-    pre_approval: bool = False,
     azimuth_angle_min: Optional[int] = None,
     azimuth_angle_max: Optional[int] = None,
     squint: Optional[Union[SquintMode, str]] = None,
     max_squint_angle: Optional[int] = None,
 ) -> Dict[str, Any]:
-
     repeat_start, repeat_end = _set_repetition_start_end(repeat_start, repeat_end, repetition_count)
 
     if squint is None:
@@ -80,7 +79,6 @@ def create_repeat_request(
             "archiveHoldback": archive_holdback,
             "customAttribute1": custom_attribute_1,
             "customAttribute2": custom_attribute_2,
-            "pre_approval": pre_approval,
             "collectConstraints": collect_constraints,
             "repetitionProperties": repetition_properties,
         },

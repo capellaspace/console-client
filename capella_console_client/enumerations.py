@@ -107,6 +107,13 @@ class RepeatCollectionTier(str, BaseEnum):
     internal = "internal"
 
 
+class RepeatCycle(int, BaseEnum):
+    DAILY = 1
+    WEEKLY = 7
+    BI_WEEKLY = 14
+    MONTHLY = 30
+
+
 class ArchiveHoldback(str, BaseEnum):
     none = "none"
     one_year = "1_year"
