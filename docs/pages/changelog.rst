@@ -2,15 +2,6 @@
 History
 =======
 
-0.14.1 (2025-01-15)
--------------------
-* bump httpx to >=0.27.0
-* bump pytest-httpx to >=0.30.0
-* bump pytest to >=7.4.0
-* bump pytest-cov to >=4.1.0
-* enforcing python >= 3.9 (dropping 3.8) as pytest-httpx >0.30.x requires python >= 3.9
-
-
 0.14.0 (2024-12-19)
 -------------------
 * CLI mandatory API key authentication for CLI
