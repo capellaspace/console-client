@@ -763,11 +763,17 @@ Issue the following snippet to view the ordering history
 create tasking request
 ######################
 
-Create a tasking request with basic parameters
+NOTE: `geometry` and `name` are the only required properties to create a tasking request.
 
 .. code:: python3
 
-    # Create basic tasking request with a geometry (only required parameter)
+    # create point tasking request
+    client.create_tasking_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="point tasking request #127"
+    )
+
+    # area tasking request
     client.create_tasking_request(
         geometry=geojson.Polygon(
             [
@@ -779,10 +785,12 @@ Create a tasking request with basic parameters
                     [11.148216220469152, 49.59672249842626],
                 ]
             ]
-        )
+        ),
+        name="area tasking request #127",
+        collection_type="stripmap_100",
     )
 
-    # Add a couple of parameters to help you track/identify it better
+    # tasking request customization
     client.create_tasking_request(
         geometry=geojson.Polygon(
             [
@@ -795,68 +803,142 @@ Create a tasking request with basic parameters
                 ]
             ]
         ),
-        name="I<3SAR",
-        description="My first tasking request"
+        name="highly customizable #127",
+        description="too many knobs",
+        collection_tier="urgent",
+        collection_type="spotlight_ultra",
+        local_time="day",
+        off_nadir_min=5,
+        off_nadir_max=50,
+        orbitalPlanes=[45, 53],
+        asc_dsc="ascending",
+        look_direction="right",
+        polarization="HH",
+        archive_holdback="30 day",
+        custom_attribute_1="correlation #1",
+        custom_attribute_2="correlation #2",
+        pre_approval=True,
+        azimuth_angle_min=340,
+        azimuth_angle_max=20,
+        squint="enabled",
+        max_squint_angle=25,
     )
 
 
-create repeating tasking request
-################################
+    # same as above but leveraging enums defined in `enumerations.py` (client-side validation)
+    from capella_console_client.enumerations import (
+        CollectionTier,
+        CollectionType,
+        LocalTimeOption,
+        OrbitalPlane,
+        OrbitState,
+        Polarization,
+        ObservationDirection,
+        ArchiveHoldback,
+        SquintMode,
+    )
 
-Create a repeating tasking request with basic parameters
+    client.create_tasking_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="highly customizable #127",
+        description="too many knobs",
+        collection_tier=CollectionTier.urgent,
+        collection_type=CollectionType.SPOTLIGHT_ULTRA,
+        local_time=LocalTimeOption.day,
+        off_nadir_min=5,
+        off_nadir_max=50,
+        orbital_planes=[OrbitalPlane.fortyfive, OrbitalPlane.fiftythree],
+        asc_dsc=OrbitState.ascending,
+        look_direction=ObservationDirection.right,
+        polarization=Polarization.HH,
+        archive_holdback=ArchiveHoldback.thirty_day,
+        custom_attribute_1="correlation #1",
+        custom_attribute_2="correlation #2",
+        pre_approval=True,
+        azimuth_angle_min=340,
+        azimuth_angle_max=20,
+        squint=SquintMode.ENABLED,
+        max_squint_angle=30,
+    )
+
+
+create repeat request
+#####################
+
+NOTE: `geometry` and `name` are the only required properties to create a repeat request.
 
 .. code:: python3
 
-    # Create basic repeating tasking request with a geometry (only required parameter)
-    client.create_repeat_request(
-        geometry=geojson.Polygon(
-            [
-                [
-                    [11.148216220469152, 49.59672249842626],
-                    [11.148216220469152, 49.55415435337187],
-                    [11.219621049225651, 49.55415435337187],
-                    [11.219621049225651, 49.59672249842626],
-                    [11.148216220469152, 49.59672249842626],
-                ]
-            ]
-        )
+    # create above tasking request as repeat series
+    from capella_console_client.enumerations import (
+        RepeatCollectionTier,
+        CollectionType,
+        LocalTimeOption,
+        OrbitalPlane,
+        OrbitState,
+        Polarization,
+        ObservationDirection,
+        ArchiveHoldback,
+        SquintMode,
     )
 
-    # Add a couple of parameters to help you track/identify it better
     client.create_repeat_request(
-        geometry=geojson.Polygon(
-            [
-                [
-                    [11.148216220469152, 49.59672249842626],
-                    [11.148216220469152, 49.55415435337187],
-                    [11.219621049225651, 49.55415435337187],
-                    [11.219621049225651, 49.59672249842626],
-                    [11.148216220469152, 49.59672249842626],
-                ]
-            ]
-        ),
-        name="I<3SAR",
-        description="My first repeat request"
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="highly customizable repeat request #127",
+        description="too many knobs",
+        collection_tier=RepeatCollectionTier.flexible,
+        collection_type=CollectionType.SPOTLIGHT_ULTRA,
+        local_time=LocalTimeOption.day,
+        off_nadir_min=5,
+        off_nadir_max=50,
+        orbital_planes=[OrbitalPlane.fortyfive, OrbitalPlane.fiftythree],
+        asc_dsc=OrbitState.ascending,
+        look_direction=ObservationDirection.right,
+        polarization=Polarization.HH,
+        archive_holdback=ArchiveHoldback.thirty_day,
+        custom_attribute_1="correlation #1",
+        custom_attribute_2="correlation #2",
+        azimuth_angle_min=340,
+        azimuth_angle_max=20,
+        squint=SquintMode.ENABLED,
+        max_squint_angle=30,
     )
 
-    # Note that you can only define either repeat_end OR repetition_count, not both. The following request will fail:
+
+repeat requests repeat cadence can be configured in multiple ways
+
+.. code:: python3
+
+    # A) until cancelled, e.g. weekly starting now (defaults)
     client.create_repeat_request(
-        geometry=geojson.Polygon(
-            [
-                [
-                    [11.148216220469152, 49.59672249842626],
-                    [11.148216220469152, 49.55415435337187],
-                    [11.219621049225651, 49.55415435337187],
-                    [11.219621049225651, 49.59672249842626],
-                    [11.148216220469152, 49.59672249842626],
-                ]
-            ]
-        ),
-        name="I<3SAR",
-        description="My first repeat request",
-        repeat_start="2023-12-24 3:30 PM"
-        repeat_end="2023-12-31 3:30 PM",
-        repetition_count=23
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="daily repeat",
+    )
+
+    # B) start + end datetime + frequency , e.g. daily for 27 days
+    from datetime import datetime, timezone, timedelta
+    from capella_console_client.enumerations import RepeatCycle
+
+    repeat_start = datetime.now(tz=timezone.utc)
+    repeat_end = repeat_start + timedelta(days=27)
+
+    client.create_repeat_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="daily repeat",
+        description="daily repeat",
+        repeat_start=repeat_start,
+        repeat_end=repeat_end,
+        repetition_interval=RepeatCycle.DAILY,
+    )
+
+    # C) number of collects + frequency, e.g. 5 collects weekly starting from now
+    client.create_repeat_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="repeat five weeks",
+        description="repeat five weeks",
+        repeat_start=repeat_start,
+        repetition_count=5,
+        repetition_interval=RepeatCycle.WEEKLY,
     )
 
 search tasking request
