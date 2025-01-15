@@ -109,15 +109,15 @@ def test_get_collects_for_task_not_completed(test_client, auth_httpx_mock):
 
 
 def test_create_task_returns_new_task(test_client, authed_tasking_request_mock):
-    tasking_requests = test_client.create_tasking_request(geometry=mock_geojson)
+    tasking_requests = test_client.create_tasking_request(geometry=mock_geojson, name="test")
     assert tasking_requests == post_mock_responses("/task")
 
 
 def test_create_task_invalid_window_open(test_client):
     with pytest.raises(ValueError):
-        test_client.create_tasking_request(geometry=mock_geojson, window_open="PANDA")
+        test_client.create_tasking_request(geometry=mock_geojson, name="test", window_open="PANDA")
 
 
 def test_create_task_invalid_window_close(test_client):
     with pytest.raises(ValueError):
-        test_client.create_tasking_request(geometry=mock_geojson, window_close="PANDA")
+        test_client.create_tasking_request(geometry=mock_geojson, name="test", window_close="PANDA")

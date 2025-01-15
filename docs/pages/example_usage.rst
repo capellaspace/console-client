@@ -763,11 +763,17 @@ Issue the following snippet to view the ordering history
 create tasking request
 ######################
 
-Create a tasking request with basic parameters
+`geometry` and `name` are the only required properties
 
 .. code:: python3
 
-    # Create basic tasking request with a geometry (only required parameter)
+    # point tasking request
+    client.create_tasking_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="point tasking request #127"
+    )
+
+    # sarea tasking request
     client.create_tasking_request(
         geometry=geojson.Polygon(
             [
@@ -779,10 +785,12 @@ Create a tasking request with basic parameters
                     [11.148216220469152, 49.59672249842626],
                 ]
             ]
-        )
+        ),
+        name="area tasking request #127",
+        collection_type="stripmap_100",
     )
 
-    # Add a couple of parameters to help you track/identify it better
+    # tasking request customization
     client.create_tasking_request(
         geometry=geojson.Polygon(
             [
@@ -796,7 +804,62 @@ Create a tasking request with basic parameters
             ]
         ),
         name="I<3SAR",
-        description="My first tasking request"
+        description="too many knobs",
+        collection_tier="urgent",
+        collection_type="spotlight_ultra",
+        local_time="day",
+        off_nadir_min=5,
+        off_nadir_max=50,
+        orbitalPlanes=[45, 53],
+        asc_dsc="ascending",
+        look_direction="right",
+        polarization="HH",
+        archive_holdback="30 day",
+        custom_attribute_1="correlation #1",
+        custom_attribute_2="correlation #2",
+        pre_approval=True,
+        azimuth_angle_min=340,
+        azimuth_angle_max=20,
+        squint="enabled",
+        max_squint_angle=25,
+    )
+
+
+    # same as above but leveraging enums defined in `enumerations.py`
+    from capella_console_client.enumerations import (
+        CollectionTier,
+        CollectionType,
+        LocalTimeOption,
+        OrbitalPlane,
+        OrbitState,
+        Polarization,
+        ObservationDirection,
+        ArchiveHoldback,
+        SquintMode,
+    )
+
+
+    client.create_tasking_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="I<3SAR",
+        description="too many knobs",
+        collection_tier=CollectionTier.urgent,
+        collection_type=CollectionType.SPOTLIGHT_ULTRA,
+        local_time=LocalTimeOption.day,
+        off_nadir_min=5,
+        off_nadir_max=50,
+        orbital_planes=[OrbitalPlane.fortyfive, OrbitalPlane.fiftythree],
+        asc_dsc=OrbitState.ascending,
+        look_direction=ObservationDirection.right,
+        polarization=Polarization.HH,
+        archive_holdback=ArchiveHoldback.thirty_day,
+        custom_attribute_1="correlation #1",
+        custom_attribute_2="correlation #2",
+        pre_approval=True,
+        azimuth_angle_min=340,
+        azimuth_angle_max=20,
+        squint=SquintMode.ENABLED,
+        max_squint_angle=30,
     )
 
 

@@ -105,27 +105,18 @@ UNKNOWN_GROUPBY_FIELD = "unknown"
 
 _COMMON_COLLECT_CONSTRAINTS_FIELDS = frozenset(
     [
-        "collect_mode",
-        "look_direction",
-        "asc_dsc",
-        "orbital_planes",
-        "local_time",
         "off_nadir_min",
         "off_nadir_max",
-        "elevation_min",
-        "elevation_max",
-        "image_length",
         "image_width",
-        "azimuth",
-        "grr_min",
-        "grr_max",
-        "srr_min",
-        "srr_max",
-        "azr_min",
-        "azr_max",
-        "nesz_max",
-        "num_looks",
+        "orbital_planes",
+        "asc_dsc",
+        "look_direction",
+        "local_time",
         "polarization",
+        "azimuth_angle_min",
+        "azimuth_angle_max",
+        "squint",
+        "max_squint_angle",
     ]
 )
 TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS = _COMMON_COLLECT_CONSTRAINTS_FIELDS.copy()
@@ -138,7 +129,5 @@ REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS = frozenset(
         "repeat_end",
         "repetition_interval",
         "repetition_count",
-        "maintain_scene_framing",
-        "look_angle_tolerance",
     ]
 )

@@ -113,35 +113,27 @@ class CapellaConsoleClient:
             geometry: A GeoJSON representation of the area/point of interest. Must be either a polygon or point
             name: Can be used along with description to help characterize and describe the tasking request. Default: ""
             description: Can be used along with name to help characterize and describe the tasking request. Default: ""
+            collection_type: The collection type sets the collect mode, number of looks, and resolutions for the resulting imagery. The available collection types can be found by submitting: GET https://api.capellaspace.com/collectiontypes
+            collection_tier: Preference for data to be collected within a certain time after window_open. Can be one of "urgent", "priority", "standard", and "flexible". Default: "standard"
             window_open: Earliest time (in UTC) that you would like data to be collected. Default: Now
             window_close: Latest time (in UTC) that you would like data to be collected. Default: Seven days after window_open
-            collection_tier: Preference for data to be collected within a certain time after window_open. Can be one of "urgent", "priority", "standard", and "flexible". Default: "standard"
-            product_category: Category used to define image collection. "Extended" has broader look angles and "Custom" allows specifying advanced image acquisition parameters. More information on the specifics of each can be found at https://support.capellaspace.com/hc/en-us/articles/360049110852-SAR-Imagery-Product-Tasking-Categories. One of "standard", "extended", and "custom". Default: "standard"
-            product_types: List of analytics to add to the order along with the imagery. Currently available analytics are Amplitude Change Detection and Vessel Detection. One of "ACD", "VS". Default: None
+            local_time: Times, in the timezone of the area where the image will be collected, during which the collect can be taken. Represented by a list of time ranges as seconds in the day. For example, [[21600, 64800]] would allow collects between 6 AM and 6 PM; [[0, 21600], [64800, 86400]] would allow collects between 6 PM and 12 AM as well as from 12 AM to 6 AM. Alternatively, you can pass string values of "day", "night", or "anytime" which are parsed to [[21600, 64800]], [[0, 21600], [64800, 86400]], and [[0, 86400]] respectively. Default: None
+            product_types: List of analytics to add to the order along with the imagery. Currently available analytics are Vessel classification (VC), Default: None
+            off_nadir_min: Minimum off-nadir angle permitted. Must be less than off_nadir_max. Default: None
+            off_nadir_max: Maximum off-nadir angle permitted. Must be greater than off_nadir_min. Default: None
+            image_width: Image width. Units: [m], Default: None
+            orbital_planes: List of orbital planes allowed to service request. If empty any spacecraft in any plane can service request. One of 45, 53, 97. Default: None
+            asc_dsc: Constraint on ascending/descending pass. One of "ascending", "descending", "either". Default: "either"
+            look_direction: Constraint on view angle. One of "right", "left", "either". Default: "either"
+            polarization: Image polarization. One of "HH", "VV". Default: None
             archive_holdback: If defined will specify a time period during which the resulting imagery will be kept from the publicly accessible archive. One of "none", "one_year", "thirty_day", "permanent". Default: "none"
             custom_attribute_1: Can be used along with custom_attribute_2 to help you track a Capella task with your own metadata or internal systems. Default: None
             custom_attribute_2: Can be used along with custom_attribute_1 to help you track a Capella task with your own metadata or internal systems. Default: None
-            collect_mode: Collect mode to be used by the satellite when making the collect. One of "spotlight", "stripmap", "sliding_spotlight". Default: "spotlight"
-            look_direction: Constraint on view angle. One of "right", "left", "either". Default: "either"
-            asc_dsc: Constraint on ascending/descending pass. One of "ascending", "descending", "either". Default: "either"
-            orbital_planes: List of orbital planes allowed to service request. If empty any spacecraft in any plane can service request. One of 45, 53, 97. Default: None
-            local_time: Times, in the timezone of the area where the image will be collected, during which the collect can be taken. Represented by a list of time ranges as seconds in the day. For example, [[21600, 64800]] would allow collects between 6 AM and 6 PM; [[0, 21600], [64800, 86400]] would allow collects between 6 PM and 12 AM as well as from 12 AM to 6 AM. Alternatively, you can pass string values of "day", "night", or "anytime" which are parsed to [[21600, 64800]], [[0, 21600], [64800, 86400]], and [[0, 86400]] respectively. Default: None
-            off_nadir_min: Minimum off-nadir angle permitted. Must be less than off_nadir_max. Default: None
-            off_nadir_max: Maximum off-nadir angle permitted. Must be greater than off_nadir_min. Default: None
-            elevation_min: Minimum elevation angle permitted. Default: None
-            elevation_max: Maximum elevation angle permitted. Default: None
-            image_length: Image length. Default: None
-            image_width: Image width. Default: None
-            azimuth: Azimuth angle at collect mid-time. Clockwise angle from North to the spacecraft in the target frame of reference. Default: None
-            grr_min: Minimum ground-range resolution. Minimum is in ordinal sense. Default: None
-            grr_max: Maximum ground-range resolution. Maximum is in ordinal sense. Default: None
-            srr_min: Minimum slant-range resolution. Minimum is in ordinal sense. Default: None
-            srr_max: Maximum slant-range resolution. Maximum is in ordinal sense. Default: None
-            azr_min: Minimum azimuth resolution. Minimum is in ordinal sense. Default: None
-            azr_max: Maximum azimuth resolution. Maximum is in ordinal sense. Default: None
-            nesz_max: Maximum allowable NESZ of resulting collect. Default: None
-            num_looks: Number of looks to use in processing collect. Default: None
-            polarization: Image polarization. One of "HH", "VV". Default: None
+            pre_approval: will skip the tasking request cost review step if set to true. Default: false
+            azimuth_angle_min: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
+            azimuth_angle_max: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
+            squint: Determines if generated collects will be squinted. One of: enabled, forward, backward. Default: enabled for point requests, disabled for area requests
+            max_squint_angle: max. allowed absolute squint angle when generating collects. Units: [degrees]. Default: None
 
         Returns:
             Dict[str, Any]: created tasking request metadata
@@ -221,38 +213,28 @@ class CapellaConsoleClient:
             name: Can be used along with description to help characterize and describe the tasking request. Default: ""
             description: Can be used along with name to help characterize and describe the tasking request. Default: ""
             collection_tier: Preference for data to be collected within a certain time after window_open. Can be either "flexible" or "routine". Default: "routine"
-            product_category: Category used to define image collection. "Extended" has broader look angles and "Custom" allows specifying advanced image acquisition parameters. More information on the specifics of each can be found at https://support.capellaspace.com/hc/en-us/articles/360049110852-SAR-Imagery-Product-Tasking-Categories. One of "standard", "extended", and "custom". Default: "standard"
-            archive_holdback: If defined will specify a time period during which the resulting imagery will be kept from the publicly accessible archive. One of "none", "one_year", "thirty_day", "permanent". Default: "none"
-            custom_attribute_1: Can be used along with custom_attribute_2 to help you track a Capella task with your own metadata or internal systems. Default: None
-            custom_attribute_2: Can be used along with custom_attribute_1 to help you track a Capella task with your own metadata or internal systems. Default: None
-            product_types: List of analytics to add to the order along with the imagery. Currently available analytics are Amplitude Change Detection and Vessel Detection. One of "ACD", "VS". Default: None
+            collection_type: The collection type sets the collect mode, number of looks, and resolutions for the resulting imagery. The available collection types can be found by submitting: GET https://api.capellaspace.com/collectiontypes
             repeat_start: Starting date (in UTC) when you would like data to begin being collected. Default: Now
             repeat_end: Starting date (in UTC) when you would like data to stop being collected. This and repetition_count are mutually exclusive; only one of them can be defined per request. Default: None
             repetition_interval: Number of days between the start of each derived request. Default: 7
             repetition_count: Total number of acquisitions in the repeat series. This and repeat_end are mutually exclusive; only one of them can be defined per request. Default: None
-            maintain_scene_framing: Whether to maintain consistent framing (look-direction, ascending/descending, orbital-plane) across all acquisitions. Default: False
-            look_angle_tolerance: Tolerance to look-angle deviations across all acquisitions. Default: None
-            collect_mode: Collect mode to be used by the satellite when making the collect. One of "spotlight", "stripmap", "sliding_spotlight". Default: "spotlight"
-            look_direction: Constraint on view angle. One of "right", "left", "either". Default: "either"
-            asc_dsc: Constraint on ascending/descending pass. One of "ascending", "descending", "either". Default: "either"
-            orbital_planes: List of orbital planes allowed to service request. If empty any spacecraft in any plane can service request. One of 45, 53, 97. Default: None
             local_time: Times, in the timezone of the area where the image will be collected, during which the collect can be taken. Represented by a list of time ranges as seconds in the day. For example, [[21600, 64800]] would allow collects between 6 AM and 6 PM; [[0, 21600], [64800, 86400]] would allow collects between 6 PM and 12 AM as well as from 12 AM to 6 AM. Alternatively, you can pass string values of "day", "night", or "anytime" which are parsed to [[21600, 64800]], [[0, 21600], [64800, 86400]], and [[0, 86400]] respectively. Default: None
+            product_types: List of analytics to add to the order along with the imagery. Currently available analytics are Vessel classification (VC), Default: None
             off_nadir_min: Minimum off-nadir angle permitted. Must be less than off_nadir_max. Default: None
             off_nadir_max: Maximum off-nadir angle permitted. Must be greater than off_nadir_min. Default: None
-            elevation_min: Minimum elevation angle permitted. Default: None
-            elevation_max: Maximum elevation angle permitted. Default: None
-            image_length: Image length. Default: None
-            image_width: Image width. Default: None
-            azimuth: Azimuth angle at collect mid-time. Clockwise angle from North to the spacecraft in the target frame of reference. Default: None
-            grr_min: Minimum ground-range resolution. Minimum is in ordinal sense. Default: None
-            grr_max: Maximum ground-range resolution. Maximum is in ordinal sense. Default: None
-            srr_min: Minimum slant-range resolution. Minimum is in ordinal sense. Default: None
-            srr_max: Maximum slant-range resolution. Maximum is in ordinal sense. Default: None
-            azr_min: Minimum azimuth resolution. Minimum is in ordinal sense. Default: None
-            azr_max: Maximum azimuth resolution. Maximum is in ordinal sense. Default: None
-            nesz_max: Maximum allowable NESZ of resulting collect. Default: None
-            num_looks: Number of looks to use in processing collect. Default: None
+            image_width: Image width. Units: [m], Default: None
+            orbital_planes: List of orbital planes allowed to service request. If empty any spacecraft in any plane can service request. One of 45, 53, 97. Default: None
+            asc_dsc: Constraint on ascending/descending pass. One of "ascending", "descending", "either". Default: "either"
+            look_direction: Constraint on view angle. One of "right", "left", "either". Default: "either"
             polarization: Image polarization. One of "HH", "VV". Default: None
+            archive_holdback: If defined will specify a time period during which the resulting imagery will be kept from the publicly accessible archive. One of "none", "one_year", "thirty_day", "permanent". Default: "none"
+            custom_attribute_1: Can be used along with custom_attribute_2 to help you track a Capella task with your own metadata or internal systems. Default: None
+            custom_attribute_2: Can be used along with custom_attribute_1 to help you track a Capella task with your own metadata or internal systems. Default: None
+            pre_approval: will skip the tasking request cost review step if set to true. Default: false
+            azimuth_angle_min: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
+            azimuth_angle_max: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
+            squint: Determines if generated collects will be squinted. One of: enabled, forward, backward. Default: enabled for point requests, disabled for area requests
+            max_squint_angle: max. allowed absolute squint angle when generating collects. Units: [degr
 
         Returns:
             Dict[str, Any]: created repeat request metadata

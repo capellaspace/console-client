@@ -109,8 +109,8 @@ class RepeatCollectionTier(str, BaseEnum):
 
 class ArchiveHoldback(str, BaseEnum):
     none = "none"
-    one_year = "1 year"
-    thirty_day = "30 day"
+    one_year = "1_year"
+    thirty_day = "30_day"
     permanent = "permanent"
 
 
@@ -134,3 +134,19 @@ class OwnershipOption(str, BaseEnum):
     @classmethod
     def is_valid(cls, option_str: str) -> bool:
         return option_str in list(cls)
+
+
+class CollectionType(str, BaseEnum):
+    SPOTLIGHT = "spotlight"
+    SPOTLIGHT_ULTRA = "spotlight_ultra"
+    SPOTLIGHT_WIDE = "spotlight_wide"
+    STRIPMAP_20 = "stripmap_20"
+    STRIPMAP_50 = "stripmap_50"
+    STRIPMAP_100 = "stripmap_100"
+
+
+class SquintMode(str, BaseEnum):
+    ENABLED = "enabled"
+    DISABLED = "disabled"
+    FORWARD = "forward"
+    BACKWARD = "backward"

@@ -1,73 +1,65 @@
-from typing import Optional, Dict, Any, List, Union
+from typing import Optional, Dict, Any, List, Union, Tuple
 from datetime import datetime, timedelta
 
 import geojson
-from dateutil.parser import parse, ParserError
+from dateutil.parser import parse
 
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
-from capella_console_client.validate import _validate_uuid, _snake_to_camel, _datetime_to_iso8601_str
+from capella_console_client.validate import (
+    _validate_uuid,
+    _snake_to_camel,
+    _datetime_to_iso8601_str,
+    _set_squint_default,
+)
 from capella_console_client.config import TASKING_REQUEST_DEFAULT_PAGE_SIZE, TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS
 from capella_console_client.enumerations import (
     TaskingRequestStatus,
     ObservationDirection,
     OrbitState,
     ProductType,
-    ProductClass,
     OrbitalPlane,
     CollectionTier,
-    InstrumentMode,
     Polarization,
     ArchiveHoldback,
     LocalTimeOption,
+    SquintMode,
+    CollectionType,
 )
 
 
 def create_tasking_request(
     session: CapellaConsoleSession,
     geometry: geojson.geometry.Geometry,
-    name: Optional[str] = "",
+    name: str,
     description: Optional[str] = "",
+    collection_type: Optional[Union[CollectionType, str]] = CollectionType.SPOTLIGHT,
+    collection_tier: Optional[Union[CollectionTier, str]] = CollectionTier.standard,
     window_open: Optional[Union[datetime, str]] = None,
     window_close: Optional[Union[datetime, str]] = None,
-    collection_tier: Optional[Union[str, CollectionTier]] = CollectionTier.standard,
-    product_category: Optional[Union[str, ProductClass]] = ProductClass.standard,
-    archive_holdback: Optional[Union[str, ArchiveHoldback]] = ArchiveHoldback.none,
-    custom_attribute_1: Optional[str] = None,
-    custom_attribute_2: Optional[str] = None,
-    product_types: Optional[List[Union[str, ProductType]]] = None,
-    # Collect constraints
-    collect_mode: Optional[Union[str, InstrumentMode]] = InstrumentMode.spotlight,
-    look_direction: Optional[Union[str, ObservationDirection]] = ObservationDirection.either,
-    asc_dsc: Optional[Union[str, OrbitState]] = OrbitState.either,
-    orbital_planes: Optional[List[Union[int, OrbitalPlane]]] = None,
-    local_time: Optional[Union[List[int], LocalTimeOption]] = None,
+    local_time: Optional[Union[LocalTimeOption, List[int]]] = None,
+    product_types: Optional[List[Union[ProductType, str]]] = None,
     off_nadir_min: Optional[int] = None,
     off_nadir_max: Optional[int] = None,
-    elevation_min: Optional[int] = None,
-    elevation_max: Optional[int] = None,
-    image_length: Optional[int] = None,
     image_width: Optional[int] = None,
-    azimuth: Optional[int] = None,
-    grr_min: Optional[int] = None,
-    grr_max: Optional[int] = None,
-    srr_min: Optional[int] = None,
-    srr_max: Optional[int] = None,
-    azr_min: Optional[int] = None,
-    azr_max: Optional[int] = None,
-    nesz_max: Optional[int] = None,
-    num_looks: Optional[int] = None,
-    polarization: Optional[Union[str, Polarization]] = None,
+    orbital_planes: Optional[List[Union[OrbitalPlane, int]]] = None,
+    asc_dsc: Optional[Union[OrbitState, str]] = OrbitState.either,
+    look_direction: Optional[Union[ObservationDirection, str]] = ObservationDirection.either,
+    polarization: Optional[Union[Polarization, str]] = None,
+    archive_holdback: Optional[Union[ArchiveHoldback, str]] = ArchiveHoldback.none,
+    custom_attribute_1: Optional[str] = None,
+    custom_attribute_2: Optional[str] = None,
+    pre_approval: bool = False,
+    azimuth_angle_min: Optional[int] = None,
+    azimuth_angle_max: Optional[int] = None,
+    squint: Optional[Union[SquintMode, str]] = None,
+    max_squint_angle: Optional[int] = None,
 ) -> Dict[str, Any]:
-    if window_open is None:
-        window_open = datetime.utcnow()
-    if window_close is None:
-        if isinstance(window_open, str):
-            window_open = parse(window_open)
-        window_close = window_open + timedelta(days=7)
 
-    window_open = _datetime_to_iso8601_str(window_open)
-    window_close = _datetime_to_iso8601_str(window_close)
+    window_open, window_close = _set_window_open_close(window_open, window_close)
+
+    if squint is None:
+        squint = _set_squint_default(geometry)
 
     loc = locals()
     collect_constraints = {
@@ -85,10 +77,11 @@ def create_tasking_request(
             "windowOpen": window_open,
             "windowClose": window_close,
             "collectionTier": collection_tier,
-            "productCategory": product_category,
+            "collectionType": collection_type,
             "archiveHoldback": archive_holdback,
             "customAttribute1": custom_attribute_1,
             "customAttribute2": custom_attribute_2,
+            "pre_approval": pre_approval,
             "collectConstraints": collect_constraints,
         },
     }
@@ -97,6 +90,22 @@ def create_tasking_request(
         payload["properties"]["processingConfig"] = {"productTypes": product_types}
 
     return session.post("/task", json=payload).json()
+
+
+def _set_window_open_close(
+    window_open: Optional[Union[datetime, str]], window_close: Optional[Union[datetime, str]]
+) -> Tuple[str, str]:
+    if window_open is None:
+        window_open = datetime.utcnow()
+
+    if window_close is None:
+        if isinstance(window_open, str):
+            window_open = parse(window_open)
+        window_close = window_open + timedelta(days=7)
+
+    window_open = _datetime_to_iso8601_str(window_open)
+    window_close = _datetime_to_iso8601_str(window_close)
+    return (window_open, window_close)
 
 
 def get_tasking_requests(

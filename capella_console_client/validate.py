@@ -4,9 +4,10 @@ from datetime import datetime
 from collections import Counter
 from dateutil.parser import parse, ParserError
 
-from typing import no_type_check, Optional, List, Dict, Tuple, Any, Union
+from typing import no_type_check, Optional, List, Dict, Any, Union
+import geojson
 
-from capella_console_client.enumerations import ProductType, AssetType
+from capella_console_client.enumerations import ProductType, AssetType, SquintMode
 from capella_console_client.logconf import logger
 from capella_console_client.search import SearchResult
 
@@ -93,3 +94,12 @@ def _datetime_to_iso8601_str(dt: Union[datetime, str]) -> str:
         except ParserError:
             raise ValueError(f"Could not parse {dt} string into a datetime")
     return dt.isoformat(timespec="milliseconds") + "Z"
+
+
+def _set_squint_default(geometry: geojson.geometry.Geometry) -> SquintMode:
+    is_point_request = geometry["type"] == "Point"
+
+    if is_point_request:
+        return SquintMode.ENABLED
+
+    return SquintMode.DISABLED
