@@ -2,46 +2,58 @@
 History
 =======
 
+
+0.15.0 (2025-01-24)
+-------------------
+* handle 401 - INVALID_API_KEY (`#99 <https://github.com/capellaspace/console-client/pull/99>`_)
+* poetry==2.0.1 (`#98 <https://github.com/capellaspace/console-client/pull/98>`_)
+* drop python 3.8 support and bump httpx (`#97 <https://github.com/capellaspace/console-client/pull/97>`_)
+* align public signature of create_[tasking|repeat]_request with console-ui tasking experience (`#96 <https://github.com/capellaspace/console-client/pull/96>`_)
+* specify contract id for order (review) (`#93 <https://github.com/capellaspace/console-client/pull/93>`_)
+
 0.14.0 (2024-12-19)
 -------------------
-* CLI mandatory API key authentication for CLI
-* api key based authentication and basic auth deprecation warning (#90)
-* ownership based search
+* CLI mandatory API key authentication for CLI (`#91 <https://github.com/capellaspace/console-client/pull/91>`_)
+* api key based authentication and basic auth deprecation warning (`#90 <https://github.com/capellaspace/console-client/pull/90>`_)
+* ownership based search (`#89 <https://github.com/capellaspace/console-client/pull/89>`_)
+* `SearchResult.groupby(field)` (`#87 <https://github.com/capellaspace/console-client/pull/87>`_)
 
 0.13.3 (2024-11-14)
 -------------------
-* importlib.metadata import
+* importlib.metadata import (`#86 <https://github.com/capellaspace/console-client/pull/86>`_)
 
 
 0.13.2 (2024-10-31)
 -------------------
 * vulnerability updates (jinja2, qtornado, urllib3, certifi, zipp, setuptools)
-* drop pkg_resources, declare python3.13 support
+* drop pkg_resources, declare python3.13 support (`#84 <https://github.com/capellaspace/console-client/pull/84>`_)
 
 
 0.13.1 (2024-04-16)
 -------------------
 * vulnerability updates (idna, black)
-* dependency update (rich, mypy)
+* dependency update (rich, mypy) (`#75 <https://github.com/capellaspace/console-client/pull/75>`_)
 
 
 0.13.0 (2024-02-28)
 -------------------
-* python = ">=3.8,<4.0"
-* ensure license href is not downloaded
+* python = ">=3.8,<4.0" (`#64 <https://github.com/capellaspace/console-client/pull/64>`_)
+* ensure license href is not downloaded (`#68 <https://github.com/capellaspace/console-client/pull/68>`_)
 
 0.12.0 (2024-01-04)
 -------------------
-* create tasking request
-* create repeat request
+
+* add support for new localTime string values (`#59 <https://github.com/capellaspace/console-client/pull/59>`_)
+* readthedocs build fixes (`#57 <https://github.com/capellaspace/console-client/pull/57>`_, `#60 <https://github.com/capellaspace/console-client/pull/60>`_)
 
 0.11.0 (2023-12-19)
 -------------------
-* safeguards to return up to max allowed (10000) items upon searches
+* safeguards to return up to max allowed (10000) items upon searches (`#55 <https://github.com/capellaspace/console-client/pull/55>`_)
 * handle and refresh expired access token
 * opt in threaded flag for client.search (#53)
 * Bump urllib3 from 2.0.4 to 2.0.7 (#50)
 * enforcing python >= 3.8 (dropping 3.7)
+* create tasking request and create repeat request (`48 <https://github.com/capellaspace/console-client/pull/48>`_)
 
 0.10.3 (2023-07-04)
 -------------------
