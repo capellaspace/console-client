@@ -35,6 +35,7 @@ python-dateutil = "^2.8.2"
 httpx = "^0.27.0"
 retrying = "^1.3.3"
 rich = "^13.7.1"
+geojson = "^3.0.1"
 typer = {version = "^0.6.1", optional = true }
 questionary = {version = "^1.10.0", optional = true }
 tabulate = {version = "^0.8.10", optional = true }
@@ -43,13 +44,12 @@ sphinx-rtd-theme = {version = "^1.0.0", optional = true}
 sphinx-autobuild = {version = "^2021.3.14", optional = true}
 sphinx-copybutton = {version = "^0.5.0", optional = true}
 sphinx-autodoc-typehints = {version = "^1.19.2", optional = true}
-geojson = "^3.0.1"
 
 [tool.poetry.extras]
 wizard = ["typer", "questionary", "tabulate"]
 docs = ["Sphinx", "sphinx-rtd-theme", "sphinx-autobuild", "sphinx-copybutton", "sphinx-autodoc-typehints"]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 pytest-cov = "^4.1.0"
 pytest-httpx = "^0.30.0"
@@ -61,7 +61,7 @@ rope = "^1.3.0"
 
 [tool.black]
 line-length = 120
-target-version = [ "py37", "py38", "py39" ]
+target-version = [ "py39", "py310", "py311", "py312", "py313" ]
 exclude = "((.eggs | .git | .pytype | .pytest_cache | build | dist))"
 
 [build-system]

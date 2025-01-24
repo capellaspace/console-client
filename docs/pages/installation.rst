@@ -41,7 +41,7 @@ need to install Poetry first:
 
 .. code-block:: console
 
-  $ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
+  $ curl -sSL https://install.python-poetry.org | python3 -
 
 There are several other ways to install Poetry, as seen in
 `the official guide <https://python-poetry.org/docs/#installation>`_.
