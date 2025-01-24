@@ -7,6 +7,7 @@ from pytest_httpx import HTTPXMock
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from capella_console_client.exceptions import AuthenticationError
+from capella_console_client.enumerations import AuthHeaderPrefix
 import capella_console_client.session
 from .test_data import (
     post_mock_responses,
@@ -92,7 +93,7 @@ def test_api_key_auth(httpx_mock: HTTPXMock):
     assert requests[0].method == "GET"
 
     assert "Authorization" in client._sesh.headers
-    assert client._sesh.headers["Authorization"] == f"ApiKey {api_key}"
+    assert client._sesh.headers["Authorization"] == f"{AuthHeaderPrefix.API_KEY.value} {api_key}"
 
 
 def test_api_key_auth_no_check(httpx_mock: HTTPXMock):
@@ -101,8 +102,14 @@ def test_api_key_auth_no_check(httpx_mock: HTTPXMock):
     requests = httpx_mock.get_requests()
 
     assert "Authorization" in client._sesh.headers
-    assert client._sesh.headers["Authorization"] == f"ApiKey {api_key}"
+    assert client._sesh.headers["Authorization"] == f"{AuthHeaderPrefix.API_KEY.value} {api_key}"
     assert len(requests) == 0
+
+
+def test_failed_api_key_auth(httpx_mock: HTTPXMock):
+    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/user", status_code=401, json={"message": "Unauthorized"})
+    with pytest.raises(AuthenticationError):
+        CapellaConsoleClient(api_key="MOCK_INVALID_API_KEY")
 
 
 @pytest.mark.parametrize(

@@ -5,6 +5,7 @@ from getpass import getpass
 
 from typing import Optional, Tuple
 
+from capella_console_client.enumerations import AuthHeaderPrefix
 import httpx
 
 from capella_console_client.config import DEFAULT_TIMEOUT, CONSOLE_API_URL
@@ -23,6 +24,9 @@ class AuthMethod(Enum):
     BASIC = 1  # email/ password - TO BE DEPRECATED
     TOKEN = 2  # JWT token
     API_KEY = 3  # API key
+
+
+AUTHORIZATION_HEADER_NAME = "Authorization"
 
 
 class AuthMethodDeprecationWarning(DeprecationWarning):
@@ -130,21 +134,21 @@ class CapellaConsoleSession(httpx.Client):
         assert isinstance(password, str)
 
         basic_token = base64.b64encode(f"{email}:{password}".encode()).decode("utf-8")
-        resp = self.post("/token", headers={"Authorization": f"Basic {basic_token}"})
+        resp = self.post("/token", headers={AUTHORIZATION_HEADER_NAME: f"{AuthHeaderPrefix.BASIC.value} {basic_token}"})
         resp.raise_for_status()
         response_body = resp.json()
 
-        self._set_bearer_auth_header(response_body["accessToken"])
+        self._set_bearer_auth_header(token=response_body["accessToken"])
         self._refresh_token = response_body["refreshToken"]
         self._cache_user_info()
 
     def _set_bearer_auth_header(self, token: Optional[str]):
         assert isinstance(token, str)
         token = token.strip()
-        if not token.startswith("Bearer"):
-            token = f"Bearer {token}"
+        if not token.lower().startswith(AuthHeaderPrefix.TOKEN.value.lower()):
+            token = f"{AuthHeaderPrefix.TOKEN.value} {token}"
 
-        self.headers["Authorization"] = token
+        self.headers[AUTHORIZATION_HEADER_NAME] = token
 
     def _cache_user_info(self):
         """cache customer_id and organization_id - serves as test for successful auth"""
@@ -159,19 +163,19 @@ class CapellaConsoleSession(httpx.Client):
     def _set_api_key_auth_header(self, api_key: Optional[str]):
         assert isinstance(api_key, str)
         api_key = api_key.strip()
-        if not api_key.lower().startswith("apikey"):
-            api_key = f"ApiKey {api_key}"
+        if not api_key.lower().startswith(AuthHeaderPrefix.API_KEY.value.lower()):
+            api_key = f"{AuthHeaderPrefix.API_KEY.value} {api_key}"
 
-        self.headers["Authorization"] = api_key
+        self.headers[AUTHORIZATION_HEADER_NAME] = api_key
 
     def send(self, *fct_args, **kwargs):
-        """wrap httpx.Client.send for auto token_refresh"""
+        """wrap httpx.Client.send for token refresh + request retry"""
         try:
             ret = super().send(*fct_args, **kwargs)
-        except AuthenticationError as e:
+        except AuthenticationError as exc:
             # safeguard in case AuthenticationError get's improperly re-used
-            if e.code != INVALID_TOKEN_ERROR_CODE:
-                raise e
+            if exc.code != INVALID_TOKEN_ERROR_CODE:
+                raise exc from None
 
             self.perform_token_refresh()
 
@@ -180,6 +184,7 @@ class CapellaConsoleSession(httpx.Client):
             orig_request.headers["authorization"] = self.headers["authorization"]
             logger.info(f"retrying {fct_args[0]}")
             ret = super().send(*fct_args, **kwargs)
+
         return ret
 
     def perform_token_refresh(self):

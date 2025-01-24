@@ -157,3 +157,9 @@ class SquintMode(str, BaseEnum):
     DISABLED = "disabled"
     FORWARD = "forward"
     BACKWARD = "backward"
+
+
+class AuthHeaderPrefix(Enum):
+    BASIC = "Basic"
+    TOKEN = "Bearer"
+    API_KEY = "ApiKey"

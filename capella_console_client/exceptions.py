@@ -1,5 +1,7 @@
 from typing import Dict, Any
 
+from capella_console_client.enumerations import AuthHeaderPrefix
+
 
 class CapellaConsoleClientError(Exception):
     response = None
@@ -72,6 +74,7 @@ class ContractNotFoundError(CapellaConsoleClientError):
 
 DEFAULT_ERROR_CODE = "GENERAL_API_ERROR"
 INVALID_TOKEN_ERROR_CODE = "INVALID_TOKEN"
+INVALID_API_KEY_ERROR_CODE = "INVALID_API_KEY"
 ORDER_EXPIRED_ERROR_CODE = "ORDER_EXPIRED"
 COLLECTION_ACCESS_DENIED_ERROR_CODE = "COLLECTION_ACCESS_DENIED"
 NOT_AUTHORIZED_ERROR_CODE = "NOT_AUTHORIZED"
@@ -82,6 +85,7 @@ UNAUTHORIZED_MESSAGE = "unauthorized"
 
 ERROR_CODES = {
     INVALID_TOKEN_ERROR_CODE: AuthenticationError,
+    INVALID_API_KEY_ERROR_CODE: AuthenticationError,
     ORDER_EXPIRED_ERROR_CODE: OrderExpiredError,
     COLLECTION_ACCESS_DENIED_ERROR_CODE: CollectionAccessDeniedError,
     NOT_AUTHORIZED_ERROR_CODE: AuthorizationError,
@@ -106,7 +110,6 @@ def handle_error_response_and_raise(response):
     if not response.is_stream_consumed:
         response.read()
     error = response.json()
-
     try:
         if "error" in error:
             error = error["error"]
@@ -123,7 +126,11 @@ def handle_error_response_and_raise(response):
         data = {}
 
     if message is not None and message.lower() == UNAUTHORIZED_MESSAGE and code == DEFAULT_ERROR_CODE:
-        code = INVALID_TOKEN_ERROR_CODE
+        api_key_auth = response.request.headers["authorization"].startswith(AuthHeaderPrefix.API_KEY.value)
+        if api_key_auth:
+            code = INVALID_API_KEY_ERROR_CODE
+        else:
+            code = INVALID_TOKEN_ERROR_CODE
 
     # try to assign some more meaningful exception class by message
     if code == DEFAULT_ERROR_CODE and message:
