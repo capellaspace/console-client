@@ -2,7 +2,6 @@
 History
 =======
 
-
 0.14.0 (2024-12-19)
 -------------------
 * CLI mandatory API key authentication for CLI
