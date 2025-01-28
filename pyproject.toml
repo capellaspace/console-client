@@ -36,6 +36,8 @@ httpx = "^0.27.0"
 retrying = "^1.3.3"
 rich = "^13.7.1"
 geojson = "^3.0.1"
+botocore = "^1.35.0"
+cloudpathlib = {version = "^0.20.0", extras = ["s3"]}
 typer = {version = "^0.6.1", optional = true }
 questionary = {version = "^1.10.0", optional = true }
 tabulate = {version = "^0.8.10", optional = true }
@@ -44,6 +46,7 @@ sphinx-rtd-theme = {version = "^1.0.0", optional = true}
 sphinx-autobuild = {version = "^2021.3.14", optional = true}
 sphinx-copybutton = {version = "^0.5.0", optional = true}
 sphinx-autodoc-typehints = {version = "^1.19.2", optional = true}
+
 
 [tool.poetry.extras]
 wizard = ["typer", "questionary", "tabulate"]
