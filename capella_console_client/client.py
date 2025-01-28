@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Union, Optional, no_type_check, Tuple
 from collections import defaultdict
 from pathlib import Path
 import tempfile
+from cloudpathlib import S3Path
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.session import CapellaConsoleSession
@@ -504,7 +505,7 @@ class CapellaConsoleClient:
         local_path: Union[Path, str] = None,
         override: bool = False,
         show_progress: bool = False,
-    ) -> Path:
+    ) -> Path | S3Path:
         """
         downloads a presigned asset url to disk
 
@@ -532,7 +533,7 @@ class CapellaConsoleClient:
         order_id: Optional[str] = None,
         tasking_request_id: Optional[str] = None,
         collect_id: Optional[str] = None,
-        local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
+        local_dir: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
         include: Union[List[Union[str, AssetType]], str] = None,
         exclude: Union[List[Union[str, AssetType]], str] = None,
         override: bool = False,
@@ -597,7 +598,6 @@ class CapellaConsoleClient:
                 }
         """
 
-        local_dir = Path(local_dir)
         one_of_required = (items_presigned, order_id, tasking_request_id, collect_id)
 
         if not any(map(bool, one_of_required)):
@@ -706,13 +706,13 @@ class CapellaConsoleClient:
         self,
         assets_presigned: Optional[Dict[str, Any]] = None,
         order_id: Optional[str] = None,
-        local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
+        local_dir: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
         include: Union[List[Union[str, AssetType]], str] = None,
         exclude: Union[List[Union[str, AssetType]], str] = None,
         override: bool = False,
         threaded: bool = True,
         show_progress: bool = False,
-    ) -> Dict[str, Path]:
+    ) -> Dict[str, Path | S3Path]:
         """
         download all assets of a product (TO BE DEPRECATED)
 
