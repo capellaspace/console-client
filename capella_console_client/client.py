@@ -560,7 +560,7 @@ class CapellaConsoleClient:
 
                     Meaning e.g. assets_presigned takes precedence over order_id, ...
 
-            local_dir: local directory where assets are saved to, tempdir if not provided
+            local_dir: Path where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
             exclude: black-listing, which assets should be excluded, e.g. ["HH", "thumbnail"] => download ALL except HH and thumbnail assets
 
@@ -724,7 +724,7 @@ class CapellaConsoleClient:
                   1. assets_presigned
                   2. order_id
 
-            local_dir: local directory where assets are saved to, tempdir if not provided
+            local_dir: Path where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
             exclude: black-listing, which assets should be excluded, e.g. ["HH", "thumbnail"] => download ALL except HH and thumbnail assets
                      NOTE: explicit DENY overrides explicit ALLOW
