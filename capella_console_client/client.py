@@ -505,7 +505,7 @@ class CapellaConsoleClient:
         local_path: Union[Path, str] = None,
         override: bool = False,
         show_progress: bool = False,
-    ) -> Path | S3Path:
+    ) -> Union[Path, S3Path]:
         """
         downloads a presigned asset url to disk
 
@@ -712,7 +712,7 @@ class CapellaConsoleClient:
         override: bool = False,
         threaded: bool = True,
         show_progress: bool = False,
-    ) -> Dict[str, Path | S3Path]:
+    ) -> Dict[str, Union[Path, S3Path]]:
         """
         download all assets of a product (TO BE DEPRECATED)
 

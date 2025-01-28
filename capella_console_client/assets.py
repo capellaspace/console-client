@@ -28,7 +28,7 @@ ASSET_KEYS_NOT_DOWNLOADABLE = {"license"}
 @dataclass
 class DownloadRequest:
     url: str
-    local_path: Path | S3Path
+    local_path: Union[Path, S3Path]
     asset_key: str
     stac_id: str = ""
 
@@ -158,7 +158,7 @@ def _perform_download(
     override: bool,
     threaded: bool,
     show_progress: bool = False,
-) -> Dict[str, Path | S3Path]:
+) -> Dict[str, Union[Path, S3Path]]:
     local_paths_by_key = {}
 
     with progress_bar as progress:
@@ -200,7 +200,7 @@ def _download_asset(
     override: bool,
     show_progress: bool,
     progress: rich.progress.Progress,
-) -> Path | S3Path:
+) -> Union[Path, S3Path]:
     if dl_request.local_path is None:
         local_file = _get_filename(dl_request.url)
         dl_request.local_path = Path(tempfile.gettempdir()) / local_file
