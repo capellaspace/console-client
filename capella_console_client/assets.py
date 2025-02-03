@@ -257,7 +257,7 @@ def _register_progress_task(
     dl_request: DownloadRequest, progress: rich.progress.Progress, asset_size: int
 ) -> rich.progress.TaskID:
     file_name_str = str(dl_request.local_path)
-    if dl_request.local_path and isinstance(dl_request.local_path, (Path, S3Path)):
+    if dl_request.local_path and not isinstance(dl_request.local_path, str):
         file_name_str = dl_request.local_path.name
     download_task_id = progress.add_task("Download", total=asset_size, filename=file_name_str)
     return download_task_id
