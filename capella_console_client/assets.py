@@ -69,10 +69,7 @@ def _gather_download_requests(
 
     if separate_dirs:
         local_dir /= stac_id
-        if isinstance(local_dir, Path):
-            local_dir.mkdir(exist_ok=True)
-        elif isinstance(local_dir, S3Path):
-            local_dir.mkdir(parents=True)
+        local_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"downloading product {stac_id} to {local_dir}")
 
