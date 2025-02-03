@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Union, Optional, no_type_check, Tuple
 from collections import defaultdict
 from pathlib import Path
 import tempfile
-from cloudpathlib import S3Path
+from capella_console_client.s3 import S3Path
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.session import CapellaConsoleSession
