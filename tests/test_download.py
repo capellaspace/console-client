@@ -11,6 +11,7 @@ from pytest_httpx import HTTPXMock
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
+from capella_console_client.s3 import S3Path
 from .test_data import (
     get_mock_responses,
     create_mock_asset_hrefs,
@@ -189,12 +190,18 @@ def test_products_download_threaded_within_dir(download_client):
 
 
 def test_download_products_s3path(download_client, s3path_mock):
-    items_presigned = [MOCK_ITEM_PRESIGNED, MOCK_ITEM_PRESIGNED]
+    paths_by_stac_id_and_key = download_client.download_products([MOCK_ITEM_PRESIGNED], local_dir=s3path_mock)
 
-    paths_by_key = download_client.download_products(items_presigned, local_dir=s3path_mock)
-
-    assert paths_by_key
+    assert paths_by_stac_id_and_key
     s3path_mock.__truediv__.assert_called()
+
+    for stac_id, assets_dict in paths_by_stac_id_and_key.items():
+        assert stac_id in DUMMY_STAC_IDS
+        for _, path in assets_dict.items():
+            assert isinstance(S3Path(path), S3Path)
+            assert path.exists()
+            assert path.relative_to(s3path_mock)
+            assert path.is_file()
 
 
 def test_product_download_asset_include(download_client):
