@@ -228,7 +228,7 @@ def refresh_token_client(test_client, auth_httpx_mock):
 @pytest.fixture
 def s3path_mock():
     mock_s3path = MagicMock(spec=S3Path)
-    mock_s3path.__truediv__.return_value = mock_s3path
+    mock_s3path.__truediv__ = MagicMock(return_value=mock_s3path)
     mock_s3path.exists.return_value = True
     mock_s3path.mkdir.return_value = None
     yield mock_s3path
