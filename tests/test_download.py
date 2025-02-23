@@ -188,6 +188,15 @@ def test_products_download_threaded_within_dir(download_client):
                 assert p.relative_to(temp_dir)
 
 
+def test_download_products_s3path(download_client, s3path_mock):
+    items_presigned = [MOCK_ITEM_PRESIGNED, MOCK_ITEM_PRESIGNED]
+
+    paths_by_key = download_client.download_products(items_presigned, local_dir=s3path_mock)
+
+    assert paths_by_key
+    s3path_mock.__truediv__.assert_called()
+
+
 def test_product_download_asset_include(download_client):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
