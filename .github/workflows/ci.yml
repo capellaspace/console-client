@@ -78,7 +78,7 @@ jobs:
 
     - name: Install dependencies 🖥
       run: |
-        poetry install --no-interaction
+        poetry install --no-interaction --extras s3
 
     - name: Test code 🔍
       run: make test
