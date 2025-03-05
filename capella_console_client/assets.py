@@ -5,6 +5,7 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union, Dict, Any
 import re
+from capella_console_client.s3 import S3Path
 
 import httpx
 import rich.progress
@@ -27,7 +28,7 @@ ASSET_KEYS_NOT_DOWNLOADABLE = {"license"}
 @dataclass
 class DownloadRequest:
     url: str
-    local_path: Path
+    local_path: Union[Path, S3Path]
     asset_key: str
     stac_id: str = ""
 
@@ -52,19 +53,23 @@ def _flush_progress_bar(progress: rich.progress.Progress) -> None:
 
 def _gather_download_requests(
     assets_presigned: Dict[str, Any],
-    local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
+    local_dir: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
     include: Union[List[str], str] = None,
     exclude: Union[List[str], str] = None,
     separate_dirs: bool = True,
 ) -> List[DownloadRequest]:
-    local_dir = Path(local_dir)
+    if isinstance(local_dir, str):
+        if local_dir.startswith("s3://"):
+            local_dir = S3Path(local_dir)
+        else:
+            local_dir = Path(local_dir)
     assert local_dir.exists(), f"{local_dir} does not exist"
 
     stac_id = _derive_stac_id(assets_presigned)
 
     if separate_dirs:
         local_dir /= stac_id
-        local_dir.mkdir(exist_ok=True)
+        local_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"downloading product {stac_id} to {local_dir}")
 
@@ -150,7 +155,7 @@ def _perform_download(
     override: bool,
     threaded: bool,
     show_progress: bool = False,
-) -> Dict[str, Path]:
+) -> Dict[str, Union[Path, S3Path]]:
     local_paths_by_key = {}
 
     with progress_bar as progress:
@@ -192,12 +197,10 @@ def _download_asset(
     override: bool,
     show_progress: bool,
     progress: rich.progress.Progress,
-) -> Path:
+) -> Union[Path, S3Path]:
     if dl_request.local_path is None:
         local_file = _get_filename(dl_request.url)
         dl_request.local_path = Path(tempfile.gettempdir()) / local_file
-
-    dl_request.local_path = Path(dl_request.local_path)
 
     if not override and dl_request.local_path.exists():
         logger.info(f"already downloaded to {dl_request.local_path}")
@@ -233,7 +236,7 @@ def _fetch(
     progress: rich.progress.Progress,
 ):
     try:
-        with open(dl_request.local_path, "wb") as f:
+        with dl_request.local_path.open("wb") as f:
             with httpx.stream("GET", dl_request.url) as response:
                 response.raise_for_status()
                 if show_progress:
@@ -254,7 +257,7 @@ def _register_progress_task(
     dl_request: DownloadRequest, progress: rich.progress.Progress, asset_size: int
 ) -> rich.progress.TaskID:
     file_name_str = str(dl_request.local_path)
-    if dl_request.local_path and isinstance(dl_request.local_path, Path):
+    if dl_request.local_path and not isinstance(dl_request.local_path, str):
         file_name_str = dl_request.local_path.name
     download_task_id = progress.add_task("Download", total=asset_size, filename=file_name_str)
     return download_task_id
