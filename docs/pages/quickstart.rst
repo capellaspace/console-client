@@ -8,9 +8,9 @@ Execute the following snippet to authenticate with Capella's Console API and **s
 
 .. code:: python3
 
-  from capella_console_client import CapellaConsoleClient 
+  from capella_console_client import CapellaConsoleClient
 
-  # you will be prompted for console user (user@email.com)/ password before authenticating
+  # prompts for api key before authenticating
   client = CapellaConsoleClient(
       verbose=True
   )
@@ -28,7 +28,7 @@ Execute the following snippet to authenticate with Capella's Console API and **s
 
   # download
   product_paths = client.download_products(
-      order_id=order_id, 
+      order_id=order_id,
       local_dir='/tmp',
       show_progress=True
   )

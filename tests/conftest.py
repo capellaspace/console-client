@@ -47,13 +47,13 @@ def auth_httpx_mock(httpx_mock: HTTPXMock):
 
 @pytest.fixture
 def test_client(auth_httpx_mock):
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     yield client
 
 
 @pytest.fixture
 def verbose_test_client(auth_httpx_mock):
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW", verbose=True)
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY", verbose=True)
     yield client
 
 

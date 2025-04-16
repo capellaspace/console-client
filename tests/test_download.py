@@ -31,7 +31,7 @@ def test_get_presigned_assets(auth_httpx_mock, disable_validate_uuid):
         json=get_mock_responses("/orders/1/download"),
     )
 
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     presigned_assets = client.get_presigned_assets(order_id="1")
     assert presigned_assets[0] == get_mock_responses("/orders/1/download")[0]["assets"]
 
@@ -41,7 +41,7 @@ def test_get_presigned_assets_filtered(auth_httpx_mock, disable_validate_uuid):
         url=f"{CONSOLE_API_URL}/orders/2/download",
         json=get_mock_responses("/orders/2/download"),
     )
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     presigned_assets = client.get_presigned_assets(order_id="2", stac_ids=[DUMMY_STAC_IDS[0]])
     assert len(presigned_assets) == 1
 
@@ -55,7 +55,7 @@ def test_get_presigned_assets_filtered_no_overlap(auth_httpx_mock, disable_valid
         url=f"{CONSOLE_API_URL}/orders/2/download",
         json=get_mock_responses("/orders/2/download"),
     )
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     presigned_assets = client.get_presigned_assets(order_id="2", stac_ids=["3", "4"])
     assert presigned_assets == []
 
