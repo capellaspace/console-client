@@ -3,6 +3,8 @@ History
 =======
 
 
+* remove basic auth and token refresh
+
 0.15.0 (2025-01-24)
 -------------------
 * handle 401 - INVALID_API_KEY (`#99 <https://github.com/capellaspace/console-client/pull/99>`_)
