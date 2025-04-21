@@ -10,6 +10,7 @@ from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from capella_console_client import client
 from capella_console_client import tasking_request as tasking_modules
+from capella_console_client.s3 import S3Path
 
 from .test_data import (
     post_mock_responses,
@@ -46,13 +47,13 @@ def auth_httpx_mock(httpx_mock: HTTPXMock):
 
 @pytest.fixture
 def test_client(auth_httpx_mock):
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     yield client
 
 
 @pytest.fixture
 def verbose_test_client(auth_httpx_mock):
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW", verbose=True)
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY", verbose=True)
     yield client
 
 
@@ -222,3 +223,11 @@ def refresh_token_client(test_client, auth_httpx_mock):
         json=post_mock_responses("/token/refresh"),
     )
     yield test_client
+
+
+@pytest.fixture
+def s3path_mock():
+    mock_s3path = MagicMock(spec=S3Path)
+    mock_s3path.__truediv__.return_value = mock_s3path
+    mock_s3path.__str__ = MagicMock(return_value="s3://mock-bucket/mock-path")
+    yield mock_s3path

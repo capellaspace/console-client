@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Union, Optional, no_type_check, Tuple
 from collections import defaultdict
 from pathlib import Path
 import tempfile
+from capella_console_client.s3 import S3Path
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.session import CapellaConsoleSession
@@ -47,10 +48,8 @@ class CapellaConsoleClient:
     API docs: https://docs.capellaspace.com/accessing-data/searching-for-data
 
     Args:
-        email: email on api.capellaspace.com [will be deprecated in 2025]
-        password: password on api.capellaspace.com [will be deprecated in 2025]
-        token: JWT access token
         api_key: api key for api.capellaspace.com
+        token: JWT access token
         verbose: flag to enable verbose logging
         no_token_check: do not check if provided JWT token or API KEY is valid
         base_url: Capella console API base URL override
@@ -58,21 +57,19 @@ class CapellaConsoleClient:
         no_auth: bypass authentication
 
     NOTE:
-        not providing either `email` & `password` or `token` or `api_key`
-        will prompt you for email and password, which is not what you want in a script [will be deprecated in 2025]
+        not providing either `api_key` (can be set by CAPELLA_API_KEY env) or `token`
+        will prompt you for `api_key`, which is not what you want in a script
 
     NOTE: precedence order (high to low)
-        1. email and password [will be deprecated in 2025]
+        1. API key
         2. JWT token
-        3. API key
+
     """
 
     def __init__(
         self,
-        email: Optional[str] = None,
-        password: Optional[str] = None,
-        token: Optional[str] = None,
         api_key: Optional[str] = None,
+        token: Optional[str] = None,
         verbose: bool = False,
         no_token_check: bool = False,
         base_url: Optional[str] = CONSOLE_API_URL,
@@ -83,7 +80,7 @@ class CapellaConsoleClient:
         self._sesh = CapellaConsoleSession(base_url=base_url, search_url=search_url, verbose=verbose)
 
         if not no_auth:
-            self._sesh.authenticate(email, password, token, api_key, no_token_check)
+            self._sesh.authenticate(api_key, token, no_token_check)
 
     def _set_verbosity(self, verbose: bool = False):
         self.verbose = verbose
@@ -504,7 +501,7 @@ class CapellaConsoleClient:
         local_path: Union[Path, str] = None,
         override: bool = False,
         show_progress: bool = False,
-    ) -> Path:
+    ) -> Union[Path, S3Path]:
         """
         downloads a presigned asset url to disk
 
@@ -532,7 +529,7 @@ class CapellaConsoleClient:
         order_id: Optional[str] = None,
         tasking_request_id: Optional[str] = None,
         collect_id: Optional[str] = None,
-        local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
+        local_dir: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
         include: Union[List[Union[str, AssetType]], str] = None,
         exclude: Union[List[Union[str, AssetType]], str] = None,
         override: bool = False,
@@ -559,7 +556,7 @@ class CapellaConsoleClient:
 
                     Meaning e.g. assets_presigned takes precedence over order_id, ...
 
-            local_dir: local directory where assets are saved to, tempdir if not provided
+            local_dir: Path where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
             exclude: black-listing, which assets should be excluded, e.g. ["HH", "thumbnail"] => download ALL except HH and thumbnail assets
 
@@ -597,7 +594,6 @@ class CapellaConsoleClient:
                 }
         """
 
-        local_dir = Path(local_dir)
         one_of_required = (items_presigned, order_id, tasking_request_id, collect_id)
 
         if not any(map(bool, one_of_required)):
@@ -706,13 +702,13 @@ class CapellaConsoleClient:
         self,
         assets_presigned: Optional[Dict[str, Any]] = None,
         order_id: Optional[str] = None,
-        local_dir: Union[Path, str] = Path(tempfile.gettempdir()),
+        local_dir: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
         include: Union[List[Union[str, AssetType]], str] = None,
         exclude: Union[List[Union[str, AssetType]], str] = None,
         override: bool = False,
         threaded: bool = True,
         show_progress: bool = False,
-    ) -> Dict[str, Path]:
+    ) -> Dict[str, Union[Path, S3Path]]:
         """
         download all assets of a product (TO BE DEPRECATED)
 
@@ -724,7 +720,7 @@ class CapellaConsoleClient:
                   1. assets_presigned
                   2. order_id
 
-            local_dir: local directory where assets are saved to, tempdir if not provided
+            local_dir: Path where assets are saved to, tempdir if not provided
             include: white-listing, which assets should be included, e.g. ["HH"] => only download HH asset
             exclude: black-listing, which assets should be excluded, e.g. ["HH", "thumbnail"] => download ALL except HH and thumbnail assets
                      NOTE: explicit DENY overrides explicit ALLOW

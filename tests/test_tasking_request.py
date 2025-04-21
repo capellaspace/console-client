@@ -80,7 +80,7 @@ def test_get_task(test_client, authed_tasking_request_mock):
 
 
 def test_task_is_completed(authed_tasking_request_mock):
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     task = client.get_task("abc")
 
     assert client.is_task_completed(task)

@@ -29,7 +29,7 @@ pip install capella-console-client
 ```python
 from capella_console_client import CapellaConsoleClient
 
-# you will be prompted for console user (user@email.com)/ password before authenticating
+# you will be prompted for api key before authenticating
 client = CapellaConsoleClient(
     verbose=True
 )
@@ -87,4 +87,4 @@ Contributions are very much welcomed and appreciated. See [how to contribute](ht
 
 
 ## License
-• Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE) • Copyright 2024 • Capella Space •
+• Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE) • Copyright 2025 • Capella Space •

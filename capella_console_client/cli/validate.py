@@ -14,9 +14,6 @@ from capella_console_client.validate import _validate_uuid as _validate_core_uui
 from capella_console_client.assets import STAC_ID_REGEX
 
 
-EMAIL_REGEX = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
-
-
 def _must_be_type(type):
     def _must_be_type_impl(val):
         try:

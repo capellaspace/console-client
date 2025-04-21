@@ -21,9 +21,16 @@ authentication
     # don't want to validate the api-key (saves an API call)
     client = CapellaConsoleClient(api_key="<api-key>", no_token_check=True)
 
+    # prompts for API key
+    client = CapellaConsoleClient()
 
-2) access token
-***************
+    # reads API key from CAPELLA_API_KEY env
+    os.environ["CAPELLA_API_KEY"] = "<api-key>"   # NOTE: provide valid API Key
+    client = CapellaConsoleClient()
+
+
+2) with access token
+********************
 
 .. code:: python3
 
@@ -32,64 +39,6 @@ authentication
 
     # don't want to validate the token (saves an API call)
     client = CapellaConsoleClient(token="<token>", no_token_check=True)
-
-3) basic auth (email, password) - TO BE DEPRECATED
-**************************************************
-
-
-**NOTE: BASIC auth (email, password) is going to be deprecated in 2025**
-
-.. code:: python3
-
-    # you will be prompted for console user (user@email.com)/ password before authenticating
-    client = CapellaConsoleClient()
-
-    # chatty client
-    client = CapellaConsoleClient(verbose=True)
-
-
-provide user credentials
-************************
-
-.. code:: python3
-
-    from getpass import getpass
-
-    # user credentials on api.capellaspace.com
-    email = input("your email on api.capellaspace.com:").strip()
-    pw = getpass("your password on api.capellaspace.com:").strip()
-
-    # authenticate with user and password
-    client = CapellaConsoleClient(email=email, password=pw)
-
-
-token refresh with auto retry
-*****************************
-
-.. code:: python3
-
-    # issued access tokens have an expiration of 1h
-    client = CapellaConsoleClient(api_key=api_key, verbose=True)
-
-    # DON'T RUN THIS ;)
-    import time
-    time.sleep(60 * 60)
-    # token expired in the interim
-
-    # capella-console-client will refresh your access token and retry the initially failed request
-    me = client.whoami()
-    assert me is not None
-    print("All good")
-
-
-Output
-
-.. code:: sh
-
-    2021-10-07 11:00:24,590 - 🛰️  Capella Space 🐐 - INFO - successfully authenticated as user@capellaspace.com
-    2021-10-07 11:00:24,690 - root - ERROR - Request: GET https://api.capellaspace.com/user - Status 401 - Response: {'error': {'message': 'Invalid token.', 'code': 'INVALID_TOKEN'}}
-    2021-10-07 11:00:24,690 - 🛰️  Capella Space 🐐 - INFO - refreshing access token
-    All good
 
 
 search

@@ -11,6 +11,7 @@ from pytest_httpx import HTTPXMock
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
+from capella_console_client.s3 import S3Path
 from .test_data import (
     get_mock_responses,
     create_mock_asset_hrefs,
@@ -30,7 +31,7 @@ def test_get_presigned_assets(auth_httpx_mock, disable_validate_uuid):
         json=get_mock_responses("/orders/1/download"),
     )
 
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     presigned_assets = client.get_presigned_assets(order_id="1")
     assert presigned_assets[0] == get_mock_responses("/orders/1/download")[0]["assets"]
 
@@ -40,7 +41,7 @@ def test_get_presigned_assets_filtered(auth_httpx_mock, disable_validate_uuid):
         url=f"{CONSOLE_API_URL}/orders/2/download",
         json=get_mock_responses("/orders/2/download"),
     )
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     presigned_assets = client.get_presigned_assets(order_id="2", stac_ids=[DUMMY_STAC_IDS[0]])
     assert len(presigned_assets) == 1
 
@@ -54,7 +55,7 @@ def test_get_presigned_assets_filtered_no_overlap(auth_httpx_mock, disable_valid
         url=f"{CONSOLE_API_URL}/orders/2/download",
         json=get_mock_responses("/orders/2/download"),
     )
-    client = CapellaConsoleClient(email="MOCK_EMAIL", password="MOCK_PW")
+    client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     presigned_assets = client.get_presigned_assets(order_id="2", stac_ids=["3", "4"])
     assert presigned_assets == []
 
@@ -186,6 +187,21 @@ def test_products_download_threaded_within_dir(download_client):
             # within temp_dir
             for p in paths:
                 assert p.relative_to(temp_dir)
+
+
+def test_download_products_s3path(download_client, s3path_mock):
+    paths_by_stac_id_and_key = download_client.download_products([MOCK_ITEM_PRESIGNED], local_dir=s3path_mock)
+
+    assert paths_by_stac_id_and_key
+    s3path_mock.__truediv__.assert_called()
+
+    for stac_id, assets_dict in paths_by_stac_id_and_key.items():
+        assert stac_id in DUMMY_STAC_IDS
+        for _, path in assets_dict.items():
+            assert isinstance(S3Path(path), S3Path)
+            assert path.exists()
+            assert path.relative_to(s3path_mock)
+            assert path.is_file()
 
 
 def test_product_download_asset_include(download_client):
