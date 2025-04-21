@@ -21,6 +21,10 @@ class ProductType(str, BaseEnum):
     GEC = "GEC"
     SIDD = "SIDD"
     CPHD = "CPHD"
+    CSI = "CSI"
+    CSIDD = "CSIDD"
+
+    VC = "VC"
     VS = "VS"
     ACD = "ACD"
 
