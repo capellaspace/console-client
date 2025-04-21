@@ -2,6 +2,9 @@
 History
 =======
 
+0.15.1 (2025-04-21)
+-------------------
+* add CSI/ CSIDD and VC as recognized ProductTypes
 
 0.15.0 (2025-01-24)
 -------------------
