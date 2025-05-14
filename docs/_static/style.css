@@ -1,0 +1,10 @@
+.wy-nav-content {
+    max-width: 1200px;
+    width: 90%;
+}
+
+wy-side-nav-search .logo,
+.wy-side-nav-search img {
+    max-height: 100px;
+    width: auto;
+}

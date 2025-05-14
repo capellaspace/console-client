@@ -787,21 +787,25 @@ class CapellaConsoleClient:
 
         supported search filters:
 
+         • azimuth_angle: float, e.g. 123.4
          • bbox: List[float, float, float, float], e.g. [12.35, 41.78, 12.61, 42]
          • billable_area: Billable Area in m^2
          • center_frequency: Union[int, float], Center Frequency (GHz)
          • collections: List[str], e.g. ["capella-open-data"]
-         • collect_id: str, capella internal collect-uuid, e.g. '78616ccc-0436-4dc2-adc8-b0a1e316b095'
+         • collect_id: str, capella internal collect-uuid, e.g. "78616ccc-0436-4dc2-adc8-b0a1e316b095"
+         • collection_type: str, capella collection type, e.g. "spotlight_ultra"
          • constellation: str, e.g. "capella"
          • datetime: str, e.g. "2020-02-12T00:00:00Z"
          • epsg: int, e.g. 32648
          • frequency_band: str, Frequency band, one of "P", "L", "S", "C", "X", "Ku", "K", "Ka"
          • ids: List[str], e.g. `["CAPELLA_C02_SP_GEO_HH_20201109060434_20201109060437"]`
+         • image_formation_algorithm: str, Image Formation Algorithm, one of "pfa", "backprojection"
          • intersects: geometry component of the GeoJSON, e.g. {'type': 'Point', 'coordinates': [-113.1, 51.1]}
          • incidence_angle: Union[int, float], Center incidence angle, between 0 and 90
          • instruments: List[str], leveraged instruments, e.g. ["capella-radar-5"]
          • instrument_mode: str, Instrument mode, one of "spotlight", "stripmap", "sliding_spotlight"
          • limit: int, default: 500
+         • layover_angle: str, e.g. -0.1
          • local_datetime: str, local datetime, e.g. 2022-12-12TT07:37:42.324551+0800
          • local_time: str, local time, e.g. 07:37:42.324551
          • local_timezone: str, local timezone, e.g. Asia/Shanghai
@@ -816,7 +820,6 @@ class CapellaConsoleClient:
          • pixel_spacing_range: Union[int, float], Pixel spacing range (m), e.g. 0.5
          • platform: str, e.g. "capella-2"
          • polarizations: str, one of "HH", "VV", "HV", "VH"
-         • product_category: str, one of "standard", "custom", "extended"
          • product_type: str, one of "SLC", "GEO"
          • resolution_azimuth: float, Resolution azimuth (m), e.g. 0.5
          • resolution_ground_range: float, Resolution ground range (m), e.g. 0.5

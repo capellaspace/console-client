@@ -4,15 +4,21 @@
 Example Usage
 **************
 
+This page provides reusable recipes to :ref:`authenticate <example-auth>`, :ref:`search <example-search>`, :ref:`order <example-order>`, :ref:`task <example-task>`, :ref:`consume imagery and metadata <example-consume>`
+
+
 .. code:: python3
 
     from capella_console_client import CapellaConsoleClient
 
-authentication
-##############
 
-1) with API key
-****************
+.. _example-auth:
+
+authenticate
+############
+
+with API key
+************
 
 .. code:: python3
 
@@ -29,8 +35,8 @@ authentication
     client = CapellaConsoleClient()
 
 
-2) with access token
-********************
+with access token
+*****************
 
 .. code:: python3
 
@@ -41,10 +47,17 @@ authentication
     client = CapellaConsoleClient(token="<token>", no_token_check=True)
 
 
+.. _example-search:
+
 search
 ######
 
-searches are run against Capella Space's Catalog and a List of `STAC items <https://stacspec.org/>`_ matching the search criteria is returned.
+simple search
+*************
+
+Searches are run against Capella Space's Catalog and `STAC items <https://stacspec.org/>`_ matching the search criteria is returned.
+
+A multitude of :ref:`search fields <search-fields>` and :ref:`search operators <search-ops>` are supported.
 
 .. code:: python3
 
@@ -88,168 +101,8 @@ Expensive searches (time is $$)  can be sped up by providing `threaded=True`:
     many_products = client.search(constellation="capella", limit=9999, threaded=True)
 
 
-
-search fields
-*************
-
-.. list-table:: supported fields for search
-    :widths: 30 40 20 20
-    :header-rows: 1
-
-    * - field name
-      - description
-      - type
-      - example
-    * - ``bbox``
-      - bounding box
-      - ``List[float, float, float, float]``
-      - ``[12.35, 41.78, 12.61, 42]``
-    * - ``billable_area``
-      - billable Area (m^2)
-      - ``int``
-      - ``100000000``
-    * - ``center_frequency``
-      - center Frequency (GHz)
-      - ``Union[int, float]``
-      - ``9.65``
-    * - ``collections``
-      - STAC collections
-      - ``List[str]``
-      - ``["capella-open-data"]``
-    * - ``collect_id``
-      - capella internal collect-uuid
-      - ``str``
-      - ``"78616ccc-0436-4dc2-adc8-b0a1e316b095"``
-    * - ``constellation``
-      - constellation identifier
-      - ``str``
-      - ``"capella"``
-    * - ``datetime``
-      - mid time of collect in Zulu format
-      - ``str``
-      - ``"2020-02-12T00:00:00Z"``
-    * - ``epsg``
-      - EPSG code of the datasource
-      - ``int``
-      - ``32648``
-    * - ``frequency_band``
-      - frequency band
-      - ``str``
-      - ``"X"``
-    * - ``ids``
-      - STAC identifiers (unique product identifiers)
-      - ``List[str]``
-      - ``["CAPELLA_C02_SP_GEO_HH_20201109060434_20201109060437"]``
-    * - ``intersects``
-      - geometry component of GeoJSON
-      - ``geometryGeoJSON``
-      - ``{'type': 'Point', 'coordinates': [-113.1, 51.1]}``
-    * - ``incidence_angle``
-      - center incidence angle, between 0 and 90
-      - ``Union[int, float]``
-      - ``31``
-    * - ``instruments``
-      - leveraged instruments
-      - ``List[str]``
-      - ``["capella-radar-5"]``
-    * - ``instrument_mode``
-      - | instrument mode, one of
-        | ``"spotlight"``, ``"stripmap"``, ``"sliding_spotlight"``
-      - ``str``
-      - ``"spotlight"``
-    * - ``local_datetime``
-      - local datetime
-      - ``str``
-      - ``2022-12-12TT07:37:42.324551+0800``
-    * - ``local_time``
-      - local time
-      - ``str``
-      - ``07:37:42.324551``
-    * - ``local_timezone``
-      - time zone
-      - ``str``
-      - ``Asia/Shanghai``
-    * - ``look_angle``
-      - look angle
-      - ``Union[int, float]``
-      - ``28.4``
-    * - ``looks_azimuth``
-      - looks in azimuth
-      - ``int``
-      - ``7``
-    * - ``looks_equivalent_number``
-      - equivalent number of looks (ENL)
-      - ``int``
-      - ``7``
-    * - ``looks_range``
-      - looks in range
-      - ``int``
-      - ``1``
-    * - ``observation_direction``
-      - | antenna pointing direction, one of
-        | ``"right"``, ``"left"``
-      - ``str``
-      - ``"left"``
-    * - ``orbit_state``
-      - orbit State, one of "ascending", "descending"
-      - ``str``
-      - ``"ascending"``
-    * - ``orbital_plane``
-      - | Orbital Plane, inclination angle of orbit, one of
-        | ``45``, ``53``, ``97``
-      - ``int``
-      - ``45``
-    * - ``pixel_spacing_azimuth``
-      - pixel spacing azimuth (m)
-      - ``Union[int, float]``
-      - ``5``
-    * - ``pixel_spacing_range``
-      - pixel spacing range (m)
-      - ``Union[int, float]``
-      - ``5``
-    * - ``platform``
-      - platform identifier
-      - ``str``
-      - ``"capella-6"``
-    * - ``polarizations``
-      - polarization, one of "HH", "VV"
-      - ``List[str]``
-      - ``["HH"]``
-    * - ``product_category``
-      - | product category, one of
-        | ``"standard"``, ``"custom"``, ``"extended"``
-      - ``str``
-      - ``"standard"``
-    * - ``product_type``
-      - | product type str, one of
-        | ``"SLC"``, ``"GEO"``, ``"GEC"``, ``"SICD"``, ``"SIDD"``, ``"CPHD"``
-        | ``"VS"``, ``"ACD"``
-      - ``str``
-      - ``"SLC"``
-    * - ``resolution_azimuth``
-      - resolution azimuth (m)
-      - ``float``
-      - ``0.5``
-    * - ``resolution_ground_range``
-      - resolution ground range (m)
-      - ``float``
-      - ``0.5``
-    * - ``resolution_range``
-      - resolution range (m)
-      - ``float``
-      - ``0.5``
-    * - ``squint_angle``
-      - squint angle
-      - ``float``
-      - ``30.1``
-    * - ``ownership``
-      - one of ``"ownedByOrganization"``, ``"sharedWithOrganization"``, ``"availableForPurchase"``, ``"publiclyAvailable"``
-      - ``str``
-      - ``"ownedByOrganization"``
-
-
 advanced search
-###############
+***************
 
 .. code:: python3
 
@@ -348,51 +201,30 @@ advanced search
 
 
 
-``capella-console-client`` supports the following search operators:
+group search results
+********************
 
-.. list-table:: supported search operators
-   :widths: 20 20 60
-   :header-rows: 1
+.. code:: python3
 
-   * - operator
-     - description
-     - example
-   * - ``eq``
-     - equals
-     - .. code:: python3
+    results = client.search(
+        instrument_mode="spotlight",
+        product_type="GEO",
+        sortby="-datetime"
+    )
 
-         product_type__eq="GEO" (== product_type="GEO")
-   * - ``in``
-     - contains
-     - .. code:: python3
+    by_stac_id = results.groupby(field="id")
 
-         product_type__in=["SLC", "GEO", "GEC"] ( == product_type=["SLC", "GEO", "GEC"])
-   * - ``gt``
-     - greater than
-     - .. code:: python3
+    by_collect_id = results.groupby(field="collect_id")
 
-         datetime__gt="2021-01-01T00:00:00Z"
-   * - ``lt``
-     - lower than
-     - .. code:: python3
+    by_stac_collection = results.groupby(field="collection")
 
-         datetime__lt="2021-02-01T00:00:00Z"
-   * - ``gte``
-     - greater than equal
-     - .. code:: python3
+    by_instrument_mode = results.groupby(field="instrument_mode")
 
-         resolution_range__gte=0.3
-   * - ``lte``
-     - lower than equal
-     - .. code:: python3
-
-         resolution_azimuth__lte=0.5
-
-The API for advanced filtering operations was inspired by `Django's ORM <https://docs.djangoproject.com/en/3.2/topics/db/queries/#chaining-filters>`_
+    by_instrument = res.groupby(field="instruments").keys()
 
 
 visualize search results
-########################
+************************
 
 .. code:: python3
 
@@ -414,32 +246,15 @@ visualize search results
     # open e.g. in QGIS
 
 
-group search results
-####################
+.. _example-order:
 
-.. code:: python3
-
-    results = client.search(
-        instrument_mode="spotlight",
-        product_type="GEO",
-        sortby="-datetime"
-    )
-
-    by_stac_id = results.groupby(field="id")
-
-    by_collect_id = results.groupby(field="collect_id")
-
-    by_stac_collection = results.groupby(field="collection")
-
-    by_instrument_mode = results.groupby(field="instrument_mode")
-
-    by_instrument = res.groupby(field="instruments").keys()
-
-
-order products
-##############
+order
+#####
 
 Issue the following snippets to submit a (purchasing) order by providing STAC items or STAC ids.
+
+order items
+***********
 
 .. code:: python3
 
@@ -456,8 +271,8 @@ Issue the following snippets to submit a (purchasing) order by providing STAC it
                                    check_active_orders=True)
 
 
-download
-########
+download assets
+***************
 
 Download assets of previously ordered products to local disk.
 
@@ -530,8 +345,8 @@ If you prefer a flat hierarchy set ``separate_dirs`` to ``False``:
     )
 
 
-download products filtered by product type
-##########################################
+by product type
+***************
 
 .. code:: python3
 
@@ -548,8 +363,8 @@ download products filtered by product type
     )
 
 
-download products filtered by asset type
-########################################
+by asset type
+*************
 
 .. code:: python3
 
@@ -584,9 +399,8 @@ download products filtered by asset type
        exclude="raster"
     )
 
-
-order and download products of a tasking request
-################################################
+items of tasking request
+************************
 
 Requirement: you have previously issued a tasking request that is in 'completed' state
 
@@ -606,8 +420,8 @@ Requirement: you have previously issued a tasking request that is in 'completed'
     )
 
 
-order and download products of a collect
-########################################
+items of collect
+****************
 
 .. code:: python3
 
@@ -626,7 +440,7 @@ order and download products of a collect
 
 
 review order
-############
+************
 
 If you would like to review the cost of an order before you submission, issue:
 
@@ -637,10 +451,10 @@ If you would like to review the cost of an order before you submission, issue:
 
 .. _presigned items:
 
-presigned items
-###############
+presign assets
+**************
 
-In order to directly load assets (imagery or metadata) into memory you need to request signed S3 URLs first.
+In order to directly load assets (imagery or other) into memory you need to request signed S3 URLs first.
 
 .. code:: python3
 
@@ -658,19 +472,8 @@ In order to directly load assets (imagery or metadata) into memory you need to r
 
 See `read imagery`_  or `read metadata`_ for more information.
 
-
-download single product
-#######################
-
-.. code:: python3
-
-    # download a specific product with download_product (SINGULAR)
-    product_paths = client.download_product(assets_presigned[0], local_dir="/tmp", override=True)
-
-
-
-download single asset
-#####################
+single asset
+************
 
 single assets can be downloaded to gven paths
 
@@ -692,7 +495,7 @@ single assets can be downloaded to gven paths
 
 
 list orders
-###########
+***********
 
 Issue the following snippet to view the ordering history
 
@@ -709,8 +512,13 @@ Issue the following snippet to view the ordering history
     specific_orders = client.list_orders(order_ids=[specific_order_id])
 
 
+.. _example-task:
+
+task
+####
+
 create tasking request
-######################
+**********************
 
 NOTE: `geometry` and `name` are the only required properties to create a tasking request.
 
@@ -812,7 +620,7 @@ NOTE: `geometry` and `name` are the only required properties to create a tasking
 
 
 create repeat request
-#####################
+*********************
 
 NOTE: `geometry` and `name` are the only required properties to create a repeat request.
 
@@ -891,7 +699,7 @@ repeat requests repeat cadence can be configured in multiple ways
     )
 
 search tasking request
-######################
+**********************
 
 
 .. code:: python3
@@ -925,12 +733,15 @@ advanced tasking request search
     )
 
 
+.. _example-consume:
+
+consume
+#######
 
 .. _read imagery:
 
-
 read imagery
-############
+************
 
 Given a presigned asset href (see `presigned items`_) load imagery into memory
 
@@ -960,7 +771,7 @@ NOTE: requires `rasterio <https://pypi.org/project/rasterio/>`_ (not part of thi
 .. _read metadata:
 
 read metadata
-#############
+*************
 
 .. code:: python3
 
