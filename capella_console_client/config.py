@@ -34,13 +34,13 @@ SUPPORTED_QUERY_FIELDS = {
     "pixel_spacing_azimuth",
     "pixel_spacing_range",
     "platform",
-    "product_category",
     "product_type",
     "polarizations",
     "resolution_azimuth",
     "resolution_ground_range",
     "resolution_range",
     "squint_angle",
+    "layover_angle",
     "orbital_plane",
     "billable_area",
     "hash",
@@ -48,6 +48,9 @@ SUPPORTED_QUERY_FIELDS = {
     "local_datetime",
     "local_time",
     "epsg",
+    "image_formation_algorithm",
+    "azimuth_angle",
+    "collection_type",
 }
 
 ALL_SUPPORTED_FIELDS = SUPPORTED_SEARCH_FIELDS | SUPPORTED_QUERY_FIELDS
@@ -66,9 +69,9 @@ OPERATOR_SUFFIXES = {
 
 STAC_PREFIXED_BY_QUERY_FIELDS = {
     "collect_id": "capella:collect_id",
-    "product_category": "capella:product_category",
     "resolution_ground_range": "capella:resolution_ground_range",
     "squint_angle": "capella:squint_angle",
+    "layover_angle": "capella:layover_angle",
     "constellation": "constellation",
     "instruments": "instruments",
     "platform": "platform",
@@ -96,6 +99,8 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "local_time": "locale:time",
     "epsg": "proj:epsg",
     "image_formation_algorithm": "capella:image_formation_algorithm",
+    "azimuth_angle": "view:azimuth",
+    "collection_type": "capella:collection_type",
 }
 
 ROOT_LEVEL_GROUPBY_FIELDS = {"id", "collection"}

@@ -696,7 +696,6 @@ MOCK_GROUPBY_STAC_ITEM = {
         "capella:orbital_plane": 45,
         "sar:observation_direction": "left",
         "capella:collect_id": "90b34689-4eb1-4d75-89ac-6cfae59ce648",
-        "capella:product_category": "custom",
         "capella:image_formation_algorithm": "backprojection",
         "capella:hash": "some-hash",
     },

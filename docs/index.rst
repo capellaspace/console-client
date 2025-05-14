@@ -24,7 +24,7 @@ Installation
 
   $ pip install capella-console-client
 
-for more detail see the :ref:`installation` page
+for more details see the :ref:`installation` page
 
 Requirements
 ============
@@ -63,6 +63,7 @@ License
    pages/installation
    pages/quickstart
    pages/example_usage
+   pages/search_reference
    pages/wizard
    pages/api_reference
    pages/support

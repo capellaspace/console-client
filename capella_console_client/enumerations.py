@@ -52,12 +52,6 @@ class AssetType(str, BaseEnum):
     stats_plots = "stats_plots"
 
 
-class ProductClass(str, BaseEnum):
-    standard = "standard"
-    extended = "extended"
-    custom = "custom"
-
-
 class OrbitState(str, BaseEnum):
     ascending = "ascending"
     descending = "descending"

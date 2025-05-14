@@ -3,10 +3,8 @@ from pathlib import Path
 from typing import Dict, Any
 
 from capella_console_client.cli.cache import CLICache
-from capella_console_client.config import ALL_SUPPORTED_FIELDS
 from capella_console_client.enumerations import (
     InstrumentMode,
-    ProductClass,
     ObservationDirection,
     OrbitState,
     OrbitalPlane,
@@ -54,7 +52,6 @@ CLI_SEARCH_FIELDS = [
     "incidence_angle",
     "resolution_range",
     "resolution_azimuth",
-    "product_category",
     "collections",
     "ids",
     "limit",
@@ -113,7 +110,6 @@ ENUM_CHOICES_BY_FIELD_NAME = {
     "observation_direction": ObservationDirection,
     "orbital_plane": OrbitalPlane,
     "orbit_state": OrbitState,
-    "product_category": ProductClass,
     "product_type": ProductType,
 }
 
