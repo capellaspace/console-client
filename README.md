@@ -66,6 +66,12 @@ starting with `capella-console-client>=0.8.0` the SDK ships with an interactive 
 pip install capella-console-client[wizard]
 ```
 
+Note: For ZSH shells the brackets need to be escaped or full package name quoted:
+
+```
+pip install "capella-console-client[wizard]" or pip install capella-console-client\[wizard\]
+```
+
 ### Usage
 ```
 capella-console-wizard --help
