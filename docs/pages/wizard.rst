@@ -14,6 +14,12 @@ Installation
 
     $ pip install capella-console-client[wizard]
 
+Note: For ZSH shells the brackets need to be escaped or full package name quoted:
+
+.. code:: console
+
+    $ pip install "capella-console-client[wizard]" or pip install capella-console-client\[wizard\]
+
 
 .. code::
 

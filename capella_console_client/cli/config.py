@@ -1,6 +1,7 @@
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Any
+import keyring
 
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.enumerations import (
@@ -20,6 +21,9 @@ class SearchFilterOrderOption(str, BaseEnum):
     # custom = "custom"
 
 
+KEYRING_SYSTEM_NAME = "capella-console-wizard"
+KEYRING_USERNAME = "console-api-key"
+
 DEFAULT_SEARCH_RESULT_HEADERS = [
     "id",
     "instrument_mode",
@@ -38,6 +42,8 @@ DEFAULT_SETTINGS = {
 
 
 USER_SETTINGS = CLICache.load_user_settings()
+
+USER_SETTINGS["console_api_key"] = keyring.get_password(KEYRING_SYSTEM_NAME, KEYRING_USERNAME)
 
 CURRENT_SETTINGS: Dict[str, Any] = {**DEFAULT_SETTINGS, **USER_SETTINGS}
 
