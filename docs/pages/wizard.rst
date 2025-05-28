@@ -69,35 +69,35 @@ you will be prompted for search 1 to many search filter (e.g. ``datetime`` , ``b
 .. code:: console
 
     ? What are you looking for today? (Use arrow keys to move, <space> to select, <a> to toggle, <i> to invert)
-   ● bbox
-   ○ billable_area
-   ○ center_frequency
-   ○ collect_id
-   ○ collections
-   ○ constellation
-»  ● datetime
-   ○ frequency_band
-   ○ ids
-   ○ incidence_angle
-   ○ instrument_mode
-   ○ instruments
-   ○ limit
-   ○ look_angle
-   ○ looks_azimuth
-   ○ looks_equivalent_number
-   ○ looks_range
-   ○ observation_direction
-   ○ orbit_state
-   ○ orbital_plane
-   ○ pixel_spacing_azimuth
-   ○ pixel_spacing_range
-   ○ platform
-   ○ polarizations
-   ○ product_type
-   ○ resolution_azimuth
-   ○ resolution_ground_range
-   ○ resolution_range
-   ○ squint_angle
+    ● bbox
+    ○ billable_area
+    ○ center_frequency
+    ○ collect_id
+    ○ collections
+    ○ constellation
+ »  ● datetime
+    ○ frequency_band
+    ○ ids
+    ○ incidence_angle
+    ○ instrument_mode
+    ○ instruments
+    ○ limit
+    ○ look_angle
+    ○ looks_azimuth
+    ○ looks_equivalent_number
+    ○ looks_range
+    ○ observation_direction
+    ○ orbit_state
+    ○ orbital_plane
+    ○ pixel_spacing_azimuth
+    ○ pixel_spacing_range
+    ○ platform
+    ○ polarizations
+    ○ product_type
+    ○ resolution_azimuth
+    ○ resolution_ground_range
+    ○ resolution_range
+    ○ squint_angle
 
 
 Checkout

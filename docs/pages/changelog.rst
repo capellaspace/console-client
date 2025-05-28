@@ -2,10 +2,18 @@
 History
 =======
 
+0.16.0 (2025-05-28)
+-------------------
+* Securely store Console API Key setting `#109 <https://github.com/capellaspace/console-client/pull/109>`_
+* adding search support for azimuth_angle, layover_angle and collection_type, deprecating product_category (`#106 <https://github.com/capellaspace/console-client/pull/106>`_)
+* security dependency upgrades (`#105 <https://github.com/capellaspace/console-client/pull/105>`_, `#107 <https://github.com/capellaspace/console-client/pull/107>`_, `#108 <https://github.com/capellaspace/console-client/pull/108>`_, `#110 <https://github.com/capellaspace/console-client/pull/110>`_)
+* remove basic auth and token refresh (`#103 <https://github.com/capellaspace/console-client/pull/103>`_)
+* Support cloudpathlib S3Path for product downloads (`#102 <https://github.com/capellaspace/console-client/pull/102>`_)
+
 
 0.15.1 (2025-04-21)
 -------------------
-* add CSI/ CSIDD and VC as recognized ProductTypes
+* add CSI/ CSIDD and VC as recognized ProductTypes (`#104 <https://github.com/capellaspace/console-client/pull/104>`_)
 
 0.15.0 (2025-01-24)
 -------------------
