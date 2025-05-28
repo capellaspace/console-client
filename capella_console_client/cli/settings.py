@@ -17,8 +17,6 @@ from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.config import (
     CLI_SUPPORTED_RESULT_HEADERS,
     CURRENT_SETTINGS,
-    KEYRING_SYSTEM_NAME,
-    KEYRING_USERNAME,
     SearchFilterOrderOption,
 )
 from capella_console_client.cli.prompt_helpers import get_first_checked
@@ -97,7 +95,7 @@ def api_key():
     ).ask()
 
     if console_api_key:
-        keyring.set_password(KEYRING_SYSTEM_NAME, KEYRING_USERNAME, console_api_key)
+        keyring.set_password(CLICache.KEYRING_SYSTEM_NAME, CLICache.KEYRING_USERNAME, console_api_key)
         typer.echo("updated API key for Capella Console")
         CLICache.JWT.unlink(missing_ok=True)
         return True
