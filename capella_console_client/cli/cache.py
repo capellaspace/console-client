@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any, Union
 from datetime import datetime
+import keyring
 
 from capella_console_client.logconf import logger
 
@@ -21,6 +22,8 @@ class CLICache:
     SETTINGS = ROOT / "settings.json"
     MY_SEARCH_RESULTS = ROOT / "my-search-results.json"
     MY_SEARCH_QUERIES = ROOT / "my-search-queries.json"
+    KEYRING_SYSTEM_NAME = "capella-console-wizard"
+    KEYRING_USERNAME = "console-api-key"
 
     @classmethod
     def write_jwt(cls, jwt: str):
@@ -39,7 +42,13 @@ class CLICache:
 
     @classmethod
     def load_user_settings(cls) -> Dict[str, Any]:
-        return _safe_load_json(cls.SETTINGS)
+        settings = _safe_load_json(cls.SETTINGS)
+        if "console_api_key" in settings:
+            cls._migrate_api_key_to_keychain(settings)
+
+        settings["console_api_key"] = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls.KEYRING_USERNAME)
+
+        return settings
 
     @classmethod
     def add_timestamps(cls, data: Union[Dict[str, Any], List[str]], is_new: bool = False) -> Dict[str, Any]:
@@ -79,6 +88,15 @@ class CLICache:
     @classmethod
     def load_my_search_queries(cls) -> Dict[str, Any]:
         return _safe_load_json(cls.MY_SEARCH_QUERIES)
+
+    @classmethod
+    def _migrate_api_key_to_keychain(cls, settings: Dict[str, Any]):
+        api_key = settings.pop("console_api_key")
+
+        # store in system secure storage rather than plain text file
+        keyring.set_password(cls.KEYRING_SYSTEM_NAME, cls.KEYRING_USERNAME, api_key)
+        # rewrite settings without api key
+        cls.SETTINGS.write_text(json.dumps(settings))
 
 
 CLICache.ROOT.mkdir(exist_ok=True)

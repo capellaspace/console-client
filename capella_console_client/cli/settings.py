@@ -2,6 +2,7 @@ from typing import List
 
 import typer
 import questionary
+import keyring
 
 from tabulate import tabulate
 
@@ -94,7 +95,7 @@ def api_key():
     ).ask()
 
     if console_api_key:
-        CLICache.write_user_settings("console_api_key", console_api_key)
+        keyring.set_password(CLICache.KEYRING_SYSTEM_NAME, CLICache.KEYRING_USERNAME, console_api_key)
         typer.echo("updated API key for Capella Console")
         CLICache.JWT.unlink(missing_ok=True)
         return True
