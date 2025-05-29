@@ -407,7 +407,7 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
-markers = {main = "extra == \"wizard\" and platform_system == \"Windows\" or extra == \"docs\"", dev = "platform_system == \"Windows\" or sys_platform == \"win32\""}
+markers = {main = "(extra == \"wizard\" or extra == \"docs\") and platform_system == \"Windows\" or extra == \"docs\"", dev = "platform_system == \"Windows\" or sys_platform == \"win32\""}
 
 [[package]]
 name = "coverage"
@@ -1895,9 +1895,10 @@ files = [
 name = "tornado"
 version = "6.5.1"
 description = "Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed."
-optional = false
+optional = true
 python-versions = ">=3.9"
 groups = ["main"]
+markers = "extra == \"docs\""
 files = [
     {file = "tornado-6.5.1-cp39-abi3-macosx_10_9_universal2.whl", hash = "sha256:d50065ba7fd11d3bd41bcad0825227cc9a95154bad83239357094c36708001f7"},
     {file = "tornado-6.5.1-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:9e9ca370f717997cb85606d074b0e5b247282cf5e2e1611568b8821afe0342d6"},
@@ -2027,4 +2028,4 @@ wizard = ["keyring", "questionary", "tabulate", "typer"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "efbc4feb6fc2c44b0df42368548748f03d7bac42c6782dac05623c747766d96e"
+content-hash = "f7d008bf998b086a49e28bcb8484dbddf201d56f0a3d25fc48fa74b6bce1bb9b"
