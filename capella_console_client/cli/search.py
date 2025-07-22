@@ -2,6 +2,7 @@ import os
 from typing import List, Dict, Any, Optional, Tuple
 import json
 from collections import defaultdict
+import subprocess
 
 import typer
 import questionary
@@ -277,7 +278,7 @@ def _prompt_post_search_actions(
         if action_selection == PostSearchActions.export_json:
             path = PostSearchActions.export_search(result, search_kwargs)
             if questionary.confirm("Would you like to open it?").ask():
-                os.system(f"open {path}")
+                subprocess.run(["open", path], check=True)
 
         if action_selection == PostSearchActions.refine_search:
             prev_search = STACQueryPayload.unflatten(search_kwargs)
