@@ -2,6 +2,12 @@
 History
 =======
 
+0.16.1 (2025-07-22)
+-------------------
+* os.system -> subprocess.run `#114 <https://github.com/capellaspace/console-client/pull/114>`_
+* Bump requests from 2.32.3 to 2.32.4 (`#113 <https://github.com/capellaspace/console-client/pull/113>`_)
+
+
 0.16.0 (2025-05-28)
 -------------------
 * Securely store Console API Key setting `#109 <https://github.com/capellaspace/console-client/pull/109>`_
