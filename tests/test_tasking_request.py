@@ -6,7 +6,7 @@ import pytest
 
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
-from capella_console_client.exceptions import TaskNotCompleteError
+from capella_console_client.exceptions import TaskNotCompleteError, ContractNotFoundError
 from .test_data import get_mock_responses, post_mock_responses, TASK_2
 
 mock_geojson = {"coordinates": [-105.120360, 39.965330], "type": "Point"}
@@ -121,3 +121,13 @@ def test_create_task_invalid_window_open(test_client):
 def test_create_task_invalid_window_close(test_client):
     with pytest.raises(ValueError):
         test_client.create_tasking_request(geometry=mock_geojson, name="test", window_close="PANDA")
+
+
+def test_create_task_with_valid_contract_id(test_client, authed_tasking_request_mock):
+    tasking_request = test_client.create_tasking_request(geometry=mock_geojson, name="test", contract_id="contract-123")
+    assert tasking_request == post_mock_responses("/task")
+
+
+def test_create_task_with_invalid_contract_id(test_client, authed_tasking_request_mock):
+    with pytest.raises(ContractNotFoundError):
+        test_client.create_tasking_request(geometry=mock_geojson, name="test", contract_id="invalid-contract")
