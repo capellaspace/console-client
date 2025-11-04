@@ -138,6 +138,10 @@ def authed_tasking_request_mock(auth_httpx_mock):
             json=get_mock_responses(mock_id),
         )
 
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/organization",
+        json=get_mock_responses("/organization"),
+    )
     auth_httpx_mock.add_response(url=f"{CONSOLE_API_URL}/task", method="POST", json=post_mock_responses("/task"))
 
     yield auth_httpx_mock
@@ -146,7 +150,12 @@ def authed_tasking_request_mock(auth_httpx_mock):
 @pytest.fixture
 def authed_repeat_request_mock(auth_httpx_mock):
     auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/organization",
+        json=get_mock_responses("/organization"),
+    )
+    auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/repeat-requests",
+        method="POST",
         json=post_mock_responses("/repeat-requests"),
     )
 
