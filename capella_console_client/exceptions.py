@@ -72,6 +72,10 @@ class ContractNotFoundError(CapellaConsoleClientError):
     pass
 
 
+class ValidationError(CapellaConsoleClientError):
+    pass
+
+
 DEFAULT_ERROR_CODE = "GENERAL_API_ERROR"
 INVALID_TOKEN_ERROR_CODE = "INVALID_TOKEN"
 INVALID_API_KEY_ERROR_CODE = "INVALID_API_KEY"
@@ -80,6 +84,7 @@ COLLECTION_ACCESS_DENIED_ERROR_CODE = "COLLECTION_ACCESS_DENIED"
 NOT_AUTHORIZED_ERROR_CODE = "NOT_AUTHORIZED"
 ORDER_VALIDATION_ERROR_CODE = "ORDER_VALIDATION_ERROR"
 CONTRACT_NOT_FOUND = "CONTRACT_NOT_FOUND"
+VALIDATION_ERROR = "VALIDATION_ERROR"
 
 UNAUTHORIZED_MESSAGE = "unauthorized"
 
@@ -91,6 +96,7 @@ ERROR_CODES = {
     NOT_AUTHORIZED_ERROR_CODE: AuthorizationError,
     ORDER_VALIDATION_ERROR_CODE: OrderValidationError,
     CONTRACT_NOT_FOUND: ContractNotFoundError,
+    VALIDATION_ERROR: ValidationError,
 }
 
 ERROR_CODES_BY_MESSAGE_SNIP = {
@@ -116,14 +122,18 @@ def handle_error_response_and_raise(response):
 
         message = error.get("message", error.get("Message"))
         code = error.get("code", DEFAULT_ERROR_CODE)
-        data = {
-            **error.get("data", {}),
-            **error.get("detail", {}),
-        }
+
+        error_data = {}
+        if "data" in error:
+            error_data["data"] = error["data"]
+
+        if "detail" in error:
+            error_data["detail"] = error["detail"]
+
     except Exception:
         message = error
         code = DEFAULT_ERROR_CODE
-        data = {}
+        error_data = {}
 
     if message is not None and message.lower() == UNAUTHORIZED_MESSAGE and code == DEFAULT_ERROR_CODE:
         api_key_auth = response.request.headers["authorization"].startswith(AuthHeaderPrefix.API_KEY.value)
@@ -138,5 +148,7 @@ def handle_error_response_and_raise(response):
             code = next(v for k, v in ERROR_CODES_BY_MESSAGE_SNIP.items() if k in message.lower())
         except StopIteration:
             pass
-    exc = ERROR_CODES.get(code, CapellaConsoleClientError)(message=message, code=code, data=data, response=response)
+    exc = ERROR_CODES.get(code, CapellaConsoleClientError)(
+        message=message, code=code, data=error_data, response=response
+    )
     raise exc from None
