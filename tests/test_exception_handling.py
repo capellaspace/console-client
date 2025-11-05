@@ -3,6 +3,7 @@ from capella_console_client.exceptions import (
     CollectionAccessDeniedError,
     OrderExpiredError,
     CapellaConsoleClientError,
+    ValidationError,
 )
 
 import pytest
@@ -29,6 +30,16 @@ def create_mock_response(resp):
             CollectionAccessDeniedError,
         ),
         ({"error": "order expired"}, OrderExpiredError),
+        (
+            {
+                "error": {
+                    "message": "Validation Error",
+                    "code": "VALIDATION_ERROR",
+                    "detail": [{"message": "Invalid uuid", "code": "invalid_string", "path": "some.path"}],
+                }
+            },
+            ValidationError,
+        ),
     ],
 )
 def test_handle_error_response_and_raise(error_response, expected_error_class):
@@ -38,6 +49,11 @@ def test_handle_error_response_and_raise(error_response, expected_error_class):
 
     if isinstance(error_response["error"], str):
         assert excinfo.value.message == error_response["error"]
-    else:
-        assert excinfo.value.message == error_response["error"]["message"]
-        assert excinfo.value.data == error_response["error"]["data"]
+        return
+
+    assert excinfo.value.message == error_response["error"]["message"]
+    if "data" in excinfo.value.data:
+        assert excinfo.value.data["data"] == error_response["error"]["data"]
+
+    if "detail" in excinfo.value.data:
+        assert excinfo.value.data["detail"] == error_response["error"]["detail"]
