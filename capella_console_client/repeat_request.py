@@ -89,13 +89,7 @@ def create_repeat_request(
         payload["properties"]["processingConfig"] = {"productTypes": product_types}
 
     if contract_id:
-        organization = session.get("/organization").json()
-        contracts = organization.get("contracts") or []
-
-        if not any(contract.get("id") == contract_id for contract in contracts):
-            raise ContractNotFoundError(f"Contract {contract_id} not found")
-
-        payload["contract_id"] = contract_id
+        payload["contractId"] = contract_id
 
     return session.post("/repeat-requests", json=payload).json()
 
