@@ -128,6 +128,12 @@ def test_create_task_with_valid_contract_id(test_client, authed_tasking_request_
     assert tasking_request == post_mock_responses("/task")
 
 
-def test_create_task_with_invalid_contract_id(test_client, authed_tasking_request_mock):
+def test_create_task_with_invalid_contract_id(test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/task",
+        method="POST",
+        status_code=400,
+        json={"error": {"message": "Contract not found", "code": "CONTRACT_NOT_FOUND"}},
+    )
     with pytest.raises(ContractNotFoundError):
         test_client.create_tasking_request(geometry=mock_geojson, name="test", contract_id="invalid-contract")
