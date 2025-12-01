@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Any, List, Union, Tuple
 from datetime import datetime, timedelta
 
+from capella_console_client.exceptions import ContractNotFoundError
 import geojson
 from dateutil.parser import parse
 
@@ -54,6 +55,7 @@ def create_tasking_request(
     azimuth_angle_max: Optional[int] = None,
     squint: Optional[Union[SquintMode, str]] = None,
     max_squint_angle: Optional[int] = None,
+    contract_id: Optional[str] = None,
 ) -> Dict[str, Any]:
 
     window_open, window_close = _set_window_open_close(window_open, window_close)
@@ -88,6 +90,9 @@ def create_tasking_request(
 
     if product_types is not None:
         payload["properties"]["processingConfig"] = {"productTypes": product_types}
+
+    if contract_id:
+        payload["contractId"] = contract_id
 
     return session.post("/task", json=payload).json()
 

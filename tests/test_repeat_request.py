@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-import datetime
-
 import pytest
 
 from capella_console_client import CapellaConsoleClient
 from .test_data import post_mock_responses
-from capella_console_client.exceptions import RepeatRequestPayloadValidationError
+from capella_console_client.config import CONSOLE_API_URL
+from capella_console_client.exceptions import RepeatRequestPayloadValidationError, ContractNotFoundError
 
 mock_geojson = {"coordinates": [-105.120360, 39.965330], "type": "Point"}
 
@@ -31,3 +30,19 @@ def test_create_repeat_request_end_and_count_defined(test_client):
         test_client.create_repeat_request(
             geometry=mock_geojson, name="test", repeat_end="PANDA", repetition_count=12345
         )
+
+
+def test_create_repeat_request_with_valid_contract_id(test_client, authed_repeat_request_mock):
+    repeat_request = test_client.create_repeat_request(geometry=mock_geojson, name="test", contract_id="contract-123")
+    assert repeat_request == post_mock_responses("/repeat-requests")
+
+
+def test_create_repeat_request_with_invalid_contract_id(test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/repeat-requests",
+        method="POST",
+        status_code=400,
+        json={"error": {"message": "Contract not found", "code": "CONTRACT_NOT_FOUND"}},
+    )
+    with pytest.raises(ContractNotFoundError):
+        test_client.create_repeat_request(geometry=mock_geojson, name="test", contract_id="invalid-contract")

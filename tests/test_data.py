@@ -262,6 +262,13 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
             "organizationId": "MOCK_ORG_ID",
             "email": "MOCK_EMAIL",
         },
+        "/organization": {
+            "id": "MOCK_ORG_ID",
+            "contracts": [
+                {"id": "contract-123"},
+                {"id": "contract-456"},
+            ],
+        },
         "/orders": [
             {
                 "userId": "MOCK_ID",

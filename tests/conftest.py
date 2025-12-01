@@ -147,6 +147,7 @@ def authed_tasking_request_mock(auth_httpx_mock):
 def authed_repeat_request_mock(auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/repeat-requests",
+        method="POST",
         json=post_mock_responses("/repeat-requests"),
     )
 

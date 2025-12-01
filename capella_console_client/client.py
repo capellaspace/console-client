@@ -131,6 +131,7 @@ class CapellaConsoleClient:
             azimuth_angle_max: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
             squint: Determines if generated collects will be squinted. One of: enabled, forward, backward. Default: enabled for point requests, disabled for area requests
             max_squint_angle: max. allowed absolute squint angle when generating collects. Units: [degrees]. Default: None
+            contract_id: charge tasking request on explicit contract (if omitted default contract is used)
 
         Returns:
             Dict[str, Any]: created tasking request metadata
@@ -230,7 +231,8 @@ class CapellaConsoleClient:
             azimuth_angle_min: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
             azimuth_angle_max: clockwise angle with respect to North in a topocentric geodetic ENZ coordinate system from the target to the satellite. Default: None
             squint: Determines if generated collects will be squinted. One of: enabled, forward, backward. Default: enabled for point requests, disabled for area requests
-            max_squint_angle: max. allowed absolute squint angle when generating collects. Units: [degr
+            max_squint_angle: max. allowed absolute squint angle when generating collects. Units: [degrees]. Default: None
+            contract_id: charge repeat request on explicit contract (if omitted default contract is used)
 
         Returns:
             Dict[str, Any]: created repeat request metadata
