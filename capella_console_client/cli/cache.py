@@ -4,8 +4,6 @@ from typing import List, Dict, Any, Union
 from datetime import datetime
 import keyring
 
-from capella_console_client.logconf import logger
-
 
 def _safe_load_json(file_path: Path) -> Dict[str, Any]:
     content = {}
@@ -18,21 +16,11 @@ def _safe_load_json(file_path: Path) -> Dict[str, Any]:
 
 class CLICache:
     ROOT = Path.home() / ".capella-console-wizard"
-    JWT = ROOT / "jwt.cache"
     SETTINGS = ROOT / "settings.json"
     MY_SEARCH_RESULTS = ROOT / "my-search-results.json"
     MY_SEARCH_QUERIES = ROOT / "my-search-queries.json"
     KEYRING_SYSTEM_NAME = "capella-console-wizard"
     KEYRING_USERNAME = "console-api-key"
-
-    @classmethod
-    def write_jwt(cls, jwt: str):
-        cls.JWT.write_text(jwt)
-        logger.info(f"Cached JWT to {cls.JWT}")
-
-    @classmethod
-    def load_jwt(cls) -> str:
-        return cls.JWT.read_text()
 
     @classmethod
     def write_user_settings(cls, key: str, value: Any):
@@ -46,7 +34,7 @@ class CLICache:
         if "console_api_key" in settings:
             cls._migrate_api_key_to_keychain(settings)
 
-        settings["console_api_key"] = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls.KEYRING_USERNAME)
+        settings["console_api_key"] = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls.KEYRING_USERNAME) or ""
 
         return settings
 
