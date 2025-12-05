@@ -93,14 +93,14 @@ def api_key():
         default=CURRENT_SETTINGS.get("console_api_key", ""),
         validate=_validate_api_key,
     ).ask()
+    _no_selection_bye(console_api_key)
 
     if console_api_key:
         keyring.set_password(CLICache.KEYRING_SYSTEM_NAME, CLICache.KEYRING_USERNAME, console_api_key)
         typer.echo("updated API key for Capella Console")
-        CLICache.JWT.unlink(missing_ok=True)
         return True
-    else:
-        return False
+
+    return False
 
 
 @app.command()
