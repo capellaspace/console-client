@@ -1,7 +1,9 @@
 from unittest.mock import MagicMock
 from copy import deepcopy
 from datetime import datetime, timedelta
+import re
 
+import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
@@ -139,7 +141,6 @@ def authed_tasking_request_mock(auth_httpx_mock):
         )
 
     auth_httpx_mock.add_response(url=f"{CONSOLE_API_URL}/task", method="POST", json=post_mock_responses("/task"))
-
     yield auth_httpx_mock
 
 
@@ -217,18 +218,53 @@ def multi_page_search_client(verbose_test_client, auth_httpx_mock):
 
 
 @pytest.fixture
-def refresh_token_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/token/refresh",
-        method="POST",
-        json=post_mock_responses("/token/refresh"),
-    )
-    yield test_client
-
-
-@pytest.fixture
 def s3path_mock():
     mock_s3path = MagicMock(spec=S3Path)
     mock_s3path.__truediv__.return_value = mock_s3path
     mock_s3path.__str__ = MagicMock(return_value="s3://mock-bucket/mock-path")
     yield mock_s3path
+
+
+def patch_task_status_matcher(request: httpx.Request) -> bool:
+    return request.method.upper() == "PATCH" and re.match(r"/task/[0-9a-f-]{36}/status$", str(request.url.path))
+
+
+@pytest.fixture
+def task_cancel_success_mock(authed_tasking_request_mock):
+    authed_tasking_request_mock.add_response(
+        url=re.compile(".*/task/[0-9a-f-]{36}/status$"), method="PATCH", json={"status": "canceled"}
+    )
+    yield authed_tasking_request_mock
+
+
+CANCEL_ERR = {
+    "message": "This transaction has been finalized with a status of 'customer-cancelled'. It cannot be further modified.",
+    "code": "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION",
+}
+
+
+@pytest.fixture
+def task_cancel_error_mock(authed_tasking_request_mock):
+    authed_tasking_request_mock.add_response(
+        url=re.compile(".*/task/[0-9a-f-]{36}/status$"),
+        method="PATCH",
+        status_code=400,
+        json={"error": CANCEL_ERR},
+    )
+    yield authed_tasking_request_mock
+
+
+@pytest.fixture
+def task_cancel_partial_success_mock(authed_tasking_request_mock):
+    authed_tasking_request_mock.add_response(
+        url=re.compile(".*/task/[a-]{36}/status$"), method="PATCH", status_code=200, json={"status": "canceled"}
+    )
+
+    authed_tasking_request_mock.add_response(
+        url=re.compile(".*/task/[b-]{36}/status$"),
+        method="PATCH",
+        status_code=400,
+        json={"error": CANCEL_ERR},
+    )
+
+    yield authed_tasking_request_mock

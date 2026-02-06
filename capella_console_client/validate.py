@@ -4,7 +4,8 @@ from datetime import datetime
 from collections import Counter
 from dateutil.parser import parse, ParserError
 
-from typing import no_type_check, Optional, List, Dict, Any, Union
+from typing import no_type_check, Optional, List, Dict, Any, Union, Iterable, TypeVar
+
 import geojson
 
 from capella_console_client.enumerations import ProductType, AssetType, SquintMode
@@ -24,6 +25,7 @@ def _validate_uuid(uuid_str: str) -> None:
 
 @no_type_check
 def _validate_uuids(uuid_strs: List[str]):
+    assert len(uuid_strs) > 0, "No UUIDs provided"
     for uuid_str in uuid_strs:
         _validate_uuid(uuid_str)
 
@@ -103,3 +105,17 @@ def _set_squint_default(geometry: geojson.geometry.Geometry) -> SquintMode:
         return SquintMode.ENABLED
 
     return SquintMode.DISABLED
+
+
+T = TypeVar("T")
+
+
+def _compact_unique(items: Iterable[T | None]) -> List[T]:
+    """Return unique non-None values from iterable, preserving order."""
+    seen = set()
+    result = []
+    for item in items:
+        if item is not None and item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
