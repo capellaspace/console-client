@@ -219,17 +219,21 @@ def cancel_tasking_requests(
     *tasking_request_ids: str,
     session: CapellaConsoleSession,
 ) -> Dict[str, Any]:
-    max_workers = min(MAX_CONCURRENT_CANCEL, len(tasking_request_ids))
+    return _cancel_multi_parallel(*tasking_request_ids, session=session, cancel_fct=_cancel_tasking_request)
+
+
+def _cancel_multi_parallel(*cancel_ids: str, session, cancel_fct):
+    max_workers = min(MAX_CONCURRENT_CANCEL, len(cancel_ids))
 
     results_by_tr_id = {}
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures_by_task = {}
 
-        for tr_id in tasking_request_ids:
-            futures_by_task[tr_id] = executor.submit(
-                _cancel_task,
+        for _id in cancel_ids:
+            futures_by_task[_id] = executor.submit(
+                cancel_fct,
                 session=session,
-                tasking_request_id=tr_id,
+                cancel_id=_id,
             )
 
         for key, fut in futures_by_task.items():
@@ -238,9 +242,13 @@ def cancel_tasking_requests(
     return results_by_tr_id
 
 
-def _cancel_task(session: CapellaConsoleSession, tasking_request_id: str):
+def _cancel_tasking_request(session: CapellaConsoleSession, cancel_id: str):
+    return _cancel_worker(session=session, endpoint=f"task/{cancel_id}/status")
+
+
+def _cancel_worker(session: CapellaConsoleSession, endpoint: str):
     try:
-        session.patch(f"task/{tasking_request_id}/status", json={"status": "canceled"})
+        session.patch(endpoint, json={"status": "canceled"})
     except CapellaConsoleClientError as exc:
         if exc.response is not None:
             return {"success": False, **exc.response.json()}

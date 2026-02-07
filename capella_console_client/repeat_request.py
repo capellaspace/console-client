@@ -23,6 +23,7 @@ from capella_console_client.enumerations import (
     SquintMode,
     RepeatCycle,
 )
+from capella_console_client.tasking_request import _cancel_multi_parallel, _cancel_worker
 
 
 def create_repeat_request(
@@ -113,3 +114,14 @@ def _set_repetition_start_end(
         repeat_end = _datetime_to_iso8601_str(repeat_end)
 
     return (repeat_start, repeat_end)
+
+
+def cancel_repeat_requests(
+    *repeat_request_ids: str,
+    session: CapellaConsoleSession,
+) -> Dict[str, Any]:
+    return _cancel_multi_parallel(*repeat_request_ids, session=session, cancel_fct=_cancel_repeat_request)
+
+
+def _cancel_repeat_request(session: CapellaConsoleSession, cancel_id: str):
+    return _cancel_worker(session=session, endpoint=f"repeat-requests/{cancel_id}/status")

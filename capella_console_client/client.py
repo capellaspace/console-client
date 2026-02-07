@@ -33,7 +33,7 @@ from capella_console_client.tasking_request import (
     create_tasking_request,
     cancel_tasking_requests,
 )
-from capella_console_client.repeat_request import create_repeat_request
+from capella_console_client.repeat_request import create_repeat_request, cancel_repeat_requests
 from capella_console_client.validate import (
     _validate_uuid,
     _validate_uuids,
@@ -192,16 +192,21 @@ class CapellaConsoleClient:
         """
         cancel tasking requests
 
-        Find more information at https://docs.capellaspace.com/constellation-tasking/cancel-task
+        Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`_.
+        For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Overview <https://support.capellaspace.com/what-is-the-tasking-cancellation-policy>`_.
 
         Args:
             tasking_request_ids: list of tasking_request_ids to cancel
 
         Returns:
-            Dict[str, Any]: cancel results in the following format
+            Dict[str, Any]: cancel results in the following format::
+
                 {
                     "<tr-id-1>": {
-                        "success": bool,
+                        "success": True,   # → no "error" field
+                    },
+                    "<tr-id-2>": {
+                        "success": False,  # ← **only when success=False**
                         "error": {}
                     },
                     ...
@@ -217,7 +222,7 @@ class CapellaConsoleClient:
         results_by_tr_id = cancel_tasking_requests(*filtered_tasking_request_ids, session=self._sesh)
 
         if self.verbose:
-            print_cancelation_result(results_by_tr_id)
+            print_cancelation_result(results_by_tr_id, task_type="tasking")
 
         return results_by_tr_id
 
@@ -281,6 +286,44 @@ class CapellaConsoleClient:
             Dict[str, Any]: created repeat request metadata
         """
         return create_repeat_request(session=self._sesh, **kwargs)
+
+    def cancel_repeat_requests(self, *repeat_request_ids: Optional[str]) -> Dict[str, Any]:
+        """
+        cancel repeat requests
+
+        Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`_.
+        For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Overview <https://support.capellaspace.com/what-is-the-tasking-cancellation-policy>`_.
+
+        Args:
+            repeat_request_ids: list of repeat_request_ids to cancel
+
+        Returns:
+            Dict[str, Any]: cancel results in the following format::
+
+                {
+                    "<tr-id-1>": {
+                        "success": True,   # → no "error" field
+                    },
+                    "<tr-id-2>": {
+                        "success": False,  # ← **only when success=False**
+                        "error": {}
+                    },
+                    ...
+                }
+        """
+        filtered_repeat_request_ids = _compact_unique(repeat_request_ids)
+        _validate_uuids(filtered_repeat_request_ids)
+
+        if self.verbose:
+            plural_s = "s" if len(filtered_repeat_request_ids) > 1 else ""
+            logger.info(f"attempting to cancel {len(filtered_repeat_request_ids)} repeat request{plural_s}")
+
+        results_by_tr_id = cancel_repeat_requests(*filtered_repeat_request_ids, session=self._sesh)
+
+        if self.verbose:
+            print_cancelation_result(results_by_tr_id, task_type="repeat")
+
+        return results_by_tr_id
 
     # ORDER
     def list_orders(self, *order_ids: Optional[str], is_active: Optional[bool] = False) -> List[Dict[str, Any]]:

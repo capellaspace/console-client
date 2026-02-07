@@ -231,9 +231,10 @@ def patch_task_status_matcher(request: httpx.Request) -> bool:
 
 @pytest.fixture
 def task_cancel_success_mock(authed_tasking_request_mock):
-    authed_tasking_request_mock.add_response(
-        url=re.compile(".*/task/[0-9a-f-]{36}/status$"), method="PATCH", json={"status": "canceled"}
-    )
+    for prefix in ("task", "repeat-requests"):
+        authed_tasking_request_mock.add_response(
+            url=re.compile(rf".*/{prefix}/[0-9a-f-]{{36}}/status$"), method="PATCH", json={"status": "canceled"}
+        )
     yield authed_tasking_request_mock
 
 
@@ -245,26 +246,31 @@ CANCEL_ERR = {
 
 @pytest.fixture
 def task_cancel_error_mock(authed_tasking_request_mock):
-    authed_tasking_request_mock.add_response(
-        url=re.compile(".*/task/[0-9a-f-]{36}/status$"),
-        method="PATCH",
-        status_code=400,
-        json={"error": CANCEL_ERR},
-    )
+    for prefix in ("task", "repeat-requests"):
+        authed_tasking_request_mock.add_response(
+            url=re.compile(rf".*/{prefix}/[0-9a-f-]{{36}}/status$"),
+            method="PATCH",
+            status_code=400,
+            json={"error": CANCEL_ERR},
+        )
     yield authed_tasking_request_mock
 
 
 @pytest.fixture
 def task_cancel_partial_success_mock(authed_tasking_request_mock):
-    authed_tasking_request_mock.add_response(
-        url=re.compile(".*/task/[a-]{36}/status$"), method="PATCH", status_code=200, json={"status": "canceled"}
-    )
+    for prefix in ("task", "repeat-requests"):
+        authed_tasking_request_mock.add_response(
+            url=re.compile(rf".*/{prefix}/[a-]{{36}}/status$"),
+            method="PATCH",
+            status_code=200,
+            json={"status": "canceled"},
+        )
 
-    authed_tasking_request_mock.add_response(
-        url=re.compile(".*/task/[b-]{36}/status$"),
-        method="PATCH",
-        status_code=400,
-        json={"error": CANCEL_ERR},
-    )
+        authed_tasking_request_mock.add_response(
+            url=re.compile(rf".*/{prefix}/[b-]{{36}}/status$"),
+            method="PATCH",
+            status_code=400,
+            json={"error": CANCEL_ERR},
+        )
 
     yield authed_tasking_request_mock
