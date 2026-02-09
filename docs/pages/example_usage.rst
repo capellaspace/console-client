@@ -698,8 +698,8 @@ repeat requests repeat cadence can be configured in multiple ways
         repetition_interval=RepeatCycle.WEEKLY,
     )
 
-search tasking request
-**********************
+search tasking requests
+***********************
 
 
 .. code:: python3
@@ -732,6 +732,43 @@ advanced tasking request search
         submission_time__gt=datetime.datetime(2022, 12, 1)
     )
 
+
+cancel tasking requests
+***********************
+
+Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`_.
+For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Overview <https://support.capellaspace.com/what-is-the-tasking-cancellation-policy>`_.
+
+
+.. code:: python3
+
+    # provide 1..N valid tasking request ids to be cancelled
+    cancel_result_by_id = sit_client.cancel_tasking_requests(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    )
+
+    print(cancel_result_by_id)
+
+
+cancel repeat requests
+**********************
+
+Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`_.
+For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Overview <https://support.capellaspace.com/what-is-the-tasking-cancellation-policy>`_.
+
+
+.. code:: python3
+
+    # provide 1..N valid repeat request ids to be cancelled
+    cancel_result_by_id = sit_client.cancel_repeat_requests(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    )
+
+    print(cancel_result_by_id)
 
 .. _example-consume:
 

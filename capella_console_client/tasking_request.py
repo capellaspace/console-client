@@ -1,7 +1,7 @@
 from typing import Optional, Dict, Any, List, Union, Tuple
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
 
-from capella_console_client.exceptions import ContractNotFoundError
 import geojson
 from dateutil.parser import parse
 
@@ -13,7 +13,11 @@ from capella_console_client.validate import (
     _datetime_to_iso8601_str,
     _set_squint_default,
 )
-from capella_console_client.config import TASKING_REQUEST_DEFAULT_PAGE_SIZE, TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS
+from capella_console_client.config import (
+    TASKING_REQUEST_DEFAULT_PAGE_SIZE,
+    TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
+    MAX_CONCURRENT_CANCEL,
+)
 from capella_console_client.enumerations import (
     TaskingRequestStatus,
     ObservationDirection,
@@ -27,6 +31,7 @@ from capella_console_client.enumerations import (
     SquintMode,
     CollectionType,
 )
+from capella_console_client.exceptions import CapellaConsoleClientError
 
 
 def create_tasking_request(
@@ -208,3 +213,47 @@ def _filter(tasking_requests: List[Dict[str, Any]], **kwargs: Optional[Dict[str,
         tasking_requests = fct(tasking_requests, filter_value)  # type: ignore
 
     return tasking_requests
+
+
+def cancel_tasking_requests(
+    *tasking_request_ids: str,
+    session: CapellaConsoleSession,
+) -> Dict[str, Any]:
+    return _cancel_multi_parallel(*tasking_request_ids, session=session, cancel_fct=_cancel_tasking_request)
+
+
+def _cancel_multi_parallel(*cancel_ids: str, session, cancel_fct):
+    max_workers = min(MAX_CONCURRENT_CANCEL, len(cancel_ids))
+
+    results_by_tr_id = {}
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures_by_task = {}
+
+        for _id in cancel_ids:
+            futures_by_task[_id] = executor.submit(
+                cancel_fct,
+                session=session,
+                cancel_id=_id,
+            )
+
+        for key, fut in futures_by_task.items():
+            results_by_tr_id[key] = fut.result()
+
+    return results_by_tr_id
+
+
+def _cancel_tasking_request(session: CapellaConsoleSession, cancel_id: str):
+    return _cancel_worker(session=session, endpoint=f"task/{cancel_id}/status")
+
+
+def _cancel_worker(session: CapellaConsoleSession, endpoint: str):
+    try:
+        session.patch(endpoint, json={"status": "canceled"})
+    except CapellaConsoleClientError as exc:
+        if exc.response is not None:
+            return {"success": False, **exc.response.json()}
+        return {"success": False}
+
+    return {
+        "success": True,
+    }

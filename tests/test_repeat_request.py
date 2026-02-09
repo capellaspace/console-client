@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-
+import uuid
 import pytest
+import random
 
-from capella_console_client import CapellaConsoleClient
 from .test_data import post_mock_responses
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.exceptions import RepeatRequestPayloadValidationError, ContractNotFoundError
@@ -46,3 +45,42 @@ def test_create_repeat_request_with_invalid_contract_id(test_client, auth_httpx_
     )
     with pytest.raises(ContractNotFoundError):
         test_client.create_repeat_request(geometry=mock_geojson, name="test", contract_id="invalid-contract")
+
+
+def test_cancel_success_single_repeat(test_client, task_cancel_success_mock):
+    rr_id = str(uuid.uuid4())
+    result = test_client.cancel_repeat_requests(rr_id)
+
+    assert len(result.keys()) == 1
+    assert result[rr_id]["success"]
+
+
+def test_cancel_success_multiple_tasks(test_client, task_cancel_success_mock):
+    tr_ids = [str(uuid.uuid4()) for _ in range(random.randint(10, 20))]
+    result = test_client.cancel_tasking_requests(*tr_ids)
+
+    assert len(result.keys()) == len(tr_ids)
+
+    for tr_id in tr_ids:
+        assert result[tr_id]["success"]
+
+
+def test_cancel_success_single_fail(test_client, task_cancel_error_mock):
+    tr_id = str(uuid.uuid4())
+    result = test_client.cancel_tasking_requests(tr_id)
+
+    assert len(result.keys()) == 1
+    assert not result[tr_id]["success"]
+    assert result[tr_id]["error"]["code"] == "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION"
+
+
+def test_cancel_success_partial_fail(test_client, task_cancel_partial_success_mock):
+    tr_id_success = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    tr_id_error = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+
+    result = test_client.cancel_tasking_requests(tr_id_success, tr_id_error)
+
+    assert len(result.keys()) == 2
+    assert result[tr_id_success]["success"]
+    assert not result[tr_id_error]["success"]
+    assert result[tr_id_error]["error"]["code"] == "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION"
