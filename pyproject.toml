@@ -43,7 +43,7 @@ sphinx-rtd-theme = {version = "^1.0.0", optional = true}
 sphinx-autobuild = {version = "^2021.3.14", optional = true}
 sphinx-copybutton = {version = "^0.5.0", optional = true}
 sphinx-autodoc-typehints = {version = "^1.19.2", optional = true}
-cloudpathlib = {version = "^0.20.0", extras = ["s3"], optional = true}
+cloudpathlib = {version = "^0.23.0", extras = ["s3"], optional = true}
 botocore = {version = "^1.36.11", extras = ["s3"], optional = true}
 keyring = {version = "^25.6.0", extras = ["wizard"], optional = true}
 

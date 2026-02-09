@@ -407,20 +407,20 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "cloudpathlib"
-version = "0.20.0"
+version = "0.23.0"
 description = "pathlib-style classes for cloud storage services."
 optional = true
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"s3\""
 files = [
-    {file = "cloudpathlib-0.20.0-py3-none-any.whl", hash = "sha256:7af3bcefbf73392ae7f31c08b3660ec31607f8c01b7f6262d4d73469a845f641"},
-    {file = "cloudpathlib-0.20.0.tar.gz", hash = "sha256:f6ef7ca409a510f7ba4639ba50ab3fc5b6dee82d6dff0d7f5715fd0c9ab35891"},
+    {file = "cloudpathlib-0.23.0-py3-none-any.whl", hash = "sha256:8520b3b01468fee77de37ab5d50b1b524ea6b4a8731c35d1b7407ac0cd716002"},
+    {file = "cloudpathlib-0.23.0.tar.gz", hash = "sha256:eb38a34c6b8a048ecfd2b2f60917f7cbad4a105b7c979196450c2f541f4d6b4b"},
 ]
 
 [package.dependencies]
 boto3 = {version = ">=1.34.0", optional = true, markers = "extra == \"s3\""}
-typing_extensions = {version = ">4", markers = "python_version < \"3.11\""}
+typing-extensions = {version = ">4", markers = "python_version < \"3.11\""}
 
 [package.extras]
 all = ["cloudpathlib[azure]", "cloudpathlib[gs]", "cloudpathlib[s3]"]
@@ -2144,4 +2144,4 @@ wizard = ["keyring", "questionary", "tabulate", "typer"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "b21927238551a0f3971ca363291c403f003f1f3ef7ec9ec94f128db10b2451ff"
+content-hash = "12b9f136d43ec89bb29b0cec9270b2e33c55f91ce0964c078ca6276da05ec6f5"
