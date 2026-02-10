@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Any, List, Union, Tuple
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 import geojson
 from dateutil.parser import parse
@@ -8,7 +9,6 @@ from dateutil.parser import parse
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.validate import (
-    _validate_uuid,
     _snake_to_camel,
     _datetime_to_iso8601_str,
     _set_squint_default,
@@ -16,7 +16,9 @@ from capella_console_client.validate import (
 from capella_console_client.config import (
     TASKING_REQUEST_DEFAULT_PAGE_SIZE,
     TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
+    MAX_CONCURRENT_TASK_SEARCH,
     MAX_CONCURRENT_CANCEL,
+    MIN_TASK_SEARCH_PAGE_SIZE,
 )
 from capella_console_client.enumerations import (
     TaskingRequestStatus,
@@ -32,6 +34,7 @@ from capella_console_client.enumerations import (
     CollectionType,
 )
 from capella_console_client.exceptions import CapellaConsoleClientError
+from capella_console_client.report import print_task_search_result
 
 
 def create_tasking_request(
@@ -118,101 +121,104 @@ def _set_window_open_close(
     return (window_open, window_close)
 
 
-def get_tasking_requests(
+def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession):
+    task_response = session.get(f"/task/{tasking_request_id}")
+    return task_response.json()
+
+
+# TODO: extend StacSearch and return list[SearchResult]
+def search_tasking_requests(
     *tasking_request_ids: Optional[str],
     session: CapellaConsoleSession,
     for_org: Optional[bool] = False,
     **kwargs: Optional[Dict[str, Any]],
 ):
-    # TODO: pydantic validation of kwargs
+    search_payload = _build_search_payload(*tasking_request_ids, session=session, for_org=for_org, **kwargs)
 
-    if tasking_request_ids:
-        return _get_tasking_requests_from_ids(*tasking_request_ids, session=session, **kwargs)
+    # TODO: allow override of page_size / adhere to limit
+    page_size = MIN_TASK_SEARCH_PAGE_SIZE
 
-    tasking_requests = []
-    page_cnt = 1
-    params = {"page": page_cnt, "limit": TASKING_REQUEST_DEFAULT_PAGE_SIZE}
+    logger.info(f"searching tasking requests with payload {search_payload}")
+    first_page = _fetch_trs(session, params={"page": 1, "limit": page_size}, search_payload=search_payload)
+
+    total_pages = first_page["totalPages"]
+    fetch_more = total_pages > 1
+    if not fetch_more:
+        trs = first_page["results"]
+        print_task_search_result(trs)
+        return trs
+
+    page_params = [{"page": i, "limit": page_size} for i in range(2, total_pages + 1)]
+
+    _fetch_worker = partial(_fetch_trs, search_payload=search_payload, session=session)
+
+    futures = []
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_TASK_SEARCH) as executor:
+        for page_param in page_params:
+            futures.append(executor.submit(_fetch_worker, params=page_param))
+
+    trs = []
+    for f in futures:
+        page = f.result()
+        trs.extend(page["results"])
+
+    print_task_search_result(trs)
+    return trs
+
+
+def _build_search_payload(*tasking_request_id, session: CapellaConsoleSession, for_org: Optional[bool], **kwargs):
+    # TODO: supported filters
+    query = {"includeRepeatingTasks": False}
+
+    if not session.organization_id or not session.customer_id:
+        session._cache_user_info()
+
     if for_org:
-        params["organizationId"] = session.organization_id
+        query["organizationIds"] = [session.organization_id]
     else:
-        params["customerId"] = session.customer_id
+        query["userId"] = session.customer_id
 
-    logger.info(f"getting tasking requests for {params}")
+    _add_tasking_request_id_filter(*tasking_request_id, query=query)
+    _add_status_filter(query, **kwargs)
 
-    while True:
-        if page_cnt != 1:
-            logger.info(f"\tpage {page_cnt} out of {con['totalPages']}")
-
-        resp = session.get("/tasks/paged", params=params)
-        con: Dict[str, Any] = resp.json()
-        tasking_requests.extend(con["results"])
-        if con["currentPage"] >= con["totalPages"]:
-            break
-        page_cnt += 1
-        params["page"] = page_cnt
-
-        # results are sorted by submissionTime - stop early if page is already over
-        if kwargs.get("submission_time__gt") and not _is_greater_than_submission_time(
-            tasking_requests[-1], kwargs["submission_time__gt"]  # type: ignore
-        ):
-            break
-
-    tasking_requests = _filter(tasking_requests, **kwargs)
-
-    if not tasking_requests:
-        logger.info("found no tasking requests matching")
-    else:
-        multiple_suffix = "s" if len(tasking_requests) > 1 else ""
-        logger.info(f"found {len(tasking_requests)} tasking request{multiple_suffix}")
-    return tasking_requests
+    return {
+        "query": query,
+    }
 
 
-def _get_tasking_requests_from_ids(
-    *tasking_request_ids: Optional[str], session: CapellaConsoleSession, **kwargs: Optional[Dict[str, Any]]
-):
-    for t_req_id in tasking_request_ids:
-        _validate_uuid(t_req_id)
+def _add_tasking_request_id_filter(*tasking_request_id, query):
+    if not tasking_request_id:
+        return
 
-    # TODO: performant search
-    tasking_requests = [session.get(f"/task/{tr_id}").json() for tr_id in tasking_request_ids]  # type: ignore
-
-    tasking_requests = _filter(tasking_requests, **kwargs)
-    return tasking_requests
+    query["taskingrequestIds"] = list(tasking_request_id)
 
 
-def _filter_by_status(tasking_requests: List[Dict[str, Any]], status: str) -> List[Dict[str, Any]]:
-    if status.lower() not in TaskingRequestStatus:
-        logger.warning(f"{status} is not a valid TaskingRequestStatus ... omitting")
-        return tasking_requests
+def _add_status_filter(query, **kwargs):
+    if "status" not in kwargs:
+        return
 
-    return [tr for tr in tasking_requests if _task_contains_status(tr, status)]
+    status_arg = kwargs["status"]
+    if isinstance(status_arg, str):
+        status_arg = [status_arg]
+
+    valid_status = [s.lower() for s in status_arg if s.lower() in TaskingRequestStatus]
+
+    if not valid_status:
+        logger.warning(f"No valid tasking request status provided ({kwargs['status']}) ... dropping from filter")
+
+    query["lastStatusCode"] = valid_status
+
+
+def _fetch_trs(session, search_payload, params):
+    resp = session.post("/tasks/search", params=params, json=search_payload)
+    page: Dict[str, Any] = resp.json()
+    if page["currentPage"] > 1:
+        logger.info(f"page {page['currentPage']} out of {page['totalPages']}: {len(page['results'])} tasking requests")
+    return page
 
 
 def _task_contains_status(task: Dict[str, Any], status_name: str) -> bool:
     return status_name.lower() in (s["code"] for s in task["properties"]["statusHistory"])
-
-
-def _filter_by_submission_time(tasking_requests: List[Dict[str, Any]], submission_time__gt: datetime):
-    return [cur for cur in tasking_requests if _is_greater_than_submission_time(cur, submission_time__gt)]
-
-
-def _is_greater_than_submission_time(tasking_request: Dict[str, Any], submission_time__gt: datetime) -> bool:
-    return parse(tasking_request["properties"]["submissionTime"], ignoretz=True) > submission_time__gt
-
-
-REGISTERED_FILTERS = {"status": _filter_by_status, "submission_time__gt": _filter_by_submission_time}
-
-
-def _filter(tasking_requests: List[Dict[str, Any]], **kwargs: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    for filter_name, filter_value in kwargs.items():
-        fct = REGISTERED_FILTERS.get(filter_name)
-        if fct is None:
-            logger.warning(f"filter {filter_name} unknown ... omitting")
-            continue
-
-        tasking_requests = fct(tasking_requests, filter_value)  # type: ignore
-
-    return tasking_requests
 
 
 def cancel_tasking_requests(
@@ -225,21 +231,21 @@ def cancel_tasking_requests(
 def _cancel_multi_parallel(*cancel_ids: str, session, cancel_fct):
     max_workers = min(MAX_CONCURRENT_CANCEL, len(cancel_ids))
 
-    results_by_tr_id = {}
+    results_by_cancel_id = {}
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures_by_task = {}
+        futures_by_cancel_id = {}
 
         for _id in cancel_ids:
-            futures_by_task[_id] = executor.submit(
+            futures_by_cancel_id[_id] = executor.submit(
                 cancel_fct,
                 session=session,
                 cancel_id=_id,
             )
 
-        for key, fut in futures_by_task.items():
-            results_by_tr_id[key] = fut.result()
+        for key, fut in futures_by_cancel_id.items():
+            results_by_cancel_id[key] = fut.result()
 
-    return results_by_tr_id
+    return results_by_cancel_id
 
 
 def _cancel_tasking_request(session: CapellaConsoleSession, cancel_id: str):

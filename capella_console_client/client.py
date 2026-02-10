@@ -28,7 +28,8 @@ from capella_console_client.assets import (
 )
 from capella_console_client.search import StacSearch, SearchResult
 from capella_console_client.tasking_request import (
-    get_tasking_requests,
+    get_tasking_request,
+    search_tasking_requests,
     _task_contains_status,
     create_tasking_request,
     cancel_tasking_requests,
@@ -155,7 +156,7 @@ class CapellaConsoleClient:
 
         Args:
             tasking_request_ids: list only specific tasking_request_ids (variadic, specify multiple)
-            for_org: list all tasking requests of your organization (instead of only yours) - **requires** organization index/ admin permission
+            for_org: list all tasking requests of your organization (instead of only yours) - **requires** organization-manager role
 
         additionally the following search filters are supported:
 
@@ -167,7 +168,9 @@ class CapellaConsoleClient:
             List[Dict[str, Any]]: metadata of tasking requests
         """
         filtered_tasking_request_ids = _compact_unique(tasking_request_ids)
-        return get_tasking_requests(*filtered_tasking_request_ids, session=self._sesh, for_org=for_org, **kwargs)
+        if filtered_tasking_request_ids:
+            _validate_uuids(filtered_tasking_request_ids)
+        return search_tasking_requests(*filtered_tasking_request_ids, session=self._sesh, for_org=for_org, **kwargs)
 
     def get_task(self, tasking_request_id: str) -> Dict[str, Any]:
         """
@@ -179,8 +182,8 @@ class CapellaConsoleClient:
         Returns:
             Dict[str, Any]: task metadata
         """
-        task_response = self._sesh.get(f"/task/{tasking_request_id}")
-        return task_response.json()
+        _validate_uuid(tasking_request_id)
+        return get_tasking_request(tasking_request_id=tasking_request_id, session=self._sesh)
 
     def is_task_completed(self, task: Dict[str, Any]) -> bool:
         """

@@ -1,5 +1,6 @@
-import datetime
+import json
 import uuid
+from unittest.mock import ANY
 
 import random
 import pytest
@@ -14,7 +15,7 @@ mock_geojson = {"coordinates": [-105.120360, 39.965330], "type": "Point"}
 
 def test_list_all_tasking_requests(test_client, authed_tasking_request_mock):
     tasking_requests = test_client.list_tasking_requests()
-    assert tasking_requests == get_mock_responses("/tasks/paged?page=1&limit=100&customerId=MOCK_ID")["results"]
+    assert tasking_requests == get_mock_responses("/tasks/search?page=1&limit=250")["results"]
 
 
 def test_list_all_tasking_requests_for_org(test_client, authed_tasking_request_mock):
@@ -23,9 +24,21 @@ def test_list_all_tasking_requests_for_org(test_client, authed_tasking_request_m
 
 
 def test_list_tasking_with_id_single(test_client, authed_tasking_request_mock, disable_validate_uuid):
+    authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
+    mock_id = "/tasks/search?page=1&limit=250#SINGLETASK"
+    mock_response = get_mock_responses(mock_id)
+
+    single_tr_id = mock_response["results"][0]["properties"]["taskingrequestId"]
+    authed_tasking_request_mock.add_response(
+        url=f"{CONSOLE_API_URL}{mock_id.split('#')[0]}",
+        match_json={"query": {"includeRepeatingTasks": False, "taskingrequestIds": [single_tr_id], "userId": ANY}},
+        json=mock_response,
+    )
+
     tasking_requests = test_client.list_tasking_requests("abc")
+
     assert len(tasking_requests) == 1
-    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+    assert tasking_requests[0]["properties"]["taskingrequestId"] == single_tr_id
 
 
 def test_list_tasking_with_id_multiple(test_client, authed_tasking_request_mock, disable_validate_uuid):
@@ -38,23 +51,45 @@ def test_list_tasking_with_id_multiple(test_client, authed_tasking_request_mock,
 
 
 def test_list_tasking_with_id_single_status(test_client, authed_tasking_request_mock, disable_validate_uuid):
+    authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
+    mock_id = "/tasks/search?page=1&limit=250#SINGLETASK"
+    mock_response = get_mock_responses(mock_id)
+
+    single_tr_id = mock_response["results"][0]["properties"]["taskingrequestId"]
+    authed_tasking_request_mock.add_response(
+        url=f"{CONSOLE_API_URL}{mock_id.split('#')[0]}",
+        match_json={"query": {"includeRepeatingTasks": False, "lastStatusCode": ["completed"], "userId": ANY}},
+        json=mock_response,
+    )
+
     tasking_requests = test_client.list_tasking_requests(status="completed")
     assert len(tasking_requests) == 1
-    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+    assert tasking_requests[0]["properties"]["taskingrequestId"] == single_tr_id
 
 
-def test_list_tasking_with_id_single_status_case_insensitive(
+def test_list_tasking_with_id_multi_status_case_insensitive(
     test_client, authed_tasking_request_mock, disable_validate_uuid
 ):
-    tasking_requests = test_client.list_tasking_requests(status="cOmPlEtEd")
-    assert len(tasking_requests) == 1
-    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+    test_client.list_tasking_requests(status=["accepted", "Review", "SUBMITTED"])
+    request = authed_tasking_request_mock.get_request(
+        method="POST",
+        url=f"{CONSOLE_API_URL}/tasks/search?page=1&limit=250",
+    )
+
+    request_payload = json.loads(request.read())
+    assert set(request_payload["query"]["lastStatusCode"]) == {"accepted", "review", "submitted"}
 
 
 def test_list_tasking_with_id_single_status_with_ids(test_client, authed_tasking_request_mock, disable_validate_uuid):
-    tasking_requests = test_client.list_tasking_requests("abc", "def", status="completed")
-    assert len(tasking_requests) == 1
-    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
+    test_client.list_tasking_requests("abc", "def", status=["accepted", "Review", "SUBMITTED"])
+    request = authed_tasking_request_mock.get_request(
+        method="POST",
+        url=f"{CONSOLE_API_URL}/tasks/search?page=1&limit=250",
+    )
+
+    request_payload = json.loads(request.read())
+    assert set(request_payload["query"]["lastStatusCode"]) == {"accepted", "review", "submitted"}
+    assert set(request_payload["query"]["taskingrequestIds"]) == {"abc", "def"}
 
 
 def test_list_tasking_with_id_single_status_nonexistent_omitted(
@@ -66,27 +101,21 @@ def test_list_tasking_with_id_single_status_nonexistent_omitted(
     assert tasking_requests[1]["properties"]["taskingrequestId"] == "def"
 
 
-def test_list_tasking_submission_time_gt_filter(test_client, authed_tasking_request_mock, disable_validate_uuid):
-    tasking_requests = test_client.list_tasking_requests(submission_time__gt=datetime.datetime(2020, 5, 12))
-    assert len(tasking_requests) == 1
-    assert tasking_requests[0] == TASK_2
-
-
-def test_get_task(test_client, authed_tasking_request_mock):
+def test_get_task(test_client, authed_tasking_request_mock, disable_validate_uuid):
     task = test_client.get_task("abc")
 
     assert task == get_mock_responses("/task/abc")
     assert task["properties"]["taskingrequestId"] == "abc"
 
 
-def test_task_is_completed(authed_tasking_request_mock):
+def test_task_is_completed(authed_tasking_request_mock, disable_validate_uuid):
     client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     task = client.get_task("abc")
 
     assert client.is_task_completed(task)
 
 
-def test_get_collects_for_task(test_client, authed_tasking_request_mock):
+def test_get_collects_for_task(test_client, authed_tasking_request_mock, disable_validate_uuid):
     authed_tasking_request_mock.add_response(
         url=f"{CONSOLE_API_URL}/collects/list/abc",
         json=get_mock_responses("/collects/list/abc"),
@@ -97,7 +126,7 @@ def test_get_collects_for_task(test_client, authed_tasking_request_mock):
     assert collects == get_mock_responses("/collects/list/abc")
 
 
-def test_get_collects_for_task_not_completed(test_client, auth_httpx_mock):
+def test_get_collects_for_task_not_completed(test_client, auth_httpx_mock, disable_validate_uuid):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/task/def",
         json=get_mock_responses("/task/def"),

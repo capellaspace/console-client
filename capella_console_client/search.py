@@ -10,10 +10,10 @@ from itertools import repeat
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.config import (
-    ALL_SUPPORTED_FIELDS,
+    ALL_SUPPORTED_STAC_SEARCH_FIELDS,
     ALL_SUPPORTED_SORTBY,
-    SUPPORTED_SEARCH_FIELDS,
-    SUPPORTED_QUERY_FIELDS,
+    SUPPORTED_STAC_SEARCH_FIELDS,
+    SUPPORTED_STAC_SEARCH_QUERY_FIELDS,
     STAC_PREFIXED_BY_QUERY_FIELDS,
     OPERATOR_SUFFIXES,
     CATALOG_MAX_PAGE_SIZE,
@@ -172,7 +172,7 @@ class StacSearch:
 
         for cur_field, value in kwargs.items():
             cur_field, op = self._split_op(cur_field)
-            if cur_field not in ALL_SUPPORTED_FIELDS:
+            if cur_field not in ALL_SUPPORTED_STAC_SEARCH_FIELDS:
                 logger.warning(f"filter {cur_field} not supported ... omitting")
                 continue
 
@@ -180,9 +180,9 @@ class StacSearch:
                 logger.warning(f"operator {op} not supported ... omitting")
                 continue
 
-            if cur_field in SUPPORTED_SEARCH_FIELDS:
+            if cur_field in SUPPORTED_STAC_SEARCH_FIELDS:
                 self.payload[cur_field] = value
-            elif cur_field in SUPPORTED_QUERY_FIELDS:
+            elif cur_field in SUPPORTED_STAC_SEARCH_QUERY_FIELDS:
                 if type(value) == list:
                     op = "in"
 
@@ -218,7 +218,7 @@ class StacSearch:
                 logger.warning(f"sorting by {field} not supported ... omitting")
                 continue
 
-            if field in SUPPORTED_QUERY_FIELDS or field == "datetime":
+            if field in SUPPORTED_STAC_SEARCH_QUERY_FIELDS or field == "datetime":
                 field = f"properties.{field}"
 
             sorts.append({"field": field, "direction": directions[direction]})

@@ -148,6 +148,9 @@ class CollectionType(str, BaseEnum):
     STRIPMAP_20 = "stripmap_20"
     STRIPMAP_50 = "stripmap_50"
     STRIPMAP_100 = "stripmap_100"
+    PARALLEL_STRIPMAP_20 = "parallel_stripmap_20"
+    PARALLEL_STRIPMAP_50 = "parallel_stripmap_50"
+    PARALLEL_STRIPMAP_100 = "parallel_stripmap_100"
 
 
 class SquintMode(str, BaseEnum):

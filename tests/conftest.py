@@ -36,7 +36,6 @@ def assert_all_responses_were_requested() -> bool:
 def disable_validate_uuid(monkeypatch):
     monkeypatch.setattr(capella_client_module, "_validate_uuid", lambda x: None)
     monkeypatch.setattr(capella_client_module, "_validate_uuids", lambda x: None)
-    monkeypatch.setattr(tasking_modules, "_validate_uuid", lambda x: None)
 
 
 @pytest.fixture
@@ -131,12 +130,13 @@ def authed_tasking_request_mock(auth_httpx_mock):
     MOCK_IDENTIFIER_LIST = (
         "/task/abc",
         "/task/def",
-        "/tasks/paged?page=1&limit=100&customerId=MOCK_ID",
+        "/tasks/search?page=1&limit=250",
         "/tasks/paged?page=1&limit=100&organizationId=MOCK_ORG_ID",
     )
     for mock_id in MOCK_IDENTIFIER_LIST:
+        endpoint_qs = mock_id.split("#")[0]
         auth_httpx_mock.add_response(
-            url=f"{CONSOLE_API_URL}{mock_id}",
+            url=f"{CONSOLE_API_URL}{endpoint_qs}",
             json=get_mock_responses(mock_id),
         )
 

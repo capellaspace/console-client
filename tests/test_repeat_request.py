@@ -56,31 +56,31 @@ def test_cancel_success_single_repeat(test_client, task_cancel_success_mock):
 
 
 def test_cancel_success_multiple_tasks(test_client, task_cancel_success_mock):
-    tr_ids = [str(uuid.uuid4()) for _ in range(random.randint(10, 20))]
-    result = test_client.cancel_tasking_requests(*tr_ids)
+    rr_ids = [str(uuid.uuid4()) for _ in range(random.randint(10, 20))]
+    result = test_client.cancel_repeat_requests(*rr_ids)
 
-    assert len(result.keys()) == len(tr_ids)
+    assert len(result.keys()) == len(rr_ids)
 
-    for tr_id in tr_ids:
-        assert result[tr_id]["success"]
+    for rr_id in rr_ids:
+        assert result[rr_id]["success"]
 
 
 def test_cancel_success_single_fail(test_client, task_cancel_error_mock):
-    tr_id = str(uuid.uuid4())
-    result = test_client.cancel_tasking_requests(tr_id)
+    rr_id = str(uuid.uuid4())
+    result = test_client.cancel_repeat_requests(rr_id)
 
     assert len(result.keys()) == 1
-    assert not result[tr_id]["success"]
-    assert result[tr_id]["error"]["code"] == "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION"
+    assert not result[rr_id]["success"]
+    assert result[rr_id]["error"]["code"] == "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION"
 
 
 def test_cancel_success_partial_fail(test_client, task_cancel_partial_success_mock):
-    tr_id_success = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-    tr_id_error = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    rr_id_success = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    rr_id_error = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 
-    result = test_client.cancel_tasking_requests(tr_id_success, tr_id_error)
+    result = test_client.cancel_repeat_requests(rr_id_success, rr_id_error)
 
     assert len(result.keys()) == 2
-    assert result[tr_id_success]["success"]
-    assert not result[tr_id_error]["success"]
-    assert result[tr_id_error]["error"]["code"] == "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION"
+    assert result[rr_id_success]["success"]
+    assert not result[rr_id_error]["success"]
+    assert result[rr_id_error]["error"]["code"] == "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION"

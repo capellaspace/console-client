@@ -315,8 +315,13 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
                 "id": DUMMY_STAC_IDS[1],
             },
         ],
-        "/tasks/paged?page=1&limit=100&customerId=MOCK_ID": {
+        "/tasks/search?page=1&limit=250": {
             "results": [TASK_1, TASK_2],
+            "currentPage": 1,
+            "totalPages": 1,
+        },
+        "/tasks/search?page=1&limit=250#SINGLETASK": {
+            "results": [TASK_1],
             "currentPage": 1,
             "totalPages": 1,
         },
