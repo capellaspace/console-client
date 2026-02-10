@@ -29,10 +29,11 @@ from capella_console_client.assets import (
 from capella_console_client.search import StacSearch, SearchResult
 from capella_console_client.tasking_request import (
     get_tasking_request,
-    search_tasking_requests,
     _task_contains_status,
     create_tasking_request,
     cancel_tasking_requests,
+    TaskingRequestSearch,
+    TaskingRequestSearchResult,
 )
 from capella_console_client.repeat_request import create_repeat_request, cancel_repeat_requests
 from capella_console_client.validate import (
@@ -148,7 +149,7 @@ class CapellaConsoleClient:
 
     def list_tasking_requests(
         self, *tasking_request_ids: Optional[str], for_org: Optional[bool] = False, **kwargs: Optional[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    ) -> TaskingRequestSearchResult:
         """
         list/ search tasking requests
 
@@ -158,19 +159,29 @@ class CapellaConsoleClient:
             tasking_request_ids: list only specific tasking_request_ids (variadic, specify multiple)
             for_org: list all tasking requests of your organization (instead of only yours) - **requires** organization-manager role
 
-        additionally the following search filters are supported:
+        supported search filters:
 
-         • status: TaskingRequestStatus, one of received, review, submitted, active, accepted, rejected, expired, completed, anomaly, canceled, error, failed
-         • submission_time__gt: datetime, e.g. datetime.datetime(2022, 12, 9, 21)
+         • page_size: int, default: 250, needs to be between 250 and 500
+         • status: current TaskingRequestStatus, one of received, review, submitted, active, accepted, rejected, expired, completed, anomaly, canceled, error, failed
+
+        supported operations:
+         • eq: equality search
+         • gt: greater than
+         • gte: greater than equal
+         • lt: lower than
+         • lte: lower than equal
 
 
         Returns:
-            List[Dict[str, Any]]: metadata of tasking requests
+            TaskingRequestSearchResult: metadata of tasking requests
         """
         filtered_tasking_request_ids = _compact_unique(tasking_request_ids)
         if filtered_tasking_request_ids:
             _validate_uuids(filtered_tasking_request_ids)
-        return search_tasking_requests(*filtered_tasking_request_ids, session=self._sesh, for_org=for_org, **kwargs)
+            kwargs["tasking_request_id"] = filtered_tasking_request_ids  # type: ignore[assignment]
+
+        search = TaskingRequestSearch(session=self._sesh, **kwargs)
+        return search.fetch_all()
 
     def get_task(self, tasking_request_id: str) -> Dict[str, Any]:
         """
@@ -931,7 +942,7 @@ class CapellaConsoleClient:
 
 
         Returns:
-            List[Dict[str, Any]]: STAC items matched
+            SearchResult: STAC items matched
         """
         search = StacSearch(session=self._sesh, **kwargs)
         return search.fetch_all()

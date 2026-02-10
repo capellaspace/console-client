@@ -1,7 +1,9 @@
-from typing import Optional, Dict, Any, List, Union, Tuple
+from typing import Optional, Dict, Any, List, Union, Tuple, DefaultDict
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from copy import deepcopy
+from collections import defaultdict
 
 import geojson
 from dateutil.parser import parse
@@ -14,11 +16,13 @@ from capella_console_client.validate import (
     _set_squint_default,
 )
 from capella_console_client.config import (
-    TASKING_REQUEST_DEFAULT_PAGE_SIZE,
+    TR_SEARCH_DEFAULT_PAGE_SIZE,
     TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
-    MAX_CONCURRENT_TASK_SEARCH,
-    MAX_CONCURRENT_CANCEL,
-    MIN_TASK_SEARCH_PAGE_SIZE,
+    TR_MAX_CONCURRENCY,
+    TR_CANCEL_MAX_CONCURRENCY,
+    SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS,
+    OPERATOR_SUFFIXES,
+    TR_FILTERS_BY_QUERY_FIELDS,
 )
 from capella_console_client.enumerations import (
     TaskingRequestStatus,
@@ -35,6 +39,7 @@ from capella_console_client.enumerations import (
 )
 from capella_console_client.exceptions import CapellaConsoleClientError
 from capella_console_client.report import print_task_search_result
+from capella_console_client.search import AbstractSearch, SearchResult
 
 
 def create_tasking_request(
@@ -126,92 +131,145 @@ def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession)
     return task_response.json()
 
 
-# TODO: extend StacSearch and return list[SearchResult]
-def search_tasking_requests(
-    *tasking_request_ids: Optional[str],
-    session: CapellaConsoleSession,
-    for_org: Optional[bool] = False,
-    **kwargs: Optional[Dict[str, Any]],
-):
-    search_payload = _build_search_payload(*tasking_request_ids, session=session, for_org=for_org, **kwargs)
-
-    # TODO: allow override of page_size / adhere to limit
-    page_size = MIN_TASK_SEARCH_PAGE_SIZE
-
-    logger.info(f"searching tasking requests with payload {search_payload}")
-    first_page = _fetch_trs(session, params={"page": 1, "limit": page_size}, search_payload=search_payload)
-
-    total_pages = first_page["totalPages"]
-    fetch_more = total_pages > 1
-    if not fetch_more:
-        trs = first_page["results"]
-        print_task_search_result(trs)
-        return trs
-
-    page_params = [{"page": i, "limit": page_size} for i in range(2, total_pages + 1)]
-
-    _fetch_worker = partial(_fetch_trs, search_payload=search_payload, session=session)
-
-    futures = []
-    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_TASK_SEARCH) as executor:
-        for page_param in page_params:
-            futures.append(executor.submit(_fetch_worker, params=page_param))
-
-    trs = []
-    for f in futures:
-        page = f.result()
-        trs.extend(page["results"])
-
-    print_task_search_result(trs)
-    return trs
+class TaskingRequestSearchResult(SearchResult):
+    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+        self._pages.append(page)
+        self._features.extend(page["results"])
+        return len(page["results"])
 
 
-def _build_search_payload(*tasking_request_id, session: CapellaConsoleSession, for_org: Optional[bool], **kwargs):
-    # TODO: supported filters
-    query = {"includeRepeatingTasks": False}
+class TaskingRequestSearch(AbstractSearch):
+    def __init__(self, session: CapellaConsoleSession, **kwargs) -> None:
+        self.session = session
+        self.payload: Dict[str, Any] = {}
+        self.threaded = kwargs.pop("threaded", False)
+        self.page_size = kwargs.pop("page_size", None) or TR_SEARCH_DEFAULT_PAGE_SIZE
 
-    if not session.organization_id or not session.customer_id:
-        session._cache_user_info()
+        # TODO: max results (limit)
 
-    if for_org:
-        query["organizationIds"] = [session.organization_id]
-    else:
-        query["userId"] = session.customer_id
+        query_payload = self._get_query_payload(kwargs)
+        if query_payload:
+            self.payload["query"] = dict(query_payload)
 
-    _add_tasking_request_id_filter(*tasking_request_id, query=query)
-    _add_status_filter(query, **kwargs)
+        # sortby = cur_kwargs.pop("sortby", None)
+        # if sortby:
+        #     self.payload["sortby"] = self._get_sort_payload(sortby)
 
-    return {
-        "query": query,
-    }
+        # TODO: limit
+        # if "limit" not in self.payload:
+        #     self.payload["limit"] = CATALOG_DEFAULT_LIMIT
+
+    def _get_sort_payload(self, sortby):
+        raise RuntimeError("Not implemented")
+
+    def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
+        query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
+        query_payload["includeRepeatingTasks"] = {"eq": False}
+        query_payload = self._add_user_org_query(query_payload, **kwargs)
+
+        sntzr = TaskingRequestQuerySanitizer()
+
+        for cur_field, value in kwargs.items():
+            cur_field, op = self._split_op(cur_field)
+            if cur_field not in SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS:
+                logger.warning(f"filter {cur_field} not supported ... omitting")
+                continue
+
+            if op not in OPERATOR_SUFFIXES:
+                logger.warning(f"operator {op} not supported ... omitting")
+                continue
+
+            target_field = TR_FILTERS_BY_QUERY_FIELDS.get(cur_field, cur_field)
+
+            if sntzr.has_sanitizer(cur_field):
+                value = sntzr.sanitize(field=cur_field, value=value)
+
+            # op == in currently not supported by api
+            # TODO: replace direct assignment (no operator) once in supported
+            if isinstance(value, list):
+                query_payload[target_field] = value  # type: ignore[assignment]
+                continue
+
+            query_payload[target_field][op] = value
+
+        return query_payload
+
+    def _add_user_org_query(self, query_payload, **kwargs):
+        # TODO: resellerId?
+        any_of = ("org_id", "user_id")
+
+        if any(x in kwargs for x in any_of):
+            return query_payload
+
+        if not self.session.customer_id:
+            self.session._cache_user_info()
+
+        # TODO: should the endpoint fill this in?
+        query_payload["userId"] = self.session.customer_id
+        return query_payload
+
+    def fetch_all(self) -> TaskingRequestSearchResult:
+        search_result = TaskingRequestSearchResult(entity="tasking request", request_body=self.payload)
+        logger.info(f"searching tasking requests with payload {self.payload}")
+        first_page = _fetch_trs(self.session, params={"page": 1, "limit": self.page_size}, search_payload=self.payload)
+
+        total_pages = first_page["totalPages"]
+        fetch_more = total_pages > 1
+
+        if not fetch_more:
+            search_result.add(first_page)
+            print_task_search_result(search_result._features)
+            return search_result
+
+        page_params = [{"page": i, "limit": self.page_size} for i in range(2, total_pages + 1)]
+
+        _fetch_worker = partial(_fetch_trs, search_payload=self.payload, session=self.session)
+
+        with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
+            results = executor.map(_fetch_worker, page_params)
+
+        for page in results:
+            search_result.add(page)
+
+        print_task_search_result(search_result._features)
+        return search_result
 
 
-def _add_tasking_request_id_filter(*tasking_request_id, query):
-    if not tasking_request_id:
-        return
+class TaskingRequestQuerySanitizer:
 
-    query["taskingrequestIds"] = list(tasking_request_id)
+    SUPPORTED = {"status"}
 
+    @classmethod
+    def has_sanitizer(cls, field) -> bool:
+        return field in TaskingRequestQuerySanitizer.SUPPORTED
 
-def _add_status_filter(query, **kwargs):
-    if "status" not in kwargs:
-        return
+    def sanitize(cls, field, value):
+        if not cls.has_sanitizer(field):
+            # TODO: logger
+            return value
 
-    status_arg = kwargs["status"]
-    if isinstance(status_arg, str):
-        status_arg = [status_arg]
+        return {"status": cls._sanitize_status_filter}[field](value)
 
-    valid_status = [s.lower() for s in status_arg if s.lower() in TaskingRequestStatus]
+    def _sanitize_status_filter(cls, value):
+        is_string = isinstance(value, str)
+        if is_string:
+            value = [value]
 
-    if not valid_status:
-        logger.warning(f"No valid tasking request status provided ({kwargs['status']}) ... dropping from filter")
+        valid_status = [s.lower() for s in value if s.lower() in TaskingRequestStatus]
 
-    query["lastStatusCode"] = valid_status
+        if not valid_status:
+            logger.warning(f"No valid tasking request status provided ({value}) ... dropping from filter")
+            return None
+
+        if is_string:
+            return valid_status[0]
+
+        return valid_status
 
 
 def _fetch_trs(session, search_payload, params):
     resp = session.post("/tasks/search", params=params, json=search_payload)
-    page: Dict[str, Any] = resp.json()
+    page = resp.json()
     if page["currentPage"] > 1:
         logger.info(f"page {page['currentPage']} out of {page['totalPages']}: {len(page['results'])} tasking requests")
     return page
@@ -229,7 +287,7 @@ def cancel_tasking_requests(
 
 
 def _cancel_multi_parallel(*cancel_ids: str, session, cancel_fct):
-    max_workers = min(MAX_CONCURRENT_CANCEL, len(cancel_ids))
+    max_workers = min(TR_CANCEL_MAX_CONCURRENCY, len(cancel_ids))
 
     results_by_cancel_id = {}
     with ThreadPoolExecutor(max_workers=max_workers) as executor:

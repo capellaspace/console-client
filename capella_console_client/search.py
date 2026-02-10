@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from math import ceil
 from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
+from abc import ABCMeta, abstractmethod
 
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
@@ -18,7 +19,7 @@ from capella_console_client.config import (
     OPERATOR_SUFFIXES,
     CATALOG_MAX_PAGE_SIZE,
     CATALOG_DEFAULT_LIMIT,
-    STAC_MAX_ITEM_RETURN,
+    CATALOG_STAC_MAX_ITEM_RETURN,
     ALL_SUPPORTED_GROUPBY_FIELDS,
     ROOT_LEVEL_GROUPBY_FIELDS,
     UNKNOWN_GROUPBY_FIELD,
@@ -28,6 +29,7 @@ from capella_console_client.enumerations import OwnershipOption
 
 @dataclass
 class SearchResult:
+    entity: str = "STAC item"
     request_body: Dict[str, Any] = field(default_factory=dict)
     _pages: List[Dict[str, Any]] = field(default_factory=list)
     _features: List[Dict[str, Any]] = field(default_factory=list)
@@ -64,11 +66,15 @@ class SearchResult:
     def _report(self):
         len_results = len(self)
         if not len_results:
-            message = "found no STAC items matching your query"
+            message = f"found no {self.entity}s matching your query"
         else:
-            multiple_suffix = "s" if len_results > 1 else ""
-            message = f"found {len_results} STAC item{multiple_suffix}"
+            message = f"found {len_results} {self.entity}{self.multiple_suffix}"
         logger.info(message)
+
+    @property
+    def multiple_suffix(self):
+        len_results = len(self)
+        return "s" if len_results > 1 else ""
 
     # backwards compatibility
     def __getitem__(self, key):
@@ -81,15 +87,17 @@ class SearchResult:
         return len(self._features)
 
     def __repr__(self):
-        return f"{self.__class__} ({len(self)} STAC items)"
+        return f"{self.__class__} ({len(self)} {self.entity}{self.multiple_suffix})"
 
     def to_feature_collection(self):
         return {"type": "FeatureCollection", "features": self._features}
 
+    # separate class
     @property
     def stac_ids(self):
         return [item["id"] for item in self._features]
 
+    # separate class
     @property
     def collect_ids(self):
         return [item["properties"].get("capella:collect_id", "N/A") for item in self._features]
@@ -101,6 +109,7 @@ class SearchResult:
 
         return copy
 
+    # separate class
     def groupby(self, field: str) -> Dict[str, Any]:
         """
         group matched features by provided field name
@@ -139,7 +148,30 @@ def _get_safe_field_value(field: str, stac_item: Dict[str, Any]):
     return value
 
 
-class StacSearch:
+class AbstractSearch(metaclass=ABCMeta):
+
+    @abstractmethod
+    def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
+        pass
+
+    @abstractmethod
+    def _get_sort_payload(self, sortby):
+        pass
+
+    def _split_op(self, cur_field: str) -> Tuple[str, str]:
+        parts = cur_field.split("__")
+        if len(parts) == 2:
+            op = parts[1]
+        else:
+            op = "eq"
+        return (parts[0], op)
+
+    @abstractmethod
+    def fetch_all(self) -> SearchResult:
+        pass
+
+
+class StacSearch(AbstractSearch):
     def __init__(self, session: CapellaConsoleSession, **kwargs) -> None:
         cur_kwargs = deepcopy(kwargs)
         self.session = session
@@ -161,11 +193,11 @@ class StacSearch:
         if "limit" not in self.payload:
             self.payload["limit"] = CATALOG_DEFAULT_LIMIT
 
-        if self.payload["limit"] > STAC_MAX_ITEM_RETURN:
+        if self.payload["limit"] > CATALOG_STAC_MAX_ITEM_RETURN:
             logger.warning(
-                f"Capella's STAC server can return up to {STAC_MAX_ITEM_RETURN} items ({self.payload['limit']} requested), limiting to that"
+                f"Capella's STAC server can return up to {CATALOG_STAC_MAX_ITEM_RETURN} items ({self.payload['limit']} requested), limiting to that"
             )
-            self.payload["limit"] = STAC_MAX_ITEM_RETURN
+            self.payload["limit"] = CATALOG_STAC_MAX_ITEM_RETURN
 
     def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
         query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
@@ -190,14 +222,6 @@ class StacSearch:
                 query_payload[target_field][op] = value
 
         return query_payload
-
-    def _split_op(self, cur_field: str) -> Tuple[str, str]:
-        parts = cur_field.split("__")
-        if len(parts) == 2:
-            op = parts[1]
-        else:
-            op = "eq"
-        return (parts[0], op)
 
     def _get_sort_payload(self, sortby):
         directions = {"-": "desc", "+": "asc"}
@@ -247,9 +271,9 @@ class StacSearch:
             _log_page_query(page_cnt=page_cnt, start=start, end=end)
 
             # safeguard to not step over 10000
-            if start + cur_payload["limit"] > STAC_MAX_ITEM_RETURN:
+            if start + cur_payload["limit"] > CATALOG_STAC_MAX_ITEM_RETURN:
                 # translate limit/ page for last request
-                missing = STAC_MAX_ITEM_RETURN - len(search_result)
+                missing = CATALOG_STAC_MAX_ITEM_RETURN - len(search_result)
                 if not missing:
                     break
 
@@ -313,10 +337,10 @@ class StacSearch:
         ]
 
         # safeguard to not step over 10000
-        overflow = payloads[-1]["limit"] * payloads[-1]["page"] > STAC_MAX_ITEM_RETURN
+        overflow = payloads[-1]["limit"] * payloads[-1]["page"] > CATALOG_STAC_MAX_ITEM_RETURN
         if overflow:
             offset = payloads[-1]["limit"] * payloads[-2]["page"]
-            missing = STAC_MAX_ITEM_RETURN - offset
+            missing = CATALOG_STAC_MAX_ITEM_RETURN - offset
             payloads[-1]["limit"] = missing
             payloads[-1]["page"] = int(offset / missing) + 1
 

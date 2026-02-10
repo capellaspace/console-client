@@ -14,13 +14,13 @@ mock_geojson = {"coordinates": [-105.120360, 39.965330], "type": "Point"}
 
 
 def test_list_all_tasking_requests(test_client, authed_tasking_request_mock):
-    tasking_requests = test_client.list_tasking_requests()
-    assert tasking_requests == get_mock_responses("/tasks/search?page=1&limit=250")["results"]
+    tr_results = test_client.list_tasking_requests()
+    assert tr_results[:] == get_mock_responses("/tasks/search?page=1&limit=250")["results"]
 
 
 def test_list_all_tasking_requests_for_org(test_client, authed_tasking_request_mock):
-    tasking_requests = test_client.list_tasking_requests(for_org=True)
-    assert tasking_requests == get_mock_responses("/tasks/paged?page=1&limit=100&organizationId=MOCK_ORG_ID")["results"]
+    tr_results = test_client.list_tasking_requests(for_org=True)
+    assert tr_results[:] == get_mock_responses("/tasks/paged?page=1&limit=100&organizationId=MOCK_ORG_ID")["results"]
 
 
 def test_list_tasking_with_id_single(test_client, authed_tasking_request_mock, disable_validate_uuid):
@@ -31,21 +31,23 @@ def test_list_tasking_with_id_single(test_client, authed_tasking_request_mock, d
     single_tr_id = mock_response["results"][0]["properties"]["taskingrequestId"]
     authed_tasking_request_mock.add_response(
         url=f"{CONSOLE_API_URL}{mock_id.split('#')[0]}",
-        match_json={"query": {"includeRepeatingTasks": False, "taskingrequestIds": [single_tr_id], "userId": ANY}},
+        match_json={
+            "query": {"includeRepeatingTasks": {"eq": False}, "taskingrequestIds": [single_tr_id], "userId": ANY}
+        },
         json=mock_response,
     )
 
-    tasking_requests = test_client.list_tasking_requests("abc")
+    tr_results = test_client.list_tasking_requests("abc")
 
-    assert len(tasking_requests) == 1
-    assert tasking_requests[0]["properties"]["taskingrequestId"] == single_tr_id
+    assert len(tr_results) == 1
+    assert tr_results[0]["properties"]["taskingrequestId"] == single_tr_id
 
 
 def test_list_tasking_with_id_multiple(test_client, authed_tasking_request_mock, disable_validate_uuid):
-    tasking_requests = test_client.list_tasking_requests("abc", "def")
-    assert len(tasking_requests) == 2
+    tr_results = test_client.list_tasking_requests("abc", "def")
+    assert len(tr_results) == 2
 
-    found_ids = [t["properties"]["taskingrequestId"] for t in tasking_requests]
+    found_ids = [t["properties"]["taskingrequestId"] for t in tr_results]
     assert "abc" in found_ids
     assert "def" in found_ids
 
@@ -58,13 +60,15 @@ def test_list_tasking_with_id_single_status(test_client, authed_tasking_request_
     single_tr_id = mock_response["results"][0]["properties"]["taskingrequestId"]
     authed_tasking_request_mock.add_response(
         url=f"{CONSOLE_API_URL}{mock_id.split('#')[0]}",
-        match_json={"query": {"includeRepeatingTasks": False, "lastStatusCode": ["completed"], "userId": ANY}},
+        match_json={
+            "query": {"includeRepeatingTasks": {"eq": False}, "lastStatusCode": {"eq": "completed"}, "userId": ANY}
+        },
         json=mock_response,
     )
 
-    tasking_requests = test_client.list_tasking_requests(status="completed")
-    assert len(tasking_requests) == 1
-    assert tasking_requests[0]["properties"]["taskingrequestId"] == single_tr_id
+    tr_results = test_client.list_tasking_requests(status="completed")
+    assert len(tr_results) == 1
+    assert tr_results[0]["properties"]["taskingrequestId"] == single_tr_id
 
 
 def test_list_tasking_with_id_multi_status_case_insensitive(
@@ -95,10 +99,10 @@ def test_list_tasking_with_id_single_status_with_ids(test_client, authed_tasking
 def test_list_tasking_with_id_single_status_nonexistent_omitted(
     test_client, authed_tasking_request_mock, disable_validate_uuid
 ):
-    tasking_requests = test_client.list_tasking_requests("abc", "def", status="doesnotexist-status")
-    assert len(tasking_requests) == 2
-    assert tasking_requests[0]["properties"]["taskingrequestId"] == "abc"
-    assert tasking_requests[1]["properties"]["taskingrequestId"] == "def"
+    tr_results = test_client.list_tasking_requests("abc", "def", status="doesnotexist-status")
+    assert len(tr_results) == 2
+    assert tr_results[0]["properties"]["taskingrequestId"] == "abc"
+    assert tr_results[1]["properties"]["taskingrequestId"] == "def"
 
 
 def test_get_task(test_client, authed_tasking_request_mock, disable_validate_uuid):

@@ -90,6 +90,10 @@ class TaskingRequestStatus(str, BaseEnum):
     error = "error"
     failed = "failed"
 
+    @classmethod
+    def is_valid(cls, status_str: str) -> bool:
+        return status_str in list(cls)
+
 
 class CollectionTier(str, BaseEnum):
     urgent = "urgent"
