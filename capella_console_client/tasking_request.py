@@ -1,8 +1,7 @@
-from typing import Optional, Dict, Any, List, Union, Tuple, DefaultDict
+from typing import Optional, Dict, Any, List, Union, Tuple, DefaultDict, Callable
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from copy import deepcopy
+from functools import partial, wraps
 from collections import defaultdict
 
 import geojson
@@ -23,6 +22,7 @@ from capella_console_client.config import (
     SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS,
     OPERATOR_SUFFIXES,
     TR_FILTERS_BY_QUERY_FIELDS,
+    TR_DATETIME_FILTERS,
 )
 from capella_console_client.enumerations import (
     TaskingRequestStatus,
@@ -40,6 +40,7 @@ from capella_console_client.enumerations import (
 from capella_console_client.exceptions import CapellaConsoleClientError
 from capella_console_client.report import print_task_search_result
 from capella_console_client.search import AbstractSearch, SearchResult
+from capella_console_client.validate import _compact_unique, _validate_uuids
 
 
 def create_tasking_request(
@@ -144,7 +145,6 @@ class TaskingRequestSearch(AbstractSearch):
         self.payload: Dict[str, Any] = {}
         self.threaded = kwargs.pop("threaded", False)
         self.page_size = kwargs.pop("page_size", None) or TR_SEARCH_DEFAULT_PAGE_SIZE
-
         # TODO: max results (limit)
 
         query_payload = self._get_query_payload(kwargs)
@@ -154,10 +154,6 @@ class TaskingRequestSearch(AbstractSearch):
         # sortby = cur_kwargs.pop("sortby", None)
         # if sortby:
         #     self.payload["sortby"] = self._get_sort_payload(sortby)
-
-        # TODO: limit
-        # if "limit" not in self.payload:
-        #     self.payload["limit"] = CATALOG_DEFAULT_LIMIT
 
     def _get_sort_payload(self, sortby):
         raise RuntimeError("Not implemented")
@@ -204,6 +200,11 @@ class TaskingRequestSearch(AbstractSearch):
         if not self.session.customer_id:
             self.session._cache_user_info()
 
+        for_org = kwargs.pop("for_org", False)
+        if for_org:
+            query_payload["organizationIds"] = [self.session.organization_id]
+            return query_payload
+
         # TODO: should the endpoint fill this in?
         query_payload["userId"] = self.session.customer_id
         return query_payload
@@ -237,34 +238,62 @@ class TaskingRequestSearch(AbstractSearch):
 
 class TaskingRequestQuerySanitizer:
 
-    SUPPORTED = {"status"}
+    SUPPORTED = {"collection_tier", "collection_type", "status", "tasking_request_id"}
+
+    @staticmethod
+    def single_or_list(func: Callable[..., list[Any]]) -> Callable[..., list[Any] | Any]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> list[Any] | Any:
+            if not isinstance(kwargs["value"], str):
+                return func(args[0], **kwargs)
+
+            kwargs["value"] = [kwargs["value"]]
+            result = func(args[0], **kwargs)
+            if result is None:
+                return None
+            return result[0]
+
+        return wrapper
 
     @classmethod
     def has_sanitizer(cls, field) -> bool:
         return field in TaskingRequestQuerySanitizer.SUPPORTED
 
-    def sanitize(cls, field, value):
-        if not cls.has_sanitizer(field):
-            # TODO: logger
+    def sanitize(self, field, value):
+        if not self.has_sanitizer(field):
             return value
 
-        return {"status": cls._sanitize_status_filter}[field](value)
+        return {
+            "collection_tier": self._sanitize_collection_tier,
+            "collection_type": self._sanitize_collection_type,
+            "status": self._sanitize_tr_status,
+            "tasking_request_id": self._sanitize_tr_ids,
+        }[field](field=field, value=value)
 
-    def _sanitize_status_filter(cls, value):
-        is_string = isinstance(value, str)
-        if is_string:
-            value = [value]
+    def _sanitize_collection_tier(self, field, value):
+        return self._sanitize_enum(field=field, value=value, enum_cls=CollectionTier)
 
-        valid_status = [s.lower() for s in value if s.lower() in TaskingRequestStatus]
+    def _sanitize_collection_type(self, field, value):
+        return self._sanitize_enum(field=field, value=value, enum_cls=CollectionType)
+
+    def _sanitize_tr_status(self, field, value):
+        return self._sanitize_enum(field=field, value=value, enum_cls=TaskingRequestStatus)
+
+    @single_or_list
+    def _sanitize_enum(self, field, value, enum_cls):
+        valid_status = [s.lower() for s in value if s.lower() in enum_cls]
 
         if not valid_status:
-            logger.warning(f"No valid tasking request status provided ({value}) ... dropping from filter")
+            logger.warning(f"No valid {field} provided ({value}) ... dropping from filter")
             return None
 
-        if is_string:
-            return valid_status[0]
-
         return valid_status
+
+    @single_or_list
+    def _sanitize_tr_ids(self, field, value):
+        value = _compact_unique(value)
+        _validate_uuids(value)
+        return value
 
 
 def _fetch_trs(session, search_payload, params):

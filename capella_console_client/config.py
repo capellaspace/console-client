@@ -145,10 +145,18 @@ REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS = frozenset(
 )
 
 TR_FILTERS_BY_QUERY_FIELDS = {
-    "status": "lastStatusCode",
-    "tasking_request_id": "taskingrequestIds",
+    "collection_type": "collectionType",
+    "collection_tier": "collectionTier",
+    "last_status_time": "lastStatusTime",
     "org_id": "organizationIds",
+    "status": "lastStatusCode",
+    "submission_time": "submissionTime",
+    "tasking_request_id": "taskingrequestIds",
     "user_id": "userId",
+    "window_close": "windowClose",
+    "window_open": "windowOpen",
 }
+
+TR_DATETIME_FILTERS = {"window_open"}
 
 SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS = set(TR_FILTERS_BY_QUERY_FIELDS.keys())

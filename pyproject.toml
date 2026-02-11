@@ -20,7 +20,7 @@ classifiers=[
     "Topic :: Software Development :: Libraries",
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
-keywords = [ "Capella Space", "Earth Observation", "Capella Console", "Synthetic Aperture Radar", "SAR" ]
+keywords = [ "Capella", "Earth Observation", "Capella Console", "Synthetic Aperture Radar", "SAR" ]
 readme = "README.md"
 license = "MIT"
 

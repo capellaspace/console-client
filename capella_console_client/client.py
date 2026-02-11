@@ -26,7 +26,7 @@ from capella_console_client.assets import (
     _derive_stac_id,
     _filter_items_by_product_types,
 )
-from capella_console_client.search import StacSearch, SearchResult
+from capella_console_client.search import StacSearch, StacSearchResult
 from capella_console_client.tasking_request import (
     get_tasking_request,
     _task_contains_status,
@@ -147,11 +147,9 @@ class CapellaConsoleClient:
         """
         return create_tasking_request(session=self._sesh, **kwargs)
 
-    def list_tasking_requests(
-        self, *tasking_request_ids: Optional[str], for_org: Optional[bool] = False, **kwargs: Optional[Dict[str, Any]]
-    ) -> TaskingRequestSearchResult:
+    def search_tasking_requests(self, **kwargs: Optional[Dict[str, Any]]) -> TaskingRequestSearchResult:
         """
-        list/ search tasking requests
+        search tasking requests
 
         Find more information at https://docs.capellaspace.com/constellation-tasking/tasking-requests
 
@@ -159,10 +157,20 @@ class CapellaConsoleClient:
             tasking_request_ids: list only specific tasking_request_ids (variadic, specify multiple)
             for_org: list all tasking requests of your organization (instead of only yours) - **requires** organization-manager role
 
-        supported search filters:
+        supported query filters:
 
-         • page_size: int, default: 250, needs to be between 250 and 500
+         • collection_type: CollectionType, e.g. "spotlight_ultra"
+         • collection_tier: CollectionTier, e.g. "priority"
+         • last_status_time: str, UTC datetime of latest status, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
+         • for_org: boolean: str, scope tasking request search to org instead of user (requires elevated permissions), e.g. True
+         • org_id: str, organization id to list tasking requests for (requires elevated permissions), e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
          • status: current TaskingRequestStatus, one of received, review, submitted, active, accepted, rejected, expired, completed, anomaly, canceled, error, failed
+         • submission_time: str, UTC datetime of task submission, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
+         • tasking_request_id: str, tasking request id, e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
+         • user_id: str, user id to list tasking requests for (requires elevated permissions), e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
+         • window_open: str, Earliest UTC datetime of collection, e.g. "2020-02-11"
+         • window_close: str, Latest UTC datetime of collection, e.g. "2020-02-12"
+         • page_size: int, page size, default: 250, needs to be between 250 and 500
 
         supported operations:
          • eq: equality search
@@ -171,15 +179,9 @@ class CapellaConsoleClient:
          • lt: lower than
          • lte: lower than equal
 
-
         Returns:
-            TaskingRequestSearchResult: metadata of tasking requests
+            TaskingRequestSearchResult: matched tasking requests
         """
-        filtered_tasking_request_ids = _compact_unique(tasking_request_ids)
-        if filtered_tasking_request_ids:
-            _validate_uuids(filtered_tasking_request_ids)
-            kwargs["tasking_request_id"] = filtered_tasking_request_ids  # type: ignore[assignment]
-
         search = TaskingRequestSearch(session=self._sesh, **kwargs)
         return search.fetch_all()
 
@@ -375,7 +377,7 @@ class CapellaConsoleClient:
         orders = resp.json()
         return orders
 
-    def get_stac_items_of_order(self, order_id: str, ids_only: bool = False) -> Union[List[str], SearchResult]:
+    def get_stac_items_of_order(self, order_id: str, ids_only: bool = False) -> Union[List[str], StacSearchResult]:
         """
         get stac items of an existing order
 
@@ -394,7 +396,7 @@ class CapellaConsoleClient:
     def review_order(
         self,
         stac_ids: Optional[List[str]] = None,
-        items: Optional[Union[List[Dict[str, Any]], SearchResult]] = None,
+        items: Optional[Union[List[Dict[str, Any]], StacSearchResult]] = None,
         contract_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
@@ -418,7 +420,7 @@ class CapellaConsoleClient:
     def submit_order(
         self,
         stac_ids: Optional[List[str]] = None,
-        items: Optional[Union[List[Dict[str, Any]], SearchResult]] = None,
+        items: Optional[Union[List[Dict[str, Any]], StacSearchResult]] = None,
         check_active_orders: bool = False,
         omit_search: bool = False,
         omit_review: bool = False,
@@ -881,7 +883,7 @@ class CapellaConsoleClient:
         return assets_presigned[0]
 
     # SEARCH
-    def search(self, **kwargs) -> SearchResult:
+    def search(self, **kwargs) -> StacSearchResult:
         """
         paginated search for up to 500 matches (if no bigger limit specified)
 
@@ -942,7 +944,7 @@ class CapellaConsoleClient:
 
 
         Returns:
-            SearchResult: STAC items matched
+            StacSearchResult: STAC items matched
         """
         search = StacSearch(session=self._sesh, **kwargs)
         return search.fetch_all()

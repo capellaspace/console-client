@@ -5,12 +5,12 @@ Search Query Syntax
 *******************
 
 
-.. _search-fields:
+.. _stac-query-fields:
 
-search fields
-#############
+catalog search
+##############
 
-.. list-table:: supported fields for search
+.. list-table:: supported query fields for catalog search
     :widths: 30 40 20 20
     :header-rows: 1
 
@@ -182,12 +182,12 @@ search fields
 
 
 
-.. _search-ops:
+.. _query-ops:
 
-search operators
-################
+query operators
+###############
 
-.. list-table:: supported search operators
+.. list-table:: supported query operators
    :widths: 20 20 60
    :header-rows: 1
 
@@ -224,3 +224,68 @@ search operators
      - .. code:: python3
 
          resolution_azimuth__lte=0.5
+
+
+.. _tr-query-fields:
+
+tasking requests
+################
+
+.. list-table:: supported query fields for tasking request search
+    :widths: 30 40 20 20
+    :header-rows: 1
+
+    * - field name
+      - description
+      - type
+      - example
+    * - ``collection_type``
+      - | Capella collection type, one of
+        | ``"spotlight_ultra"``, ``"spotlight"``,
+        | ``"stripmap_100"``, ``"stripmap_50"``, ``"stripmap_20"``
+        | ``"parallel_stripmap_100"``, ``"parallel_stripmap_50"``, ``"parallel_stripmap_20"``
+      - ``str``
+      - ``"spotlight_ultra"``
+    * - ``collection_tier``
+      - collection tier
+      - ``str``
+      - ``"priority"``
+    * - ``last_status_time``
+      - UTC datetime of latest status
+      - ``str``
+      - ``"2020-02-12"``
+    * - ``org_id``
+      - organization id to list tasking requests for (requires elevated permissions)
+      - ``str``
+      - ``""34c78a57-2d68-4b4a-a7ba-c188f9e2645d""``
+    * - ``status``
+      - | current TaskingRequestStatus
+        | ``"received"``, ``"review"``,
+        | ``"submitted"``, ``"active"``, ``"accepted"``, ``"rejected"``, ``"expired"``,
+        | ``"completed"``, ``"anomaly"``, ``"canceled"``, ``"error"``, ``"failed"``
+      - ``str``
+      - ``"completed"``
+    * - ``submission_time``
+      - UTC datetime of task submission
+      - ``str``
+      - ``"2020-02-12"``
+    * - ``tasking_request_id``
+      - tasking request id
+      - ``str``
+      - ``""34c78a57-2d68-4b4a-a7ba-c188f9e2645d""``
+    * - ``user_id``
+      - user id to list tasking requests for (requires elevated permissions)
+      - ``str``
+      - ``""34c78a57-2d68-4b4a-a7ba-c188f9e2645d""``
+    * - ``window_open``
+      - Earliest UTC datetime of collection
+      - ``str``
+      - ``"2020-02-12"``
+    * - ``window_close``
+      - Latest UTC datetime of collection
+      - ``str``
+      - ``"2020-02-12"``
+    * - ``page_size``
+      - page size, default: 250, needs to be between 250 and 500
+      - ``int``
+      - ``250``

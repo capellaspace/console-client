@@ -28,34 +28,11 @@ from capella_console_client.enumerations import OwnershipOption
 
 
 @dataclass
-class SearchResult:
+class SearchResult(metaclass=ABCMeta):
     entity: str = "STAC item"
     request_body: Dict[str, Any] = field(default_factory=dict)
     _pages: List[Dict[str, Any]] = field(default_factory=list)
     _features: List[Dict[str, Any]] = field(default_factory=list)
-
-    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
-        if not keep_duplicates:
-            page = self._filter_dupes(page)
-        self._pages.append(page)
-        self._features.extend(page["features"])
-        return len(page["features"])
-
-    def _filter_dupes(self, page: Dict[str, Any]) -> Dict[str, Any]:
-        # drop duplicates within page features
-        page_stac_ids = [feat["id"] for feat in page["features"]]
-        set_page_stac_ids = set(page_stac_ids)
-
-        if len(set_page_stac_ids) != len(page["features"]):
-            page["features"] = [page["features"][page_stac_ids.index(p_id)] for p_id in set_page_stac_ids]
-
-        # drop duplicates within SearchResult
-        dupes = set_page_stac_ids.intersection(self.stac_ids)
-
-        if dupes:
-            page["features"] = [p for p in page["features"] if p["id"] not in dupes]
-
-        return page
 
     def _truncate(self):
         len_features = len(self)
@@ -92,15 +69,9 @@ class SearchResult:
     def to_feature_collection(self):
         return {"type": "FeatureCollection", "features": self._features}
 
-    # separate class
-    @property
-    def stac_ids(self):
-        return [item["id"] for item in self._features]
-
-    # separate class
-    @property
-    def collect_ids(self):
-        return [item["properties"].get("capella:collect_id", "N/A") for item in self._features]
+    @abstractmethod
+    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+        pass
 
     def merge(self, other: "SearchResult", keep_duplicates: bool = False) -> "SearchResult":
         copy = deepcopy(self)
@@ -108,6 +79,40 @@ class SearchResult:
             copy.add(page=page, keep_duplicates=keep_duplicates)
 
         return copy
+
+
+class StacSearchResult(SearchResult):
+
+    @property
+    def stac_ids(self):
+        return [item["id"] for item in self._features]
+
+    @property
+    def collect_ids(self):
+        return [item["properties"].get("capella:collect_id", "N/A") for item in self._features]
+
+    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+        if not keep_duplicates:
+            page = self._filter_dupes(page)
+        self._pages.append(page)
+        self._features.extend(page["features"])
+        return len(page["features"])
+
+    def _filter_dupes(self, page: Dict[str, Any]) -> Dict[str, Any]:
+        # drop duplicates within page features
+        page_stac_ids = [feat["id"] for feat in page["features"]]
+        set_page_stac_ids = set(page_stac_ids)
+
+        if len(set_page_stac_ids) != len(page["features"]):
+            page["features"] = [page["features"][page_stac_ids.index(p_id)] for p_id in set_page_stac_ids]
+
+        # drop duplicates within StacSearchResult
+        dupes = set_page_stac_ids.intersection(self.stac_ids)
+
+        if dupes:
+            page["features"] = [p for p in page["features"] if p["id"] not in dupes]
+
+        return page
 
     # separate class
     def groupby(self, field: str) -> Dict[str, Any]:
@@ -248,7 +253,7 @@ class StacSearch(AbstractSearch):
             sorts.append({"field": field, "direction": directions[direction]})
         return sorts
 
-    def fetch_all(self) -> SearchResult:
+    def fetch_all(self) -> StacSearchResult:
         logger.info(f"searching catalog with payload {self.payload}")
         if not self.threaded:
             return self._fetch_all_sync()
@@ -256,7 +261,7 @@ class StacSearch(AbstractSearch):
             return self._fetch_all_threaded()
 
     def _fetch_all_sync(self):
-        search_result = SearchResult(request_body=self.payload)
+        search_result = StacSearchResult(request_body=self.payload)
         cur_payload = deepcopy(self.payload)
 
         # limit page size
@@ -306,7 +311,7 @@ class StacSearch(AbstractSearch):
         return search_result
 
     def _fetch_all_threaded(self):
-        search_result = SearchResult(request_body=self.payload)
+        search_result = StacSearchResult(request_body=self.payload)
         page_payloads = self._get_page_payloads()
 
         # TODO: configurable max threads

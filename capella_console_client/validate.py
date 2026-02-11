@@ -10,7 +10,7 @@ import geojson
 
 from capella_console_client.enumerations import ProductType, AssetType, SquintMode
 from capella_console_client.logconf import logger
-from capella_console_client.search import SearchResult
+from capella_console_client.search import StacSearchResult
 
 STAC_ID_REGEX_STRICT = re.compile("^CAPELLA_C\\d{2}_\\w+_\\w+_\\w{2}_\\d{14}_\\d{14}$")
 
@@ -32,7 +32,7 @@ def _validate_uuids(uuid_strs: List[str]):
 
 def _validate_stac_id_or_stac_items(
     stac_ids: Optional[List[str]] = None,
-    items: Union[Optional[List[Dict[str, Any]]], SearchResult] = None,
+    items: Union[Optional[List[Dict[str, Any]]], StacSearchResult] = None,
 ) -> List[str]:
     if not stac_ids and not items:
         raise ValueError("Please provide stac_ids or items")

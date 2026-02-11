@@ -4,7 +4,7 @@ from datetime import date
 project = "capella-console-client"
 __version__ = importlib.metadata.version(project)
 
-author = "Capella Space"
+author = "Capella"
 copyright = f"{date.today().year}, {author}"
 
 version = __version__

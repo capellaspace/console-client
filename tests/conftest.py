@@ -36,6 +36,7 @@ def assert_all_responses_were_requested() -> bool:
 def disable_validate_uuid(monkeypatch):
     monkeypatch.setattr(capella_client_module, "_validate_uuid", lambda x: None)
     monkeypatch.setattr(capella_client_module, "_validate_uuids", lambda x: None)
+    monkeypatch.setattr(tasking_modules, "_validate_uuids", lambda x: None)
 
 
 @pytest.fixture
