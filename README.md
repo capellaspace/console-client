@@ -93,4 +93,4 @@ Contributions are very much welcomed and appreciated. See [how to contribute](ht
 
 
 ## License
-• Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE) • Copyright 2025 • Capella Space •
+• Licensed under the [MIT License](https://github.com/capellaspace/console-client/blob/master/LICENSE) • Copyright 2026 • Capella •

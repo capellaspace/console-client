@@ -8,7 +8,7 @@ import typer
 import questionary
 
 from capella_console_client.enumerations import BaseEnum
-from capella_console_client.search import SearchResult
+from capella_console_client.search import StacSearchResult
 from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.cli.validate import (
     get_validator,
@@ -192,7 +192,7 @@ class PostSearchActions(str, BaseEnum):
     quit = "quit"
 
     @classmethod
-    def save_search(cls, result: SearchResult, search_kwargs: STACQueryPayload):
+    def save_search(cls, result: StacSearchResult, search_kwargs: STACQueryPayload):
         identifier = questionary.text(
             message="Please provide an identifier for your search:",
             default=str(search_kwargs),
@@ -203,7 +203,7 @@ class PostSearchActions(str, BaseEnum):
         my_search_entity_info(identifier)
 
     @classmethod
-    def export_search(cls, result: SearchResult, search_kwargs: STACQueryPayload) -> str:
+    def export_search(cls, result: StacSearchResult, search_kwargs: STACQueryPayload) -> str:
         default = CURRENT_SETTINGS["out_path"]
         if default[-1] != os.sep:
             default += os.sep
@@ -222,7 +222,7 @@ class PostSearchActions(str, BaseEnum):
         return path
 
     @classmethod
-    def refine_search_cmd(cls, prev_search: STACQueryPayload) -> Tuple[STACQueryPayload, SearchResult]:
+    def refine_search_cmd(cls, prev_search: STACQueryPayload) -> Tuple[STACQueryPayload, StacSearchResult]:
         prev_search.pop("constellation", None)
         if prev_search["limit"][0][1] == CURRENT_SETTINGS["limit"]:
             prev_search.pop("limit")
@@ -250,7 +250,7 @@ def search_and_post_actions(search_query: STACQueryPayload, choices: List[PostSe
 
 
 def _prompt_post_search_actions(
-    result: SearchResult,
+    result: StacSearchResult,
     search_kwargs: STACQueryPayload,
     choices: List[PostSearchActions] = None,
 ):

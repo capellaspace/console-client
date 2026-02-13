@@ -1,8 +1,8 @@
 import pytest
 
-from capella_console_client.search import SearchResult
+from capella_console_client.search import StacSearchResult
 from capella_console_client.config import (
-    ROOT_LEVEL_GROUPBY_FIELDS,
+    STAC_ROOT_LEVEL_GROUPBY_FIELDS,
 )
 
 from .test_data import (
@@ -14,7 +14,7 @@ from .test_data import (
 
 def test_search_result_add_drops_dupes():
     page = get_canned_search_results_single_page()
-    result = SearchResult()
+    result = StacSearchResult()
     added = result.add(page)
     assert added == len(page["features"])
     orig_len = len(result)
@@ -27,7 +27,7 @@ def test_search_result_add_drops_dupes():
 
 def test_search_result_add_drops_keep_dupes():
     page = get_canned_search_results_single_page()
-    result = SearchResult()
+    result = StacSearchResult()
     added = result.add(page)
     assert added == len(page["features"])
     added = result.add(page, keep_duplicates=True)
@@ -37,10 +37,10 @@ def test_search_result_add_drops_keep_dupes():
 
 def test_search_result_merge_dupes():
     page = get_canned_search_results_single_page()
-    result1 = SearchResult()
+    result1 = StacSearchResult()
     result1.add(page)
 
-    result2 = SearchResult()
+    result2 = StacSearchResult()
     result2.add(page)
 
     orig_len1 = len(result1)
@@ -54,10 +54,10 @@ def test_search_result_merge_dupes():
 
 def test_search_result_merge_keep():
     page = get_canned_search_results_single_page()
-    result1 = SearchResult()
+    result1 = StacSearchResult()
     result1.add(page)
 
-    result2 = SearchResult()
+    result2 = StacSearchResult()
     result2.add(page)
 
     orig_len1 = len(result1)
@@ -70,27 +70,27 @@ def test_search_result_merge_keep():
 
 
 def test_search_result_has_collect_ids():
-    result1 = SearchResult()
+    result1 = StacSearchResult()
     page = get_canned_search_results_with_collect_id()
     result1.add(page)
     assert len(result1.collect_ids) == len(page["features"])
 
 
 def test_search_result_groupby_empty():
-    empty = SearchResult()
+    empty = StacSearchResult()
     assert empty.groupby(field="id") == {}
 
 
 @pytest.mark.parametrize("field", ["email", "pw", "other", "field", "that", "does", "not", "exist"])
 def test_search_result_groupby_invalid_field(field):
-    result = SearchResult(_features=get_canned_search_results_with_collect_id()["features"])
+    result = StacSearchResult(_features=get_canned_search_results_with_collect_id()["features"])
     ret = result.groupby(field=field)
     assert list(ret.keys()) == ["unknown"]
 
 
-@pytest.mark.parametrize("field", [*ROOT_LEVEL_GROUPBY_FIELDS, *MOCK_GROUPBY_STAC_ITEM["properties"].keys()])
+@pytest.mark.parametrize("field", [*STAC_ROOT_LEVEL_GROUPBY_FIELDS, *MOCK_GROUPBY_STAC_ITEM["properties"].keys()])
 def test_search_result_groupby_known_field(field):
-    result = SearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])
+    result = StacSearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])
     ret = result.groupby(field=field)
     assert len(ret) == 1
     assert isinstance(ret, dict)
@@ -99,7 +99,7 @@ def test_search_result_groupby_known_field(field):
 
 @pytest.mark.parametrize("field", ["epsg", "billable_area"])
 def test_search_result_groupby_missing_field(field):
-    result = SearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])
+    result = StacSearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])
     ret = result.groupby(field=field)
     assert list(ret.keys()) == ["unknown"]
     assert list(ret.values()) == [[MOCK_GROUPBY_STAC_ITEM]]

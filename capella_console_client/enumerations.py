@@ -90,6 +90,10 @@ class TaskingRequestStatus(str, BaseEnum):
     error = "error"
     failed = "failed"
 
+    @classmethod
+    def is_valid(cls, status_str: str) -> bool:
+        return status_str in list(cls)
+
 
 class CollectionTier(str, BaseEnum):
     urgent = "urgent"
@@ -148,6 +152,9 @@ class CollectionType(str, BaseEnum):
     STRIPMAP_20 = "stripmap_20"
     STRIPMAP_50 = "stripmap_50"
     STRIPMAP_100 = "stripmap_100"
+    PARALLEL_STRIPMAP_20 = "parallel_stripmap_20"
+    PARALLEL_STRIPMAP_50 = "parallel_stripmap_50"
+    PARALLEL_STRIPMAP_100 = "parallel_stripmap_100"
 
 
 class SquintMode(str, BaseEnum):

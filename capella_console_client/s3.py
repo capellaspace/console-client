@@ -1,8 +1,7 @@
 """Wrapper for cloudpathlib S3Path."""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from typing_extensions import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
     from cloudpathlib import S3Path as _S3Path

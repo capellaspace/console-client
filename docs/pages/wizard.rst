@@ -31,8 +31,8 @@ Configure
 .. code:: console
 
     $ capella-console-wizard configure
-    2021-10-07 15:01:22,936 - 🛰️  Capella Space 🐐 - INFO - let's get you all setup using capella-console-wizard:
-    2021-10-07 15:01:22,936 - 🛰️  Capella Space 🐐 - INFO - 		Press Ctrl + C anytime to quit
+    2021-10-07 15:01:22,936 - 🛰️  Capella 🐐 - INFO - let's get you all setup using capella-console-wizard:
+    2021-10-07 15:01:22,936 - 🛰️  Capella 🐐 - INFO - 		Press Ctrl + C anytime to quit
 
     ? Console API key: ****************************************************************
     updated API key for Capella Console
@@ -133,19 +133,19 @@ Given collect id
       ○ metadata
       ○ thumbnail
     ? download location: /Users/thomas.beyer/data/new_stuff
-    2021-11-17 14:00:53,144 - 🛰️  Capella Space 🐐 - INFO - searching catalog with payload {'query': {'capella:collect_id': {'in': ['<collect_id>']}, 'sar:product_type': {'in': ['GEO', 'GEC']}}}
-    2021-11-17 14:00:53,145 - 🛰️  Capella Space 🐐 - INFO - 	page 1 (0 - 500)
-    2021-11-17 14:00:53,477 - 🛰️  Capella Space 🐐 - INFO - found 2 STAC items
-    2021-11-17 14:00:54,461 - 🛰️  Capella Space 🐐 - INFO - reviewing order for <stac_id_1>, <stac_id_2>
-    2021-11-17 14:00:56,197 - 🛰️  Capella Space 🐐 - INFO - submitting order for <stac_id_1>, <stac_id_2>
-    2021-11-17 14:00:58,106 - 🛰️  Capella Space 🐐 - INFO - successfully submitted order <order_id>
-    2021-11-17 14:00:58,106 - 🛰️  Capella Space 🐐 - INFO - getting presigned assets for order <order_id>
-    2021-11-17 14:00:59,541 - 🛰️  Capella Space 🐐 - INFO - downloading 2 products
-    2021-11-17 14:00:59,541 - 🛰️  Capella Space 🐐 - INFO - filtering by product_types: GEO, GEC
-    2021-11-17 14:00:59,542 - 🛰️  Capella Space 🐐 - INFO - downloading product <stac_id_1> to /Users/thomas.beyer/data/new_stuff/<stac_id_1>
-    2021-11-17 14:00:59,542 - 🛰️  Capella Space 🐐 - INFO - Only including assets HH, VV
-    2021-11-17 14:00:59,543 - 🛰️  Capella Space 🐐 - INFO - downloading product <stac_id_2> to /Users/thomas.beyer/data/new_stuff/<stac_id_2>
-    2021-11-17 14:00:59,543 - 🛰️  Capella Space 🐐 - INFO - Only including assets HH, VV
+    2021-11-17 14:00:53,144 - 🛰️  Capella 🐐 - INFO - searching catalog with payload {'query': {'capella:collect_id': {'in': ['<collect_id>']}, 'sar:product_type': {'in': ['GEO', 'GEC']}}}
+    2021-11-17 14:00:53,145 - 🛰️  Capella 🐐 - INFO - 	page 1 (0 - 500)
+    2021-11-17 14:00:53,477 - 🛰️  Capella 🐐 - INFO - found 2 STAC items
+    2021-11-17 14:00:54,461 - 🛰️  Capella 🐐 - INFO - reviewing order for <stac_id_1>, <stac_id_2>
+    2021-11-17 14:00:56,197 - 🛰️  Capella 🐐 - INFO - submitting order for <stac_id_1>, <stac_id_2>
+    2021-11-17 14:00:58,106 - 🛰️  Capella 🐐 - INFO - successfully submitted order <order_id>
+    2021-11-17 14:00:58,106 - 🛰️  Capella 🐐 - INFO - getting presigned assets for order <order_id>
+    2021-11-17 14:00:59,541 - 🛰️  Capella 🐐 - INFO - downloading 2 products
+    2021-11-17 14:00:59,541 - 🛰️  Capella 🐐 - INFO - filtering by product_types: GEO, GEC
+    2021-11-17 14:00:59,542 - 🛰️  Capella 🐐 - INFO - downloading product <stac_id_1> to /Users/thomas.beyer/data/new_stuff/<stac_id_1>
+    2021-11-17 14:00:59,542 - 🛰️  Capella 🐐 - INFO - Only including assets HH, VV
+    2021-11-17 14:00:59,543 - 🛰️  Capella 🐐 - INFO - downloading product <stac_id_2> to /Users/thomas.beyer/data/new_stuff/<stac_id_2>
+    2021-11-17 14:00:59,543 - 🛰️  Capella 🐐 - INFO - Only including assets HH, VV
     ...
 
     ? Want to open any product directories? Yes
@@ -160,10 +160,10 @@ New search
     ? Select your search filters: done (2 selections)
     ? collections [=]: capella-open-data
     ? limit [=]: 1
-    2021-11-17 14:10:53,289 - 🛰️  Capella Space 🐐 - INFO - searching catalog with payload {'collections': ['capella-open-data'], 'limit': 1, 'query': {'constellation': {'eq': 'capella'}}}
-    2021-11-17 14:10:53,289 - 🛰️  Capella Space 🐐 - INFO - 	page 1 (0 - 1)
-    2021-11-17 14:10:53,473 - 🛰️  Capella Space 🐐 - INFO - Using https://0r1mdcwa5c.execute-api.us-west-2.amazonaws.com/prod/search for searches
-    2021-11-17 14:10:53,637 - 🛰️  Capella Space 🐐 - INFO - found 1 STAC item
+    2021-11-17 14:10:53,289 - 🛰️  Capella 🐐 - INFO - searching catalog with payload {'collections': ['capella-open-data'], 'limit': 1, 'query': {'constellation': {'eq': 'capella'}}}
+    2021-11-17 14:10:53,289 - 🛰️  Capella 🐐 - INFO - 	page 1 (0 - 1)
+    2021-11-17 14:10:53,473 - 🛰️  Capella 🐐 - INFO - Using https://0r1mdcwa5c.execute-api.us-west-2.amazonaws.com/prod/search for searches
+    2021-11-17 14:10:53,637 - 🛰️  Capella 🐐 - INFO - found 1 STAC item
     ╒═════╤═════════════════════════════════════════════════════╤═══════════════════╤════════════════╤════════════════════════════╤═══════════════════╤═════════════════╕
     │   # │ id                                                  │ instrument_mode   │ product_type   │ datetime                   │   incidence_angle │ polarizations   │
     ╞═════╪═════════════════════════════════════════════════════╪═══════════════════╪════════════════╪════════════════════════════╪═══════════════════╪═════════════════╡
@@ -177,9 +177,9 @@ New search
     ? Select your search filters: done (2 selections)
     ? collections [=]: ['capella-open-data']
     ? limit [=]: 2
-    2021-11-17 14:11:05,597 - 🛰️  Capella Space 🐐 - INFO - searching catalog with payload {'collections': ['capella-open-data'], 'limit': 2, 'query': {'constellation': {'eq': 'capella'}}}
-    2021-11-17 14:11:05,597 - 🛰️  Capella Space 🐐 - INFO - 	page 1 (0 - 2)
-    2021-11-17 14:11:05,759 - 🛰️  Capella Space 🐐 - INFO - found 2 STAC items
+    2021-11-17 14:11:05,597 - 🛰️  Capella 🐐 - INFO - searching catalog with payload {'collections': ['capella-open-data'], 'limit': 2, 'query': {'constellation': {'eq': 'capella'}}}
+    2021-11-17 14:11:05,597 - 🛰️  Capella 🐐 - INFO - 	page 1 (0 - 2)
+    2021-11-17 14:11:05,759 - 🛰️  Capella 🐐 - INFO - found 2 STAC items
     ╒═════╤═════════════════════════════════════════════════════╤═══════════════════╤════════════════╤════════════════════════════╤════════════════════╤═════════════════╕
     │   # │ id                                                  │ instrument_mode   │ product_type   │ datetime                   │   incidence_angle  │ polarizations   │
     ╞═════╪═════════════════════════════════════════════════════╪═══════════════════╪════════════════╪════════════════════════════╪════════════════════╪═════════════════╡
@@ -192,18 +192,18 @@ New search
     ? Anything you'd like to do now? continue
     ? asset type: [thumbnail]
     ? download location: /Users/thomas.beyer/data/new_stuff
-    2021-11-17 14:11:12,876 - 🛰️  Capella Space 🐐 - INFO - reviewing order for CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918, CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928
-    2021-11-17 14:11:14,565 - 🛰️  Capella Space 🐐 - INFO - submitting order for CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918, CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928
-    2021-11-17 14:11:16,409 - 🛰️  Capella Space 🐐 - INFO - successfully submitted order 48128100-47f3-11ec-8308-5bb8546cd9f5
-    2021-11-17 14:11:16,409 - 🛰️  Capella Space 🐐 - INFO - getting presigned assets for order 48128100-47f3-11ec-8308-5bb8546cd9f5
-    2021-11-17 14:11:17,845 - 🛰️  Capella Space 🐐 - INFO - downloading 2 products
-    2021-11-17 14:11:17,846 - 🛰️  Capella Space 🐐 - INFO - downloading product CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918 to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918
-    2021-11-17 14:11:17,846 - 🛰️  Capella Space 🐐 - INFO - Only including assets thumbnail
-    2021-11-17 14:11:17,847 - 🛰️  Capella Space 🐐 - INFO - downloading product CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928 to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928
-    2021-11-17 14:11:17,847 - 🛰️  Capella Space 🐐 - INFO - Only including assets thumbnail
-    2021-11-17 14:11:18,125 - 🛰️  Capella Space 🐐 - INFO - downloading to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png (382.4 KiB)
-    2021-11-17 14:11:18,175 - 🛰️  Capella Space 🐐 - INFO - downloading to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png (382.4 KiB)
-    2021-11-17 14:11:18,365 - 🛰️  Capella Space 🐐 - INFO - successfully downloaded to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png
-    2021-11-17 14:11:18,365 - 🛰️  Capella Space 🐐 - INFO - successfully downloaded to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png
+    2021-11-17 14:11:12,876 - 🛰️  Capella 🐐 - INFO - reviewing order for CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918, CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928
+    2021-11-17 14:11:14,565 - 🛰️  Capella 🐐 - INFO - submitting order for CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918, CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928
+    2021-11-17 14:11:16,409 - 🛰️  Capella 🐐 - INFO - successfully submitted order 48128100-47f3-11ec-8308-5bb8546cd9f5
+    2021-11-17 14:11:16,409 - 🛰️  Capella 🐐 - INFO - getting presigned assets for order 48128100-47f3-11ec-8308-5bb8546cd9f5
+    2021-11-17 14:11:17,845 - 🛰️  Capella 🐐 - INFO - downloading 2 products
+    2021-11-17 14:11:17,846 - 🛰️  Capella 🐐 - INFO - downloading product CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918 to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918
+    2021-11-17 14:11:17,846 - 🛰️  Capella 🐐 - INFO - Only including assets thumbnail
+    2021-11-17 14:11:17,847 - 🛰️  Capella 🐐 - INFO - downloading product CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928 to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928
+    2021-11-17 14:11:17,847 - 🛰️  Capella 🐐 - INFO - Only including assets thumbnail
+    2021-11-17 14:11:18,125 - 🛰️  Capella 🐐 - INFO - downloading to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png (382.4 KiB)
+    2021-11-17 14:11:18,175 - 🛰️  Capella 🐐 - INFO - downloading to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png (382.4 KiB)
+    2021-11-17 14:11:18,365 - 🛰️  Capella 🐐 - INFO - successfully downloaded to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_GEC_HH_20211020065906_20211020065928/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png
+    2021-11-17 14:11:18,365 - 🛰️  Capella 🐐 - INFO - successfully downloaded to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png
 
     ? Do you want to open any product directories? No

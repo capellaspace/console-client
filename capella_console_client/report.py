@@ -19,3 +19,11 @@ def print_cancelation_result(results_by_tr_id: Dict[str, Any], task_type: str):
 
         for _id, cancel_result in cancel_error.items():
             logger.info(f"{_id:25s}: {cancel_result['error']} ❌")
+
+
+def print_task_search_result(trs):
+    if not trs:
+        logger.info(f"found no tasking requests matching search query")
+    else:
+        multiple_suffix = "s" if len(trs) > 1 else ""
+        logger.info(f"found {len(trs)} tasking request{multiple_suffix} matching search query")

@@ -1,14 +1,19 @@
 CONSOLE_API_URL = "https://api.capellaspace.com"
 CAPELLA_API_KEY_ENV = "CAPELLA_API_KEY"
 DEFAULT_TIMEOUT = 60
+
+# catalog
 CATALOG_MAX_PAGE_SIZE = 900
 CATALOG_DEFAULT_LIMIT = 500
-TASKING_REQUEST_DEFAULT_PAGE_SIZE = 100
-STAC_MAX_ITEM_RETURN = 10000
-MAX_CONCURRENT_CANCEL = 10
+CATALOG_STAC_MAX_ITEM_RETURN = 10000
+
+# tasking
+TR_SEARCH_DEFAULT_PAGE_SIZE = 250
+TR_MAX_CONCURRENCY = 8  # protection from getting 429ed
+TR_CANCEL_MAX_CONCURRENCY = 10
 
 
-SUPPORTED_SEARCH_FIELDS = {
+STAC_SUPPORTED_ROOT_FIELDS = {
     "bbox",
     "intersects",
     "collections",
@@ -17,7 +22,7 @@ SUPPORTED_SEARCH_FIELDS = {
 }
 
 
-SUPPORTED_QUERY_FIELDS = {
+STAC_SUPPORTED_QUERY_FIELDS = {
     "center_frequency",
     "collect_id",
     "constellation",
@@ -54,11 +59,11 @@ SUPPORTED_QUERY_FIELDS = {
     "collection_type",
 }
 
-ALL_SUPPORTED_FIELDS = SUPPORTED_SEARCH_FIELDS | SUPPORTED_QUERY_FIELDS
+STAC_ALL_SUPPORTED_SEARCH_FIELDS = STAC_SUPPORTED_ROOT_FIELDS | STAC_SUPPORTED_QUERY_FIELDS
 
-ALL_SUPPORTED_SORTBY = ALL_SUPPORTED_FIELDS | {"id"}
+STAC_ALL_SUPPORTED_SORTBY = STAC_ALL_SUPPORTED_SEARCH_FIELDS | {"id"}
 
-OPERATOR_SUFFIXES = {
+QUERY_OPERATORS = {
     "eq",
     "in",
     "gt",
@@ -104,9 +109,9 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "collection_type": "capella:collection_type",
 }
 
-ROOT_LEVEL_GROUPBY_FIELDS = {"id", "collection"}
+STAC_ROOT_LEVEL_GROUPBY_FIELDS = {"id", "collection"}
 
-ALL_SUPPORTED_GROUPBY_FIELDS = ROOT_LEVEL_GROUPBY_FIELDS | SUPPORTED_QUERY_FIELDS
+STAC_ALL_SUPPORTED_GROUPBY_FIELDS = STAC_ROOT_LEVEL_GROUPBY_FIELDS | STAC_SUPPORTED_QUERY_FIELDS
 UNKNOWN_GROUPBY_FIELD = "unknown"
 
 
@@ -138,3 +143,45 @@ REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS = frozenset(
         "repetition_count",
     ]
 )
+
+TR_FILTERS_BY_QUERY_FIELDS = {
+    "collection_type": "collectionType",
+    "collection_tier": "collectionTier",
+    "last_status_time": "lastStatusTime",
+    "org_id": "organizationIds",
+    "status": "lastStatusCode",
+    "submission_time": "submissionTime",
+    "tasking_request_id": "taskingrequestIds",
+    "user_id": "userId",
+    "window_close": "windowClose",
+    "window_open": "windowOpen",
+}
+
+SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS = set(TR_FILTERS_BY_QUERY_FIELDS.keys())
+
+
+TR_SUPPORTED_GROUPBY_FIELDS = {
+    "archiveHoldback",
+    "billingEnvironment",
+    "collectConstraints",
+    "collectionTier",
+    "collectionType",
+    "contractId",
+    "customAttribute1",
+    "customAttribute2",
+    "orgId",
+    "organizationName",
+    "processingConfig",
+    "repeatrequestId",
+    "statusHistory",
+    "submissionTime",
+    "taskingrequestDescription",
+    "taskingrequestId",
+    "taskingrequestName",
+    "taskingrequestType",
+    "userId",
+    "userName",
+    "windowClose",
+    "windowDuration",
+    "windowOpen",
+}

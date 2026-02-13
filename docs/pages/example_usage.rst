@@ -4,7 +4,7 @@
 Example Usage
 **************
 
-This page provides reusable recipes to :ref:`authenticate <example-auth>`, :ref:`search <example-search>`, :ref:`order <example-order>`, :ref:`task <example-task>`, :ref:`consume imagery and metadata <example-consume>`
+This page provides reusable recipes to :ref:`authenticate <example-auth>`, :ref:`search the catalog <example-catalog-search>`, :ref:`order <example-order>`, :ref:`task <example-task>`, :ref:`search tasking requests <example-search-trs>`, :ref:`consume imagery and metadata <example-consume>`
 
 
 .. code:: python3
@@ -47,17 +47,17 @@ with access token
     client = CapellaConsoleClient(token="<token>", no_token_check=True)
 
 
-.. _example-search:
+.. _example-catalog-search:
 
-search
-######
+catalog search
+##############
 
-simple search
-*************
+simple catalog search
+*********************
 
-Searches are run against Capella Space's Catalog and `STAC items <https://stacspec.org/>`_ matching the search criteria is returned.
+Searches are run against Capella's Catalog and `STAC items <https://stacspec.org/>`_ matching the search criteria is returned.
 
-A multitude of :ref:`search fields <search-fields>` and :ref:`search operators <search-ops>` are supported.
+A multitude of :ref:`query fields <stac-query-fields>` and :ref:`query operators <query-ops>` are supported.
 
 .. code:: python3
 
@@ -101,8 +101,8 @@ Expensive searches (time is $$)  can be sped up by providing `threaded=True`:
     many_products = client.search(constellation="capella", limit=9999, threaded=True)
 
 
-advanced search
-***************
+advanced catalog search
+***********************
 
 .. code:: python3
 
@@ -223,8 +223,10 @@ group search results
     by_instrument = res.groupby(field="instruments").keys()
 
 
+search results
+**************
+
 visualize search results
-************************
 
 .. code:: python3
 
@@ -244,6 +246,25 @@ visualize search results
     feature_collection_path.write_text(json.dumps(feature_collection))
 
     # open e.g. in QGIS
+
+
+group search results by key
+
+.. code:: python3
+
+    from pathlib import Path
+    import json
+
+    results = client.search(
+        instrument_mode="spotlight",
+        product_type="GEO",
+    )
+
+    # groupby STAC items by product type
+    groupby_product_type = results.groupby('product_type')
+
+    # see all available groupby fields
+    print(results.grouper.supported_fields)
 
 
 .. _example-order:
@@ -312,7 +333,7 @@ Output
 
 .. code:: sh
 
-    2021-06-21 20:28:16,734 - 🛰️  Capella Space 🐐 - INFO - downloading product CAPELLA_C03_SP_SLC_HH_20210621202423_20210621202425 to /tmp/CAPELLA_C03_SP_SLC_HH_20210621202423_20210621202425
+    2021-06-21 20:28:16,734 - 🛰️  Capella 🐐 - INFO - downloading product CAPELLA_C03_SP_SLC_HH_20210621202423_20210621202425 to /tmp/CAPELLA_C03_SP_SLC_HH_20210621202423_20210621202425
     CAPELLA_C03_SP_GEO_HH_20210603175705_20210603175729_thumb.png       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% • 211.3/211.3 KB   • 499.7 kB/s  • 0:00:00
     CAPELLA_C03_SP_GEO_HH_20210619045726_20210619045747_thumb.png       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% • 307.1/307.1 KB   • 1.4 MB/s    • 0:00:00
     CAPELLA_C03_SP_GEO_HH_20210619180117_20210619180140_thumb.png       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.0% • 271.6/271.6 KB   • 1.1 MB/s    • 0:00:00
@@ -514,8 +535,8 @@ Issue the following snippet to view the ordering history
 
 .. _example-task:
 
-task
-####
+tasking
+#######
 
 create tasking request
 **********************
@@ -698,40 +719,9 @@ repeat requests repeat cadence can be configured in multiple ways
         repetition_interval=RepeatCycle.WEEKLY,
     )
 
-search tasking requests
-***********************
 
-
-.. code:: python3
-
-    tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid taskingrequest_id
-
-    # get task info
-    task = client.get_task(tasking_request_id)
-
-    # was it completed?
-    client.is_task_completed(task)
-
-advanced tasking request search
-
-.. code:: python3
-
-    # get ALL completed tasking requests of user
-    user_completed_trs = client.list_tasking_requests(status="completed")
-
-    # get all COMPLETED tasking requests of ORG (requires org manager/ admin role)
-    org+completed_trs = client.list_tasking_requests(
-        for_org=True,
-        status="completed"
-    )
-
-    # get all completed tasking requests of org SUBMITTED AFTER 2022-12-01 (UTC)
-    org_completed_trs_submitted_dec_22 = client.list_tasking_requests(
-        for_org=True,
-        status="completed",
-        submission_time__gt=datetime.datetime(2022, 12, 1)
-    )
-
+manage tasking requests
+#######################
 
 cancel tasking requests
 ***********************
@@ -769,6 +759,55 @@ For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Ove
     )
 
     print(cancel_result_by_id)
+
+.. _example-search-trs:
+
+
+search tasking requests
+***********************
+
+
+A multitude of :ref:`query fields <tr-query-fields>` and :ref:`query operators <query-ops>` are supported.
+
+
+.. code:: python3
+
+    tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid taskingrequest_id
+
+    # get task info
+    task = client.get_task(tasking_request_id)
+
+    # was it completed?
+    client.is_task_completed(task)
+
+advanced tasking request search
+
+.. code:: python3
+
+    # get ALL completed tasking requests of user
+    user_completed_trs_result = client.search_tasking_requests(status="completed")
+
+    # get all COMPLETED tasking requests of ORG (requires org manager/ admin role)
+    org_completed_trs_result = client.search_tasking_requests(
+        for_org=True,
+        status="completed"
+    )
+
+    # get all completed tasking requests of org SUBMITTED AFTER 2022-12-01 (UTC)
+    org_completed_trs_submitted_dec_22_result = client.search_tasking_requests(
+        for_org=True,
+        status="completed",
+        submission_time__gt=datetime.datetime(2022, 12, 1)
+    )
+
+    # subset of supported filters
+    completed_sp_prio_trs_result = client.search_tasking_requests(
+        status="completed",
+        window_open__gt=datetime.datetime(2025, 12, 1)
+        window_open__lt=datetime.datetime(2026, 12, 1)
+        collection_type=["spotlight", "spotlight_ultra"],
+        collection_tier="priority"
+    )
 
 .. _example-consume:
 
