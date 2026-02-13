@@ -1,13 +1,10 @@
-from typing import Optional, Dict, Any, List, Union, Tuple, DefaultDict, Callable
+from typing import Optional, Dict, Any, List, Union, Tuple
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial, wraps
-from collections import defaultdict
 
 import geojson
 from dateutil.parser import parse
 
-from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.validate import (
     _snake_to_camel,
@@ -15,17 +12,10 @@ from capella_console_client.validate import (
     _set_squint_default,
 )
 from capella_console_client.config import (
-    TR_SEARCH_DEFAULT_PAGE_SIZE,
     TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
-    TR_MAX_CONCURRENCY,
     TR_CANCEL_MAX_CONCURRENCY,
-    SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS,
-    OPERATOR_SUFFIXES,
-    TR_FILTERS_BY_QUERY_FIELDS,
-    TR_DATETIME_FILTERS,
 )
 from capella_console_client.enumerations import (
-    TaskingRequestStatus,
     ObservationDirection,
     OrbitState,
     ProductType,
@@ -38,9 +28,6 @@ from capella_console_client.enumerations import (
     CollectionType,
 )
 from capella_console_client.exceptions import CapellaConsoleClientError
-from capella_console_client.report import print_task_search_result
-from capella_console_client.search import AbstractSearch, SearchResult
-from capella_console_client.validate import _compact_unique, _validate_uuids
 
 
 def create_tasking_request(
@@ -130,178 +117,6 @@ def _set_window_open_close(
 def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession):
     task_response = session.get(f"/task/{tasking_request_id}")
     return task_response.json()
-
-
-class TaskingRequestSearchResult(SearchResult):
-    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
-        self._pages.append(page)
-        self._features.extend(page["results"])
-        return len(page["results"])
-
-
-class TaskingRequestSearch(AbstractSearch):
-    def __init__(self, session: CapellaConsoleSession, **kwargs) -> None:
-        self.session = session
-        self.payload: Dict[str, Any] = {}
-        self.threaded = kwargs.pop("threaded", False)
-        self.page_size = kwargs.pop("page_size", None) or TR_SEARCH_DEFAULT_PAGE_SIZE
-        # TODO: max results (limit)
-
-        query_payload = self._get_query_payload(kwargs)
-        if query_payload:
-            self.payload["query"] = dict(query_payload)
-
-        # sortby = cur_kwargs.pop("sortby", None)
-        # if sortby:
-        #     self.payload["sortby"] = self._get_sort_payload(sortby)
-
-    def _get_sort_payload(self, sortby):
-        raise RuntimeError("Not implemented")
-
-    def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
-        query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
-        query_payload["includeRepeatingTasks"] = {"eq": False}
-        query_payload = self._add_user_org_query(query_payload, **kwargs)
-
-        sntzr = TaskingRequestQuerySanitizer()
-
-        for cur_field, value in kwargs.items():
-            cur_field, op = self._split_op(cur_field)
-            if cur_field not in SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS:
-                logger.warning(f"filter {cur_field} not supported ... omitting")
-                continue
-
-            if op not in OPERATOR_SUFFIXES:
-                logger.warning(f"operator {op} not supported ... omitting")
-                continue
-
-            target_field = TR_FILTERS_BY_QUERY_FIELDS.get(cur_field, cur_field)
-
-            if sntzr.has_sanitizer(cur_field):
-                value = sntzr.sanitize(field=cur_field, value=value)
-
-            # op == in currently not supported by api
-            # TODO: replace direct assignment (no operator) once in supported
-            if isinstance(value, list):
-                query_payload[target_field] = value  # type: ignore[assignment]
-                continue
-
-            query_payload[target_field][op] = value
-
-        return query_payload
-
-    def _add_user_org_query(self, query_payload, **kwargs):
-        # TODO: resellerId?
-        any_of = ("org_id", "user_id")
-
-        if any(x in kwargs for x in any_of):
-            return query_payload
-
-        if not self.session.customer_id:
-            self.session._cache_user_info()
-
-        for_org = kwargs.pop("for_org", False)
-        if for_org:
-            query_payload["organizationIds"] = [self.session.organization_id]
-            return query_payload
-
-        # TODO: should the endpoint fill this in?
-        query_payload["userId"] = self.session.customer_id
-        return query_payload
-
-    def fetch_all(self) -> TaskingRequestSearchResult:
-        search_result = TaskingRequestSearchResult(entity="tasking request", request_body=self.payload)
-        logger.info(f"searching tasking requests with payload {self.payload}")
-        first_page = _fetch_trs(self.session, params={"page": 1, "limit": self.page_size}, search_payload=self.payload)
-
-        total_pages = first_page["totalPages"]
-        fetch_more = total_pages > 1
-
-        if not fetch_more:
-            search_result.add(first_page)
-            print_task_search_result(search_result._features)
-            return search_result
-
-        page_params = [{"page": i, "limit": self.page_size} for i in range(2, total_pages + 1)]
-
-        _fetch_worker = partial(_fetch_trs, search_payload=self.payload, session=self.session)
-
-        with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
-            results = executor.map(_fetch_worker, page_params)
-
-        for page in results:
-            search_result.add(page)
-
-        print_task_search_result(search_result._features)
-        return search_result
-
-
-class TaskingRequestQuerySanitizer:
-
-    SUPPORTED = {"collection_tier", "collection_type", "status", "tasking_request_id"}
-
-    @staticmethod
-    def single_or_list(func: Callable[..., list[Any]]) -> Callable[..., list[Any] | Any]:
-        @wraps(func)
-        def wrapper(*args, **kwargs) -> list[Any] | Any:
-            if not isinstance(kwargs["value"], str):
-                return func(args[0], **kwargs)
-
-            kwargs["value"] = [kwargs["value"]]
-            result = func(args[0], **kwargs)
-            if result is None:
-                return None
-            return result[0]
-
-        return wrapper
-
-    @classmethod
-    def has_sanitizer(cls, field) -> bool:
-        return field in TaskingRequestQuerySanitizer.SUPPORTED
-
-    def sanitize(self, field, value):
-        if not self.has_sanitizer(field):
-            return value
-
-        return {
-            "collection_tier": self._sanitize_collection_tier,
-            "collection_type": self._sanitize_collection_type,
-            "status": self._sanitize_tr_status,
-            "tasking_request_id": self._sanitize_tr_ids,
-        }[field](field=field, value=value)
-
-    def _sanitize_collection_tier(self, field, value):
-        return self._sanitize_enum(field=field, value=value, enum_cls=CollectionTier)
-
-    def _sanitize_collection_type(self, field, value):
-        return self._sanitize_enum(field=field, value=value, enum_cls=CollectionType)
-
-    def _sanitize_tr_status(self, field, value):
-        return self._sanitize_enum(field=field, value=value, enum_cls=TaskingRequestStatus)
-
-    @single_or_list
-    def _sanitize_enum(self, field, value, enum_cls):
-        valid_status = [s.lower() for s in value if s.lower() in enum_cls]
-
-        if not valid_status:
-            logger.warning(f"No valid {field} provided ({value}) ... dropping from filter")
-            return None
-
-        return valid_status
-
-    @single_or_list
-    def _sanitize_tr_ids(self, field, value):
-        value = _compact_unique(value)
-        _validate_uuids(value)
-        return value
-
-
-def _fetch_trs(session, search_payload, params):
-    resp = session.post("/tasks/search", params=params, json=search_payload)
-    page = resp.json()
-    if page["currentPage"] > 1:
-        logger.info(f"page {page['currentPage']} out of {page['totalPages']}: {len(page['results'])} tasking requests")
-    return page
 
 
 def _task_contains_status(task: Dict[str, Any], status_name: str) -> bool:

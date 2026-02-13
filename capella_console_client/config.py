@@ -13,7 +13,7 @@ TR_MAX_CONCURRENCY = 8  # protection from getting 429ed
 TR_CANCEL_MAX_CONCURRENCY = 10
 
 
-SUPPORTED_STAC_SEARCH_FIELDS = {
+STAC_SUPPORTED_ROOT_FIELDS = {
     "bbox",
     "intersects",
     "collections",
@@ -22,7 +22,7 @@ SUPPORTED_STAC_SEARCH_FIELDS = {
 }
 
 
-SUPPORTED_STAC_SEARCH_QUERY_FIELDS = {
+STAC_SUPPORTED_QUERY_FIELDS = {
     "center_frequency",
     "collect_id",
     "constellation",
@@ -59,11 +59,11 @@ SUPPORTED_STAC_SEARCH_QUERY_FIELDS = {
     "collection_type",
 }
 
-ALL_SUPPORTED_STAC_SEARCH_FIELDS = SUPPORTED_STAC_SEARCH_FIELDS | SUPPORTED_STAC_SEARCH_QUERY_FIELDS
+STAC_ALL_SUPPORTED_SEARCH_FIELDS = STAC_SUPPORTED_ROOT_FIELDS | STAC_SUPPORTED_QUERY_FIELDS
 
-ALL_SUPPORTED_SORTBY = ALL_SUPPORTED_STAC_SEARCH_FIELDS | {"id"}
+STAC_ALL_SUPPORTED_SORTBY = STAC_ALL_SUPPORTED_SEARCH_FIELDS | {"id"}
 
-OPERATOR_SUFFIXES = {
+QUERY_OPERATORS = {
     "eq",
     "in",
     "gt",
@@ -109,9 +109,9 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "collection_type": "capella:collection_type",
 }
 
-ROOT_LEVEL_GROUPBY_FIELDS = {"id", "collection"}
+STAC_ROOT_LEVEL_GROUPBY_FIELDS = {"id", "collection"}
 
-ALL_SUPPORTED_GROUPBY_FIELDS = ROOT_LEVEL_GROUPBY_FIELDS | SUPPORTED_STAC_SEARCH_QUERY_FIELDS
+STAC_ALL_SUPPORTED_GROUPBY_FIELDS = STAC_ROOT_LEVEL_GROUPBY_FIELDS | STAC_SUPPORTED_QUERY_FIELDS
 UNKNOWN_GROUPBY_FIELD = "unknown"
 
 
@@ -157,6 +157,31 @@ TR_FILTERS_BY_QUERY_FIELDS = {
     "window_open": "windowOpen",
 }
 
-TR_DATETIME_FILTERS = {"window_open"}
-
 SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS = set(TR_FILTERS_BY_QUERY_FIELDS.keys())
+
+
+TR_SUPPORTED_GROUPBY_FIELDS = {
+    "archiveHoldback",
+    "billingEnvironment",
+    "collectConstraints",
+    "collectionTier",
+    "collectionType",
+    "contractId",
+    "customAttribute1",
+    "customAttribute2",
+    "orgId",
+    "organizationName",
+    "processingConfig",
+    "repeatrequestId",
+    "statusHistory",
+    "submissionTime",
+    "taskingrequestDescription",
+    "taskingrequestId",
+    "taskingrequestName",
+    "taskingrequestType",
+    "userId",
+    "userName",
+    "windowClose",
+    "windowDuration",
+    "windowOpen",
+}

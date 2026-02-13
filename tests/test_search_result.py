@@ -2,7 +2,7 @@ import pytest
 
 from capella_console_client.search import StacSearchResult
 from capella_console_client.config import (
-    ROOT_LEVEL_GROUPBY_FIELDS,
+    STAC_ROOT_LEVEL_GROUPBY_FIELDS,
 )
 
 from .test_data import (
@@ -88,7 +88,7 @@ def test_search_result_groupby_invalid_field(field):
     assert list(ret.keys()) == ["unknown"]
 
 
-@pytest.mark.parametrize("field", [*ROOT_LEVEL_GROUPBY_FIELDS, *MOCK_GROUPBY_STAC_ITEM["properties"].keys()])
+@pytest.mark.parametrize("field", [*STAC_ROOT_LEVEL_GROUPBY_FIELDS, *MOCK_GROUPBY_STAC_ITEM["properties"].keys()])
 def test_search_result_groupby_known_field(field):
     result = StacSearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])
     ret = result.groupby(field=field)

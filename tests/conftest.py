@@ -12,6 +12,7 @@ from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
 from capella_console_client import client
 from capella_console_client import tasking_request as tasking_modules
+from capella_console_client import search as search_modules
 from capella_console_client.s3 import S3Path
 
 from .test_data import (
@@ -36,7 +37,7 @@ def assert_all_responses_were_requested() -> bool:
 def disable_validate_uuid(monkeypatch):
     monkeypatch.setattr(capella_client_module, "_validate_uuid", lambda x: None)
     monkeypatch.setattr(capella_client_module, "_validate_uuids", lambda x: None)
-    monkeypatch.setattr(tasking_modules, "_validate_uuids", lambda x: None)
+    monkeypatch.setattr(search_modules, "_validate_uuids", lambda x: None)
 
 
 @pytest.fixture

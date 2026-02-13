@@ -223,8 +223,10 @@ group search results
     by_instrument = res.groupby(field="instruments").keys()
 
 
+search results
+**************
+
 visualize search results
-************************
 
 .. code:: python3
 
@@ -244,6 +246,25 @@ visualize search results
     feature_collection_path.write_text(json.dumps(feature_collection))
 
     # open e.g. in QGIS
+
+
+group search results by key
+
+.. code:: python3
+
+    from pathlib import Path
+    import json
+
+    results = client.search(
+        instrument_mode="spotlight",
+        product_type="GEO",
+    )
+
+    # groupby STAC items by product type
+    groupby_product_type = results.groupby('product_type')
+
+    # see all available groupby fields
+    print(results.grouper.supported_fields)
 
 
 .. _example-order:
