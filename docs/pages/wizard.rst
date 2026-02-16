@@ -49,7 +49,7 @@ Configure
 Workflows
 =========
 
-``capella-console-wizard`` exposes common interactive workflows (search, order, download).
+``capella-console-wizard`` exposes common interactive workflows (search, order, download, cancel tasking requests).
 
 
 The following sections describe a subset of those
@@ -207,3 +207,53 @@ New search
     2021-11-17 14:11:18,365 - 🛰️  Capella 🐐 - INFO - successfully downloaded to /Users/thomas.beyer/data/new_stuff/CAPELLA_C05_SP_SLC_HH_20211020065916_20211020065918/CAPELLA_C05_SP_GEO_HH_20211020065906_20211020065928_thumb.png
 
     ? Do you want to open any product directories? No
+
+
+Cancel tasking requests
+=======================
+
+.. code:: console
+
+    $ capella-console-wizard workflows manage-trs
+
+users **with elevated permissions** will be prompted to select who they'd like to cancel tasking requests for
+
+.. code:: console
+
+    Cancel tasking requests of ? (Use arrow keys)
+    » TrCancelOptions.user
+      TrCancelOptions.org
+      TrCancelOptions.admin
+
+
+* `user`: cancelable tasking requests of current user will be searched
+* `org`: cancelable tasking requests of current user's org will be searched (**requires elevated permissions**)
+* `admin`: user_id / org_id will be prompted in previous step and used for search (**requires elevated permissions**)
+
+.. code:: console
+
+    ? Cancel tasking requests of ? current organization (requires elevated perms)
+    2026-02-16 14:39:42,023 - 🛰️  Capella 🐐 - INFO - searching tasking requests with payload {'query': {'includeRepeatingTasks': {'eq': False}, 'organizationIds': ['2d98e85f-8c4b-4089-9faf-781277dd9282'], 'lastStatusCode': ['received', 'review', 'submitted', 'active', 'accepted']}}
+    2026-02-16 14:39:42,813 - 🛰️  Capella 🐐 - INFO - found 18 tasking requests matching search query
+    ? Which tasking request? done (3 selections)
+
+    ? Please confirm you'd like to cancel the following tasking requests (cancelation charges might apply):
+
+    - tasking request 1 (aaaaaaaa-b2ca-4a44-9362-0304025e149f)
+    - tasking request 2 (bbbbbbbb-b2ca-4a44-9362-0304025e149f)
+    - tasking request 3 (cccccccc-b2ca-4a44-9362-0304025e149f)
+    Yes
+    2026-02-16 14:40:47,932 - 🛰️  Capella 🐐 - INFO - attempting to cancel 3 tasking requests
+    2026-02-16 14:40:59,119 - 🛰️  Capella 🐐 - INFO - 3 out of 3 tasking requests successfully canceled
+    2026-02-16 14:40:59,119 - 🛰️  Capella 🐐 - INFO - aaaaaaaa-b2ca-4a44-9362-0304025e149f: ✅
+    2026-02-16 14:40:59,119 - 🛰️  Capella 🐐 - INFO - bbbbbbbb-b2ca-4a44-9362-0304025e149f: ✅
+    2026-02-16 14:40:59,119 - 🛰️  Capella 🐐 - INFO - cccccccc-b2ca-4a44-9362-0304025e149f: ✅
+    ╒══════════════════════════════════════╤═════════════════╕
+    │ tasking request id                   │ cancel status   │
+    ╞══════════════════════════════════════╪═════════════════╡
+    │ aaaaaaaa-b2ca-4a44-9362-0304025e149f │ ✅              │
+    ├──────────────────────────────────────┼─────────────────┤
+    │ bbbbbbbb-b2ca-4a44-9362-0304025e149f │ ✅              │
+    ├──────────────────────────────────────┼─────────────────┤
+    │ cccccccc-b2ca-4a44-9362-0304025e149f │ ✅              │
+    ╘══════════════════════════════════════╧═════════════════╛
