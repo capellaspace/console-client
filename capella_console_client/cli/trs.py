@@ -77,16 +77,16 @@ def _cancel_trs():
             ]
         )
 
-        for_who = admin_responses.get("for_who")
+        amdin_for_who = admin_responses.get("for_who")
         admin_uuid = admin_responses.get("uuid")
 
-        if not for_who or not admin_uuid:
+        if not admin_for_who or not admin_uuid:
             return
 
-        if for_who == "user":
-            tr_search_payload["userId"] = [admin_uuid]
+        if admin_for_who == "user":
+            tr_search_payload["userId"] = admin_uuid
 
-        if for_who == "org":
+        if admin_for_who == "org":
             tr_search_payload["organizationIds"] = [admin_uuid]
 
     trs = CLIENT.search_tasking_requests(**tr_search_payload)
