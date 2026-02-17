@@ -83,3 +83,13 @@ def show_order_review_tabulated(order_review: Dict[str, Any]):
         line_item_table.append(cur)
 
     typer.echo(tabulate(line_item_table, tablefmt="fancy_grid", headers=["STAC id", "cost"]))
+
+
+def show_cancel_result_tabulated(cancel_result: Dict[str, Any]):
+    table_data = []
+
+    for tr_id, status in cancel_result.items():
+        status_icon = "✅" if status.get("success") else "❌"
+        table_data.append([tr_id, status_icon])
+
+    typer.echo(tabulate(table_data, headers=["tasking request id", "cancel status"], tablefmt="fancy_grid"))
