@@ -26,7 +26,13 @@ from capella_console_client.assets import (
     _derive_stac_id,
     _filter_items_by_product_types,
 )
-from capella_console_client.search import StacSearch, StacSearchResult, TaskingRequestSearch, TaskingRequestSearchResult
+from capella_console_client.search import (
+    StacSearch,
+    StacSearchResult,
+    TaskingRequestSearch,
+    TaskingRequestSearchResult,
+    RepeatRequestSearch,
+)
 from capella_console_client.tasking_request import (
     get_tasking_request,
     _task_contains_status,
@@ -296,6 +302,40 @@ class CapellaConsoleClient:
             Dict[str, Any]: created repeat request metadata
         """
         return create_repeat_request(session=self._sesh, **kwargs)
+
+    def search_repeat_requests(self, **kwargs: Optional[Dict[str, Any]]) -> TaskingRequestSearchResult:
+        """
+        search repeat requests
+
+        Find more information at https://docs.capellaspace.com/constellation-tasking/searching-tasking-and-repeat-requests
+
+        supported query filters:
+
+         • collection_type: CollectionType, e.g. "spotlight_ultra"
+         • collection_tier: CollectionTier, e.g. "priority"
+         • last_status_time: str, UTC datetime of latest status, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
+         • for_org: boolean: str, scope tasking request search to user's org (requires elevated permissions), e.g. True
+         • org_id: str, organization id to list tasking requests for (requires elevated permissions) -- takes precedence over for_org -- , e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
+         • status: current TaskingRequestStatus, one of received, review, submitted, active, accepted, rejected, expired, completed, anomaly, canceled, error, failed
+         • submission_time: str, UTC datetime of task submission, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
+         • repeat_request_id: str, tasking request id, e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
+         • user_id: str, user id to list tasking requests for (requires elevated permissions) -- takes precedence over for_org -- , e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
+         • window_open: str, Earliest UTC datetime of collection, e.g. "2020-02-11"
+         • window_close: str, Latest UTC datetime of collection, e.g. "2020-02-12"
+         • page_size: int, page size, default: 250, needs to be between 250 and 500
+
+        supported operators:
+         • eq: equality search
+         • gt: greater than
+         • gte: greater than equal
+         • lt: lower than
+         • lte: lower than equal
+
+        Returns:
+            RepeatRequestSearchResult: matched repeat requests
+        """
+        search = RepeatRequestSearch(session=self._sesh, **kwargs)
+        return search.fetch_all()
 
     def cancel_repeat_requests(self, *repeat_request_ids: Optional[str]) -> Dict[str, Any]:
         """

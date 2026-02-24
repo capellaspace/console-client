@@ -147,6 +147,7 @@ REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS = frozenset(
 TR_FILTERS_BY_QUERY_FIELDS = {
     "collection_type": "collectionType",
     "collection_tier": "collectionTier",
+    "instrument_mode": "type",
     "last_status_time": "lastStatusTime",
     "org_id": "organizationIds",
     "status": "lastStatusCode",
@@ -185,3 +186,22 @@ TR_SUPPORTED_GROUPBY_FIELDS = {
     "windowDuration",
     "windowOpen",
 }
+
+
+RR_FILTERS_BY_QUERY_FIELDS = {
+    "collection_type": "collectionType",
+    "collection_tier": "collectionTier",
+    "instrument_mode": "type",
+    "last_status_time": "lastStatusTime",
+    "repeat_cycle": "repetitionProperties.repetitionInterval",
+    "repeat_end": "repeatEnd",
+    "repeat_request_id": "repeatrequestIds",
+    "repeat_start": "repeatStart",
+    "org_id": "organizationIds",
+    "status": "lastStatusCode",
+    "submission_time": "submissionTime",
+    "user_id": "userId",
+}
+
+
+SUPPORTED_RR_SEARCH_QUERY_FIELDS = set(RR_FILTERS_BY_QUERY_FIELDS.keys())

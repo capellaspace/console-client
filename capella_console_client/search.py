@@ -30,9 +30,24 @@ from capella_console_client.config import (
     TR_SEARCH_DEFAULT_PAGE_SIZE,
     TR_SUPPORTED_GROUPBY_FIELDS,
     UNKNOWN_GROUPBY_FIELD,
+    SUPPORTED_RR_SEARCH_QUERY_FIELDS,
+    RR_FILTERS_BY_QUERY_FIELDS,
 )
-from capella_console_client.enumerations import CollectionTier, CollectionType, OwnershipOption, TaskingRequestStatus
+from capella_console_client.enumerations import (
+    CollectionTier,
+    CollectionType,
+    OwnershipOption,
+    TaskingRequestStatus,
+    BaseEnum,
+    RepeatCollectionTier,
+)
 from capella_console_client.validate import _compact_unique, _validate_uuids
+
+
+class SearchEntity(str, BaseEnum):
+    STAC_ITEM = "STAC item"
+    TASKING_REQUEST = "tasking request"
+    REPEAT_REQUEST = "repeat request"
 
 
 class Groupby(metaclass=ABCMeta):
@@ -70,7 +85,6 @@ class Groupby(metaclass=ABCMeta):
 
 @dataclass
 class SearchResult(metaclass=ABCMeta):
-    entity: str = "STAC item"
     request_body: Dict[str, Any] = field(default_factory=dict)
     _pages: List[Dict[str, Any]] = field(default_factory=list)
     _features: List[Dict[str, Any]] = field(default_factory=list)
@@ -86,9 +100,9 @@ class SearchResult(metaclass=ABCMeta):
     def _report(self):
         len_results = len(self)
         if not len_results:
-            message = f"found no {self.entity}s matching your query"
+            message = f"found no {self.entity.value}s matching your query"
         else:
-            message = f"found {len_results} {self.entity}{self.multiple_suffix}"
+            message = f"found {len_results} {self.entity.value}{self.multiple_suffix}"
         logger.info(message)
 
     @property
@@ -105,9 +119,6 @@ class SearchResult(metaclass=ABCMeta):
 
     def __len__(self):
         return len(self._features)
-
-    def __repr__(self):
-        return f"{self.__class__} ({len(self)} {self.entity}{self.multiple_suffix})"
 
     def to_feature_collection(self):
         return {"type": "FeatureCollection", "features": self._features}
@@ -156,8 +167,11 @@ class StacGroupby(Groupby):
 
 
 class StacSearchResult(SearchResult):
-
+    entity: SearchEntity = SearchEntity.STAC_ITEM
     grouper: ClassVar[Groupby] = StacGroupby()
+
+    def __repr__(self):
+        return f"{self.__class__} ({len(self)} {self.entity.value}{self.multiple_suffix})"
 
     @property
     def stac_ids(self):
@@ -213,16 +227,37 @@ class TaskingRequestGroupby(Groupby):
 
 
 class TaskingRequestSearchResult(SearchResult):
-
+    entity: SearchEntity = SearchEntity.TASKING_REQUEST
     grouper: ClassVar[Groupby] = TaskingRequestGroupby()
+
+    def __repr__(self):
+        return f"{self.__class__} ({len(self)} {self.entity.value}{self.multiple_suffix})"
 
     @property
     def tasking_request_ids(self):
         return [item["properties"]["taskingrequestId"] for item in self._features]
 
     @property
-    def collect_ids(self):
+    def repeat_request_ids(self):
         return [item["properties"].get("repeatrequestId", "N/A") for item in self._features]
+
+    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+        self._pages.append(page)
+        self._features.extend(page["results"])
+        return len(page["results"])
+
+
+class RepeatRequestSearchResult(SearchResult):
+    entity: SearchEntity = SearchEntity.REPEAT_REQUEST
+    # TODO: swap
+    grouper: ClassVar[Groupby] = TaskingRequestGroupby()
+
+    def __repr__(self):
+        return f"{self.__class__} ({len(self)} {self.entity.value}{self.multiple_suffix})"
+
+    @property
+    def repeat_request_ids(self):
+        return [item["properties"]["repeatrequestId"] for item in self._features]
 
     def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
         self._pages.append(page)
@@ -458,9 +493,8 @@ def _page_search(session: CapellaConsoleSession, payload: Dict[str, Any], next_h
     return data
 
 
-class TaskingRequestQuerySanitizer:
-
-    SUPPORTED = {"collection_tier", "collection_type", "status", "tasking_request_id"}
+class AbstractQuerySanitizer(metaclass=ABCMeta):
+    SUPPORTED = set([])
 
     @staticmethod
     def single_or_list(func: Callable[..., list[Any]]) -> Callable[..., list[Any] | Any]:
@@ -479,27 +513,10 @@ class TaskingRequestQuerySanitizer:
 
     @classmethod
     def has_sanitizer(cls, field) -> bool:
-        return field in TaskingRequestQuerySanitizer.SUPPORTED
-
-    def sanitize(self, field, value):
-        if not self.has_sanitizer(field):
-            return value
-
-        return {
-            "collection_tier": self._sanitize_collection_tier,
-            "collection_type": self._sanitize_collection_type,
-            "status": self._sanitize_tr_status,
-            "tasking_request_id": self._sanitize_tr_ids,
-        }[field](field=field, value=value)
-
-    def _sanitize_collection_tier(self, field, value):
-        return self._sanitize_enum(field=field, value=value, enum_cls=CollectionTier)
+        return field in cls.SUPPORTED
 
     def _sanitize_collection_type(self, field, value):
         return self._sanitize_enum(field=field, value=value, enum_cls=CollectionType)
-
-    def _sanitize_tr_status(self, field, value):
-        return self._sanitize_enum(field=field, value=value, enum_cls=TaskingRequestStatus)
 
     @single_or_list
     def _sanitize_enum(self, field, value, enum_cls):
@@ -512,31 +529,86 @@ class TaskingRequestQuerySanitizer:
         return valid_status
 
     @single_or_list
-    def _sanitize_tr_ids(self, field, value):
+    def _sanitize_uuids(self, field, value):
         value = _compact_unique(value)
         _validate_uuids(value)
-        return value
+        return
+
+    def _sanitize_status(self, field, value):
+        return self._sanitize_enum(field=field, value=value, enum_cls=TaskingRequestStatus)
+
+    def sanitize(self, field, value):
+        if not self.has_sanitizer(field):
+            return value
+
+        sanitizer_rules = {
+            "collection_type": self._sanitize_collection_type,
+            "status": self._sanitize_status,
+        }
+
+        sanitizer_rules.update(self._get_custom_sanitizer_rules())
+
+        return sanitizer_rules[field](field=field, value=value)
+
+    @abstractmethod
+    def _get_custom_sanitizer_rules(self):
+        pass
 
 
-def _fetch_trs(session, search_payload, params):
-    resp = session.post("/tasks/search", params=params, json=search_payload)
+class TaskingRequestQuerySanitizer(AbstractQuerySanitizer):
+
+    SUPPORTED = {"collection_tier", "collection_type", "status", "tasking_request_id"}
+
+    def _get_custom_sanitizer_rules(self):
+        return {
+            "collection_tier": self._sanitize_collection_tier,
+            "tasking_request_id": self._sanitize_uuids,
+        }
+
+    def _sanitize_collection_tier(self, field, value):
+        return self._sanitize_enum(field=field, value=value, enum_cls=CollectionTier)
+
+
+class RepeatRequestQuerySanitizer(AbstractQuerySanitizer):
+
+    SUPPORTED = {"collection_tier", "collection_type", "status", "repeat_request_id"}
+
+    def _get_custom_sanitizer_rules(self):
+        return {
+            "collection_tier": self._sanitize_collection_tier,
+            "repeat_request_id": self._sanitize_uuids,
+        }
+
+    def _sanitize_collection_tier(self, field, value):
+        return self._sanitize_enum(field=field, value=value, enum_cls=RepeatCollectionTier)
+
+
+def _fetch_page(session, search_endpoint, search_entity, search_payload, params):
+    resp = session.post(search_endpoint, params=params, json=search_payload)
     page = resp.json()
     if page["currentPage"] > 1:
-        logger.info(f"page {page['currentPage']} out of {page['totalPages']}: {len(page['results'])} tasking requests")
+        logger.info(f"page {page['currentPage']} out of {page['totalPages']}: {len(page['results'])} {search_entity}")
     return page
 
 
 class TaskingRequestSearch(AbstractSearch):
+
+    SEARCH_ENTITY = SearchEntity.TASKING_REQUEST
+    SEARCH_ENDPOINT = "/tasks/search"
+    QUERY_PAYLOAD_FIELD = "query"
+    SUPPORTED_QUERY_FIELDS = SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS
+    FILTERS_BY_QUERY_FIELDS = TR_FILTERS_BY_QUERY_FIELDS
+    QUERY_SANITIZER_CLS = TaskingRequestQuerySanitizer
+
     def __init__(self, session: CapellaConsoleSession, **kwargs) -> None:
         self.session = session
         self.payload: Dict[str, Any] = {}
-        self.threaded = kwargs.pop("threaded", False)
         self.page_size = kwargs.pop("page_size", None) or TR_SEARCH_DEFAULT_PAGE_SIZE
         # TODO: max results (limit)
 
         query_payload = self._get_query_payload(kwargs)
         if query_payload:
-            self.payload["query"] = dict(query_payload)
+            self.payload[self.QUERY_PAYLOAD_FIELD] = dict(query_payload)
 
         # sortby = cur_kwargs.pop("sortby", None)
         # if sortby:
@@ -547,16 +619,18 @@ class TaskingRequestSearch(AbstractSearch):
 
     def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
         query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
-        query_payload["includeRepeatingTasks"] = {"eq": False}
+
+        if self.SEARCH_ENTITY == SearchEntity.TASKING_REQUEST:
+            query_payload["includeRepeatingTasks"] = {"eq": False}
 
         for_org = kwargs.pop("for_org", False)
         query_payload = self._add_user_org_query(query_payload, for_org, **kwargs)
 
-        sntzr = TaskingRequestQuerySanitizer()
+        sntzr = self.QUERY_SANITIZER_CLS()
 
         for cur_field, value in kwargs.items():
             cur_field, op = self._split_op(cur_field)
-            if cur_field not in SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS:
+            if cur_field not in self.SUPPORTED_QUERY_FIELDS:
                 logger.warning(f"filter {cur_field} not supported ... omitting")
                 continue
 
@@ -564,7 +638,7 @@ class TaskingRequestSearch(AbstractSearch):
                 logger.warning(f"operator {op} not supported ... omitting")
                 continue
 
-            target_field = TR_FILTERS_BY_QUERY_FIELDS.get(cur_field, cur_field)
+            target_field = self.FILTERS_BY_QUERY_FIELDS.get(cur_field, cur_field)
 
             if sntzr.has_sanitizer(cur_field):
                 value = sntzr.sanitize(field=cur_field, value=value)
@@ -597,22 +671,34 @@ class TaskingRequestSearch(AbstractSearch):
         query_payload["userId"] = self.session.customer_id
         return query_payload
 
-    def fetch_all(self) -> TaskingRequestSearchResult:
-        search_result = TaskingRequestSearchResult(entity="tasking request", request_body=self.payload)
-        logger.info(f"searching tasking requests with payload {self.payload}")
-        first_page = _fetch_trs(self.session, params={"page": 1, "limit": self.page_size}, search_payload=self.payload)
+    def fetch_all(self) -> TaskingRequestSearchResult | RepeatRequestSearchResult:
+        search_result = self._init_search_result()
+        logger.info(f"searching {self.SEARCH_ENTITY.value}s with payload {self.payload}")
+        first_page = _fetch_page(
+            session=self.session,
+            search_endpoint=self.SEARCH_ENDPOINT,
+            search_entity=self.SEARCH_ENTITY,
+            params={"page": 1, "limit": self.page_size},
+            search_payload=self.payload,
+        )
 
         total_pages = first_page["totalPages"]
         fetch_more = total_pages > 1
 
         if not fetch_more:
             search_result.add(first_page)
-            print_task_search_result(search_result._features)
+            print_task_search_result(search_result._features, search_entity=self.SEARCH_ENTITY.value)
             return search_result
 
         page_params = [{"page": i, "limit": self.page_size} for i in range(2, total_pages + 1)]
 
-        _fetch_worker = partial(_fetch_trs, search_payload=self.payload, session=self.session)
+        _fetch_worker = partial(
+            _fetch_page,
+            search_endpoint=self.SEARCH_ENDPOINT,
+            search_entity=self.SEARCH_ENTITY,
+            search_payload=self.payload,
+            session=self.session,
+        )
 
         with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
             results = executor.map(_fetch_worker, page_params)
@@ -620,5 +706,21 @@ class TaskingRequestSearch(AbstractSearch):
         for page in results:
             search_result.add(page)
 
-        print_task_search_result(search_result._features)
+        print_task_search_result(search_result._features, search_entity=self.SEARCH_ENTITY.value)
         return search_result
+
+    def _init_search_result(self) -> TaskingRequestSearchResult:
+        return TaskingRequestSearchResult(request_body=self.payload)
+
+
+class RepeatRequestSearch(TaskingRequestSearch):
+
+    SEARCH_ENTITY = SearchEntity.REPEAT_REQUEST
+    SEARCH_ENDPOINT = "/repeat-requests/search"
+    QUERY_PAYLOAD_FIELD = "filter"
+    SUPPORTED_QUERY_FIELDS = SUPPORTED_RR_SEARCH_QUERY_FIELDS
+    FILTERS_BY_QUERY_FIELDS = RR_FILTERS_BY_QUERY_FIELDS
+    QUERY_SANITIZER_CLS = RepeatRequestQuerySanitizer
+
+    def _init_search_result(self) -> RepeatRequestSearchResult:
+        return RepeatRequestSearchResult(request_body=self.payload)
