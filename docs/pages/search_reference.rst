@@ -247,9 +247,15 @@ tasking requests
       - ``str``
       - ``"spotlight_ultra"``
     * - ``collection_tier``
-      - collection tier
+      - | collection tier, one of
+        | ``"urgent"``, ``"priority"``, ``"standard"``, ``"flexible"``, ``"internal"``
       - ``str``
       - ``"priority"``
+    * - ``instrument_mode``
+      - | instrument mode, one of
+        | ``"spotlight"``, ``"stripmap"``, ``"sliding_spotlight"``
+      - ``str``
+      - ``"spotlight"``
     * - ``last_status_time``
       - UTC datetime of latest status
       - ``str``
@@ -257,7 +263,7 @@ tasking requests
     * - ``org_id``
       - organization id to list tasking requests for (requires elevated permissions)
       - ``str``
-      - ``""34c78a57-2d68-4b4a-a7ba-c188f9e2645d""``
+      - ``"34c78a57-2d68-4b4a-a7ba-c188f9e2645d"``
     * - ``status``
       - | current TaskingRequestStatus
         | ``"received"``, ``"review"``,
@@ -272,11 +278,11 @@ tasking requests
     * - ``tasking_request_id``
       - tasking request id
       - ``str``
-      - ``""34c78a57-2d68-4b4a-a7ba-c188f9e2645d""``
+      - ``"34c78a57-2d68-4b4a-a7ba-c188f9e2645d"``
     * - ``user_id``
       - user id to list tasking requests for (requires elevated permissions)
       - ``str``
-      - ``""34c78a57-2d68-4b4a-a7ba-c188f9e2645d""``
+      - ``"34c78a57-2d68-4b4a-a7ba-c188f9e2645d"``
     * - ``window_open``
       - Earliest UTC datetime of collection
       - ``str``
@@ -285,6 +291,81 @@ tasking requests
       - Latest UTC datetime of collection
       - ``str``
       - ``"2020-02-12"``
+    * - ``page_size``
+      - page size, default: 250, needs to be between 250 and 500
+      - ``int``
+      - ``250``
+
+
+.. _rr-query-fields:
+
+repeat requests
+###############
+
+.. list-table:: supported query fields for repeat request search
+    :widths: 30 40 20 20
+    :header-rows: 1
+
+    * - field name
+      - description
+      - type
+      - example
+    * - ``collection_type``
+      - | Capella collection type, one of
+        | ``"spotlight_ultra"``, ``"spotlight"``,
+        | ``"stripmap_100"``, ``"stripmap_50"``, ``"stripmap_20"``
+        | ``"parallel_stripmap_100"``, ``"parallel_stripmap_50"``, ``"parallel_stripmap_20"``
+      - ``str``
+      - ``"spotlight_ultra"``
+    * - ``collection_tier``
+      - | collection tier, one of
+        | ``"flexible"``, ``"routine"``, ``"internal"``
+      - ``str``
+      - ``"routine"``
+    * - ``instrument_mode``
+      - | instrument mode, one of
+        | ``"spotlight"``, ``"stripmap"``, ``"sliding_spotlight"``
+      - ``str``
+      - ``"spotlight"``
+    * - ``last_status_time``
+      - UTC datetime of latest status
+      - ``str``
+      - ``"2020-02-12"``
+    * - ``org_id``
+      - organization id to list repeat requests for (requires elevated permissions)
+      - ``str``
+      - ``""34c78a57-2d68-4b4a-a7ba-c188f9e2645d""``
+    * - ``repeat_request_id``
+      - repeat request id
+      - ``str``
+      - ``"34c78a57-2d68-4b4a-a7ba-c188f9e2645d"``
+    * - ``repeat_start``
+      - UTC datetime of beginning of window recurrences
+      - ``str``
+      - ``"2020-02-12"``
+    * - ``repeat_end``
+      - UTC datetime of end of window recurrences
+      - ``str``
+      - ``"2020-02-12"``
+    * - ``repetition_interval``
+      - number of days between the start of derived requests
+      - ``int``
+      - ``7``
+    * - ``submission_time``
+      - UTC datetime of repeat request submission
+      - ``str``
+      - ``"2020-02-12"``
+    * - ``status``
+      - | current RepeatRequestStatus
+        | ``"received"``, ``"review"``,
+        | ``"submitted"``, ``"active"``, ``"accepted"``, ``"rejected"``, ``"expired"``,
+        | ``"completed"``, ``"anomaly"``, ``"canceled"``, ``"error"``, ``"failed"``
+      - ``str``
+      - ``"completed"``
+    * - ``user_id``
+      - user id to list repeat requests for (requires elevated permissions)
+      - ``str``
+      - ``""34c78a57-2d68-4b4a-a7ba-c188f9e2645d""``
     * - ``page_size``
       - page size, default: 250, needs to be between 250 and 500
       - ``int``

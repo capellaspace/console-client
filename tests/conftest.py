@@ -134,6 +134,8 @@ def authed_tasking_request_mock(auth_httpx_mock):
         "/task/def",
         "/tasks/search?page=1&limit=250",
         "/tasks/paged?page=1&limit=100&organizationId=MOCK_ORG_ID",
+        "/repeat-requests/search?page=1&limit=250",
+        "/repeat-requests/paged?page=1&limit=250&organizationId=MOCK_ORG_ID",
     )
     for mock_id in MOCK_IDENTIFIER_LIST:
         endpoint_qs = mock_id.split("#")[0]

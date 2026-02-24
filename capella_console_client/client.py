@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from typing import List, Dict, Any, Union, Optional, no_type_check, Tuple
+from typing import List, Dict, Any, Union, Optional, no_type_check, Tuple, cast
 from collections import defaultdict
 from pathlib import Path
 import tempfile
@@ -26,7 +26,14 @@ from capella_console_client.assets import (
     _derive_stac_id,
     _filter_items_by_product_types,
 )
-from capella_console_client.search import StacSearch, StacSearchResult, TaskingRequestSearch, TaskingRequestSearchResult
+from capella_console_client.search import (
+    StacSearch,
+    StacSearchResult,
+    TaskingRequestSearch,
+    TaskingRequestSearchResult,
+    RepeatRequestSearch,
+    RepeatRequestSearchResult,
+)
 from capella_console_client.tasking_request import (
     get_tasking_request,
     _task_contains_status,
@@ -157,6 +164,7 @@ class CapellaConsoleClient:
          • collection_tier: CollectionTier, e.g. "priority"
          • last_status_time: str, UTC datetime of latest status, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
          • for_org: boolean: str, scope tasking request search to user's org (requires elevated permissions), e.g. True
+         • instrument_mode: InstrumentMode, e.g. "spotlight"
          • org_id: str, organization id to list tasking requests for (requires elevated permissions) -- takes precedence over for_org -- , e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
          • status: current TaskingRequestStatus, one of received, review, submitted, active, accepted, rejected, expired, completed, anomaly, canceled, error, failed
          • submission_time: str, UTC datetime of task submission, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
@@ -177,7 +185,7 @@ class CapellaConsoleClient:
             TaskingRequestSearchResult: matched tasking requests
         """
         search = TaskingRequestSearch(session=self._sesh, **kwargs)
-        return search.fetch_all()
+        return cast(TaskingRequestSearchResult, search.fetch_all())
 
     def get_task(self, tasking_request_id: str) -> Dict[str, Any]:
         """
@@ -296,6 +304,42 @@ class CapellaConsoleClient:
             Dict[str, Any]: created repeat request metadata
         """
         return create_repeat_request(session=self._sesh, **kwargs)
+
+    def search_repeat_requests(self, **kwargs: Optional[Dict[str, Any]]) -> RepeatRequestSearchResult:
+        """
+        search repeat requests
+
+        Find more information at https://docs.capellaspace.com/constellation-tasking/searching-tasking-and-repeat-requests
+
+        supported query filters:
+
+         • collection_type: CollectionType, e.g. "spotlight_ultra"
+         • collection_tier: CollectionTier, e.g. "priority"
+         • last_status_time: str, UTC datetime of latest status, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
+         • for_org: boolean: str, scope repeat request search to user's org (requires elevated permissions), e.g. True
+         • instrument_mode: InstrumentMode, e.g. "spotlight"
+         • org_id: str, organization id to list repeat requests for (requires elevated permissions) -- takes precedence over for_org -- , e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
+         • repeat_request_id: str, repeat request id, e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
+         • repeat_start: str, UTC datetime of beginning of window recurrences, e.g. "2020-02-11"
+         • repeat_end: str, UTC datetime of end of window recurrences, e.g. "2020-02-12"
+         • repetition_interval: int, number of days between the start of derived requests, e.g. 7
+         • status: current status of repeat request, one of received, review, submitted, active, accepted, rejected, expired, completed, anomaly, canceled, error, failed
+         • submission_time: str, UTC datetime of task submission, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
+         • user_id: str, user id to list repeat requests for (requires elevated permissions) -- takes precedence over for_org -- , e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
+         • page_size: int, page size, default: 250, needs to be between 250 and 500
+
+        supported operators:
+         • eq: equality search
+         • gt: greater than
+         • gte: greater than equal
+         • lt: lower than
+         • lte: lower than equal
+
+        Returns:
+            RepeatRequestSearchResult: matched repeat requests
+        """
+        search = RepeatRequestSearch(session=self._sesh, **kwargs)
+        return cast(RepeatRequestSearchResult, search.fetch_all())
 
     def cancel_repeat_requests(self, *repeat_request_ids: Optional[str]) -> Dict[str, Any]:
         """

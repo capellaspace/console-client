@@ -77,7 +77,7 @@ def _cancel_trs():
             ]
         )
 
-        amdin_for_who = admin_responses.get("for_who")
+        admin_for_who = admin_responses.get("for_who")
         admin_uuid = admin_responses.get("uuid")
 
         if not admin_for_who or not admin_uuid:

@@ -147,6 +147,7 @@ REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS = frozenset(
 TR_FILTERS_BY_QUERY_FIELDS = {
     "collection_type": "collectionType",
     "collection_tier": "collectionTier",
+    "instrument_mode": "type",
     "last_status_time": "lastStatusTime",
     "org_id": "organizationIds",
     "status": "lastStatusCode",
@@ -173,7 +174,6 @@ TR_SUPPORTED_GROUPBY_FIELDS = {
     "organizationName",
     "processingConfig",
     "repeatrequestId",
-    "statusHistory",
     "submissionTime",
     "taskingrequestDescription",
     "taskingrequestId",
@@ -184,4 +184,43 @@ TR_SUPPORTED_GROUPBY_FIELDS = {
     "windowClose",
     "windowDuration",
     "windowOpen",
+}
+
+
+RR_FILTERS_BY_QUERY_FIELDS = {
+    "collection_type": "collectionType",
+    "collection_tier": "collectionTier",
+    "instrument_mode": "type",
+    "last_status_time": "lastStatusTime",
+    "repetition_interval": "repetitionProperties.repetitionInterval",
+    "repeat_end": "repetitionProperties.repeatEnd",
+    "repeat_request_id": "repeatrequestIds",
+    "repeat_start": "repetitionProperties.repeatStart",
+    "org_id": "organizationIds",
+    "status": "lastStatusCode",
+    "submission_time": "submissionTime",
+    "user_id": "userId",
+}
+
+
+SUPPORTED_RR_SEARCH_QUERY_FIELDS = set(RR_FILTERS_BY_QUERY_FIELDS.keys())
+
+
+RR_SUPPORTED_GROUPBY_FIELDS = {
+    "archiveHoldback",
+    "billingEnvironment",
+    "collectConstraints",
+    "collectionTier",
+    "collectionType",
+    "contractId",
+    "orgId",
+    "organizationName",
+    "repeatrequestDescription",
+    "repeatrequestId",
+    "repeatrequestName",
+    "repeatrequestType",
+    "submissionTime",
+    "userId",
+    "userName",
+    "windowDuration",
 }

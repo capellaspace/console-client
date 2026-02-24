@@ -1,5 +1,5 @@
 from typing import Dict, Any
-
+from copy import deepcopy
 from capella_console_client.config import CATALOG_DEFAULT_LIMIT
 
 import pytest
@@ -186,7 +186,7 @@ TASK_2 = {
     },
 }
 
-REPEAT_REQUEST = {
+REPEAT_REQUEST_1 = {
     "type": "Feature",
     "geometry": {"type": "Point", "coordinates": [-110.390625, 35.17380800000001]},
     "properties": {
@@ -252,6 +252,9 @@ REPEAT_REQUEST = {
         "customAttribute2": None,
     },
 }
+
+REPEAT_REQUEST_2 = deepcopy(REPEAT_REQUEST_1)
+REPEAT_REQUEST_2["properties"]["repeatrequestId"] = "BOAR"
 
 
 # GET
@@ -332,6 +335,21 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
         },
         "/task/abc": TASK_1,
         "/task/def": TASK_2,
+        "/repeat-requests/search?page=1&limit=250": {
+            "results": [REPEAT_REQUEST_1, REPEAT_REQUEST_2],
+            "currentPage": 1,
+            "totalPages": 1,
+        },
+        "/repeat-requests/paged?page=1&limit=250&organizationId=MOCK_ORG_ID": {
+            "results": [REPEAT_REQUEST_1, REPEAT_REQUEST_2],
+            "currentPage": 1,
+            "totalPages": 1,
+        },
+        "/repeat-requests/search?page=1&limit=250#SINGLEREPEAT": {
+            "results": [REPEAT_REQUEST_1],
+            "currentPage": 1,
+            "totalPages": 1,
+        },
         "/collects/list/abc": [
             {
                 "center": [-100.0000, 40.0000, 400.0000],
@@ -535,7 +553,7 @@ def post_mock_responses(endpoint: str) -> Dict[str, Any]:
             "orderStatus": "rejected",
         },
         "/task": TASK_1,
-        "/repeat-requests": REPEAT_REQUEST,
+        "/repeat-requests": REPEAT_REQUEST_1,
     }[endpoint]
 
 
