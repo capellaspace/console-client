@@ -4,7 +4,7 @@
 Example Usage
 **************
 
-This page provides reusable recipes to :ref:`authenticate <example-auth>`, :ref:`search the catalog <example-catalog-search>`, :ref:`order <example-order>`, :ref:`task <example-task>`, :ref:`search tasking requests <example-search-trs>`, :ref:`consume imagery and metadata <example-consume>`
+This page provides reusable snippets to :ref:`authenticate <example-auth>`, :ref:`search the catalog <example-catalog-search>`, :ref:`order <example-order>`, :ref:`task <example-task>`, :ref:`search tasking requests <example-search-trs>`, :ref:`consume imagery and metadata <example-consume>` and more.
 
 
 .. code:: python3
@@ -49,11 +49,11 @@ with access token
 
 .. _example-catalog-search:
 
-catalog search
-##############
+catalog
+#######
 
-simple catalog search
-*********************
+simple search
+*************
 
 Searches are run against Capella's Catalog and `STAC items <https://stacspec.org/>`_ matching the search criteria is returned.
 
@@ -101,8 +101,8 @@ Expensive searches (time is $$)  can be sped up by providing `threaded=True`:
     many_products = client.search(constellation="capella", limit=9999, threaded=True)
 
 
-advanced catalog search
-***********************
+advanced search
+***************
 
 .. code:: python3
 
@@ -248,24 +248,6 @@ visualize search results
     # open e.g. in QGIS
 
 
-group search results by key
-
-.. code:: python3
-
-    from pathlib import Path
-    import json
-
-    results = client.search(
-        instrument_mode="spotlight",
-        product_type="GEO",
-    )
-
-    # groupby STAC items by product type
-    groupby_product_type = results.groupby('product_type')
-
-    # see all available groupby fields
-    print(results.grouper.supported_fields)
-
 
 .. _example-order:
 
@@ -365,9 +347,32 @@ If you prefer a flat hierarchy set ``separate_dirs`` to ``False``:
         separate_dirs=False,
     )
 
+single asset
+^^^^^^^^^^^^
+
+single assets can be downloaded to gven paths
+
+.. code:: python3
+
+    # download thumbnail
+    thumb_presigned_href = assets_presigned[0]["thumbnail"]["href"]
+    dest_path = "/tmp/thumb.png"
+    local_thumb_path = client.download_asset(thumb_presigned_href, local_path=dest_path)
+
+    # assets are saved into OS specific temp directory if `local_path` not provided
+    raster_presigned_href = assets_presigned[0]["HH"]["href"]
+    local_raster_path = client.download_asset(raster_presigned_href)
+
+
+    from pathlib import Path
+    assert local_thumb_path == Path(dest_path)
+
+
+order filters
+*************
 
 by product type
-***************
+^^^^^^^^^^^^^^^
 
 .. code:: python3
 
@@ -385,7 +390,7 @@ by product type
 
 
 by asset type
-*************
+^^^^^^^^^^^^^
 
 .. code:: python3
 
@@ -421,7 +426,7 @@ by asset type
     )
 
 items of tasking request
-************************
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Requirement: you have previously issued a tasking request that is in 'completed' state
 
@@ -442,7 +447,7 @@ Requirement: you have previously issued a tasking request that is in 'completed'
 
 
 items of collect
-****************
+^^^^^^^^^^^^^^^^
 
 .. code:: python3
 
@@ -493,27 +498,6 @@ In order to directly load assets (imagery or other) into memory you need to requ
 
 See `read imagery`_  or `read metadata`_ for more information.
 
-single asset
-************
-
-single assets can be downloaded to gven paths
-
-.. code:: python3
-
-    # download thumbnail
-    thumb_presigned_href = assets_presigned[0]["thumbnail"]["href"]
-    dest_path = "/tmp/thumb.png"
-    local_thumb_path = client.download_asset(thumb_presigned_href, local_path=dest_path)
-
-    # assets are saved into OS specific temp directory if `local_path` not provided
-    raster_presigned_href = assets_presigned[0]["HH"]["href"]
-    local_raster_path = client.download_asset(raster_presigned_href)
-
-
-    from pathlib import Path
-    assert local_thumb_path == Path(dest_path)
-
-
 
 list orders
 ***********
@@ -533,13 +517,13 @@ Issue the following snippet to view the ordering history
     specific_orders = client.list_orders(order_ids=[specific_order_id])
 
 
+tasking requests
+################
+
 .. _example-task:
 
-tasking
-#######
-
-create tasking request
-**********************
+create
+******
 
 NOTE: `geometry` and `name` are the only required properties to create a tasking request.
 
@@ -639,9 +623,109 @@ NOTE: `geometry` and `name` are the only required properties to create a tasking
         max_squint_angle=30,
     )
 
+cancel
+******
 
-create repeat request
-*********************
+Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`_.
+For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Overview <https://support.capellaspace.com/what-is-the-tasking-cancellation-policy>`_.
+
+
+.. code:: python3
+
+    # provide 1..N valid tasking request ids to be cancelled
+    cancel_result_by_id = sit_client.cancel_tasking_requests(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "cccccccc-cccc-cccc-cccc-cccccccccccc"
+    )
+
+    print(cancel_result_by_id)
+
+
+.. _example-search-trs:
+
+
+search
+******
+
+
+A multitude of :ref:`query fields <tr-query-fields>` and :ref:`query operators <query-ops>` are supported.
+
+
+.. code:: python3
+
+    tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid taskingrequest_id
+
+    # get task info
+    task = client.get_task(tasking_request_id)
+
+    # was it completed?
+    client.is_task_completed(task)
+
+advanced tasking request search
+
+.. code:: python3
+
+    # get ALL completed tasking requests of user
+    user_completed_trs_result = client.search_tasking_requests(status="completed")
+
+    # get all COMPLETED tasking requests of ORG (requires org manager/ admin role)
+    org_completed_trs_result = client.search_tasking_requests(
+        for_org=True,
+        status="completed"
+    )
+
+    # get all completed tasking requests of org SUBMITTED AFTER 2022-12-01 (UTC)
+    org_completed_trs_submitted_dec_22_result = client.search_tasking_requests(
+        for_org=True,
+        status="completed",
+        submission_time__gt=datetime.datetime(2022, 12, 1)
+    )
+
+    # subset of supported filters
+    completed_sp_prio_trs_result = client.search_tasking_requests(
+        status="completed",
+        window_open__gt=datetime.datetime(2025, 12, 1),
+        window_open__lt=datetime.datetime(2026, 12, 1),
+        collection_type=["spotlight", "spotlight_ultra"],
+        collection_tier="priority",
+    )
+
+    # searches are paginated + parallelized by default
+
+    client.search_tasking_requests(
+        status="completed",
+        for_org=True,
+    )
+
+    2026-02-24 13:25:31,479 - 🛰️  Capella 🐐 - INFO - searching tasking requests with payload ...
+    2026-02-24 13:25:41,340 - 🛰️  Capella 🐐 - INFO - page 1 out of 4: 250 SearchEntity.TASKING_REQUEST
+    2026-02-24 13:25:41,695 - 🛰️  Capella 🐐 - INFO - page 4 out of 4: 250 SearchEntity.TASKING_REQUEST
+    2026-02-24 13:25:42,311 - 🛰️  Capella 🐐 - INFO - page 3 out of 4: 250 SearchEntity.TASKING_REQUEST
+    2026-02-24 13:25:42,997 - 🛰️  Capella 🐐 - INFO - page 2 out of 4: 200 SearchEntity.TASKING_REQUEST
+    2026-02-24 13:25:49,254 - 🛰️  Capella 🐐 - INFO - found 1200 tasking requests matching search query
+
+    # parallel search requests can be disabled by setting `threaded=False` in order to fetch the product assets serially
+    client.search_tasking_requests(
+        status="completed",
+        for_org=True,
+        threaded=False
+    )
+
+    2026-02-24 13:33:10,764 - 🛰️  Capella 🐐 - INFO - searching tasking requests with payload ...
+    2026-02-24 13:33:15,306 - 🛰️  Capella 🐐 - INFO - page 1 out of 4: 250 SearchEntity.TASKING_REQUEST
+    2026-02-24 13:33:17,626 - 🛰️  Capella 🐐 - INFO - page 2 out of 4: 250 SearchEntity.TASKING_REQUEST
+    2026-02-24 13:33:19,950 - 🛰️  Capella 🐐 - INFO - page 3 out of 4: 250 SearchEntity.TASKING_REQUEST
+    2026-02-24 13:33:22,086 - 🛰️  Capella 🐐 - INFO - page 4 out of 4: 200 SearchEntity.TASKING_REQUEST
+    2026-02-24 13:33:29,135 - 🛰️  Capella 🐐 - INFO - found 1200 tasking requests matching search query
+
+
+
+repeat requests
+###############
+
+create
+******
 
 NOTE: `geometry` and `name` are the only required properties to create a repeat request.
 
@@ -720,30 +804,8 @@ repeat requests repeat cadence can be configured in multiple ways
     )
 
 
-manage tasking requests
-#######################
-
-cancel tasking requests
-***********************
-
-Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`_.
-For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Overview <https://support.capellaspace.com/what-is-the-tasking-cancellation-policy>`_.
-
-
-.. code:: python3
-
-    # provide 1..N valid tasking request ids to be cancelled
-    cancel_result_by_id = sit_client.cancel_tasking_requests(
-        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-        "cccccccc-cccc-cccc-cccc-cccccccccccc"
-    )
-
-    print(cancel_result_by_id)
-
-
-cancel repeat requests
-**********************
+cancel
+******
 
 Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`_.
 For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Overview <https://support.capellaspace.com/what-is-the-tasking-cancellation-policy>`_.
@@ -760,54 +822,52 @@ For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Ove
 
     print(cancel_result_by_id)
 
-.. _example-search-trs:
+
+search
+******
 
 
-search tasking requests
-***********************
-
-
-A multitude of :ref:`query fields <tr-query-fields>` and :ref:`query operators <query-ops>` are supported.
+A multitude of :ref:`query fields <rr-query-fields>` and :ref:`query operators <query-ops>` are supported.
 
 
 .. code:: python3
 
-    tasking_request_id = "27a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid taskingrequest_id
+    repeat_request_id = "37a71826-7819-48cc-b8f2-0ad10bee0f97"  # provide valid repeat_request_id
 
-    # get task info
-    task = client.get_task(tasking_request_id)
+    # get repeat request by id
+    rr = client.search_repeat_request(repeat_request_id=repeat_request_id)
 
-    # was it completed?
-    client.is_task_completed(task)
+    rr[0]
 
-advanced tasking request search
+advanced repeat request search
 
 .. code:: python3
 
-    # get ALL completed tasking requests of user
-    user_completed_trs_result = client.search_tasking_requests(status="completed")
+    # get ALL completed repeat requests of user
+    user_completed_rrs_result = client.search_repeat_request(status="completed")
 
     # get all COMPLETED tasking requests of ORG (requires org manager/ admin role)
-    org_completed_trs_result = client.search_tasking_requests(
+    org_completed_trs_result = client.search_repeat_request(
         for_org=True,
         status="completed"
     )
 
     # get all completed tasking requests of org SUBMITTED AFTER 2022-12-01 (UTC)
-    org_completed_trs_submitted_dec_22_result = client.search_tasking_requests(
+    org_completed_rrs_submitted_dec_22_result = client.search_repeat_request(
         for_org=True,
         status="completed",
-        submission_time__gt=datetime.datetime(2022, 12, 1)
+        submission_time__gt="2022-12-1"
     )
 
     # subset of supported filters
-    completed_sp_prio_trs_result = client.search_tasking_requests(
-        status="completed",
-        window_open__gt=datetime.datetime(2025, 12, 1)
-        window_open__lt=datetime.datetime(2026, 12, 1)
+    active_sp_routine_rrs_result = client.search_repeat_request(
+        status="active",
+        repeat_start__lt="2025-10-01",
+        repeat_start__gt="2025-06-01",
         collection_type=["spotlight", "spotlight_ultra"],
-        collection_tier="priority"
+        collection_tier="routine"
     )
+
 
 .. _example-consume:
 

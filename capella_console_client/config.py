@@ -174,7 +174,6 @@ TR_SUPPORTED_GROUPBY_FIELDS = {
     "organizationName",
     "processingConfig",
     "repeatrequestId",
-    "statusHistory",
     "submissionTime",
     "taskingrequestDescription",
     "taskingrequestId",
@@ -193,10 +192,10 @@ RR_FILTERS_BY_QUERY_FIELDS = {
     "collection_tier": "collectionTier",
     "instrument_mode": "type",
     "last_status_time": "lastStatusTime",
-    "repeat_cycle": "repetitionProperties.repetitionInterval",
-    "repeat_end": "repeatEnd",
+    "repetition_interval": "repetitionProperties.repetitionInterval",
+    "repeat_end": "repetitionProperties.repeatEnd",
     "repeat_request_id": "repeatrequestIds",
-    "repeat_start": "repeatStart",
+    "repeat_start": "repetitionProperties.repeatStart",
     "org_id": "organizationIds",
     "status": "lastStatusCode",
     "submission_time": "submissionTime",
@@ -205,3 +204,23 @@ RR_FILTERS_BY_QUERY_FIELDS = {
 
 
 SUPPORTED_RR_SEARCH_QUERY_FIELDS = set(RR_FILTERS_BY_QUERY_FIELDS.keys())
+
+
+RR_SUPPORTED_GROUPBY_FIELDS = {
+    "archiveHoldback",
+    "billingEnvironment",
+    "collectConstraints",
+    "collectionTier",
+    "collectionType",
+    "contractId",
+    "orgId",
+    "organizationName",
+    "repeatrequestDescription",
+    "repeatrequestId",
+    "repeatrequestName",
+    "repeatrequestType",
+    "submissionTime",
+    "userId",
+    "userName",
+    "windowDuration",
+}
