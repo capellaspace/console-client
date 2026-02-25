@@ -94,6 +94,21 @@ def test_asset_download_defaults_to_temp(download_client):
     path.unlink()
 
 
+def test_asset_download_s3path(download_client, s3path_mock):
+    path = download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=s3path_mock)
+    assert isinstance(S3Path(path), S3Path)
+    assert path.exists()
+    assert path.is_file()
+
+
+def test_asset_download_s3path_string(download_client, s3path_mock, monkeypatch):
+    monkeypatch.setattr("capella_console_client.client.S3Path", lambda x: s3path_mock)
+    path = download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path="s3://mock-bucket/mock-path")
+    assert isinstance(S3Path(path), S3Path)
+    assert path.exists()
+    assert path.is_file()
+
+
 def test_asset_download_does_not_override(test_client):
     local_path = Path(tempfile.NamedTemporaryFile().name)
     local_path.write_text("ORIG_CONTENT")

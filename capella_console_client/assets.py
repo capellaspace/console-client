@@ -198,9 +198,10 @@ def _download_asset(
     show_progress: bool,
     progress: rich.progress.Progress,
 ) -> Union[Path, S3Path]:
-    if dl_request.local_path is None:
+    # If a directory is provided, create a file path in it
+    if hasattr(dl_request.local_path, "is_dir") and dl_request.local_path.is_dir():
         local_file = _get_filename(dl_request.url)
-        dl_request.local_path = Path(tempfile.gettempdir()) / local_file
+        dl_request.local_path = dl_request.local_path / local_file
 
     if not override and dl_request.local_path.exists():
         logger.info(f"already downloaded to {dl_request.local_path}")
