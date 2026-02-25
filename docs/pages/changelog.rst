@@ -2,15 +2,27 @@
 History
 =======
 
+0.17.0 (2026-02-24)
+-------------------
+* search repeat request (`#127 <https://github.com/capellaspace/console-client/pull/127>`_)
+* interactive wizard workflow to cancel tasking request (user, org, admin) (`#126 <https://github.com/capellaspace/console-client/pull/126>`_)
+* search tasking requests with rich query language (`#124 <https://github.com/capellaspace/console-client/pull/124>`_)
+* cancel tasking and repeat requests (`#122 <https://github.com/capellaspace/console-client/pull/122>`_)
+* deprecate python 3.9, add python 3.14, bump to poetry==2.3.2 (`#123 <https://github.com/capellaspace/console-client/pull/123>`_)
+* capella-console-wizard configure fix (`#119 <https://github.com/capellaspace/console-client/pull/119>`_)
+* add `contract_id` parameter for single and repeat tasking (`#116 <https://github.com/capellaspace/console-client/pull/116>`_)
+* handle ValidationError with explicit detail (`#117 <https://github.com/capellaspace/console-client/pull/117>`_)
+
+
 0.16.1 (2025-07-22)
 -------------------
-* os.system -> subprocess.run `#114 <https://github.com/capellaspace/console-client/pull/114>`_
+* os.system -> subprocess.run (`#114 <https://github.com/capellaspace/console-client/pull/114>`_)
 * Bump requests from 2.32.3 to 2.32.4 (`#113 <https://github.com/capellaspace/console-client/pull/113>`_)
 
 
 0.16.0 (2025-05-28)
 -------------------
-* Securely store Console API Key setting `#109 <https://github.com/capellaspace/console-client/pull/109>`_
+* Securely store Console API Key setting (`#109 <https://github.com/capellaspace/console-client/pull/109>`_)
 * adding search support for azimuth_angle, layover_angle and collection_type, deprecating product_category (`#106 <https://github.com/capellaspace/console-client/pull/106>`_)
 * security dependency upgrades (`#105 <https://github.com/capellaspace/console-client/pull/105>`_, `#107 <https://github.com/capellaspace/console-client/pull/107>`_, `#108 <https://github.com/capellaspace/console-client/pull/108>`_, `#110 <https://github.com/capellaspace/console-client/pull/110>`_)
 * remove basic auth and token refresh (`#103 <https://github.com/capellaspace/console-client/pull/103>`_)
