@@ -118,10 +118,7 @@ def _set_window_open_close(
         window_close_dt = window_close
 
     # Convert to ISO8601 strings
-    return (
-        _datetime_to_iso8601_str(window_open_dt),
-        _datetime_to_iso8601_str(window_close_dt)
-    )
+    return (_datetime_to_iso8601_str(window_open_dt), _datetime_to_iso8601_str(window_close_dt))
 
 
 def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession):
