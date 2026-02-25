@@ -101,17 +101,27 @@ def create_tasking_request(
 def _set_window_open_close(
     window_open: Optional[Union[datetime, str]], window_close: Optional[Union[datetime, str]]
 ) -> Tuple[str, str]:
+    # Normalize window_open to datetime
     if window_open is None:
-        window_open = datetime.utcnow()
+        window_open_dt = datetime.utcnow()
+    elif isinstance(window_open, str):
+        window_open_dt = parse(window_open)
+    else:
+        window_open_dt = window_open
 
+    # Normalize window_close to datetime
     if window_close is None:
-        if isinstance(window_open, str):
-            window_open = parse(window_open)
-        window_close = window_open + timedelta(days=7)
+        window_close_dt = window_open_dt + timedelta(days=7)
+    elif isinstance(window_close, str):
+        window_close_dt = parse(window_close)
+    else:
+        window_close_dt = window_close
 
-    window_open = _datetime_to_iso8601_str(window_open)
-    window_close = _datetime_to_iso8601_str(window_close)
-    return (window_open, window_close)
+    # Convert to ISO8601 strings
+    return (
+        _datetime_to_iso8601_str(window_open_dt),
+        _datetime_to_iso8601_str(window_close_dt)
+    )
 
 
 def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession):

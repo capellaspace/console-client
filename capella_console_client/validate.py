@@ -89,12 +89,15 @@ def _snake_to_camel(snake):
 
 
 def _datetime_to_iso8601_str(dt: Union[datetime, str]) -> str:
+    dt_value: datetime
     if isinstance(dt, str):
         try:
-            dt = parse(dt)
+            dt_value = parse(dt)
         except ParserError:
             raise ValueError(f"Could not parse {dt} string into a datetime")
-    return dt.replace(tzinfo=None).isoformat(timespec="milliseconds") + "Z"
+    else:
+        dt_value = dt
+    return dt_value.replace(tzinfo=None).isoformat(timespec="milliseconds") + "Z"
 
 
 def _set_squint_default(geometry: geojson.geometry.Geometry) -> SquintMode:
