@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List, Union, Tuple
+from typing import Any
 from datetime import datetime
 
 import geojson
@@ -30,31 +30,31 @@ def create_repeat_request(
     session: CapellaConsoleSession,
     geometry: geojson.geometry.Geometry,
     name: str,
-    description: Optional[str] = "",
-    collection_type: Optional[Union[CollectionType, str]] = CollectionType.SPOTLIGHT,
-    collection_tier: Optional[Union[str, RepeatCollectionTier]] = RepeatCollectionTier.routine,
-    repeat_start: Optional[Union[datetime, str]] = None,
-    repeat_end: Optional[Union[datetime, str]] = None,
-    repetition_interval: Optional[Union[RepeatCycle, int]] = RepeatCycle.WEEKLY,
-    repetition_count: Optional[int] = None,
-    local_time: Optional[Union[LocalTimeOption, List[int]]] = None,
-    product_types: Optional[List[Union[ProductType, str]]] = None,
-    off_nadir_min: Optional[int] = None,
-    off_nadir_max: Optional[int] = None,
-    image_width: Optional[int] = None,
-    orbital_planes: Optional[List[Union[OrbitalPlane, int]]] = None,
-    asc_dsc: Optional[Union[OrbitState, str]] = OrbitState.either,
-    look_direction: Optional[Union[ObservationDirection, str]] = ObservationDirection.either,
-    polarization: Optional[Union[Polarization, str]] = None,
-    archive_holdback: Optional[Union[str, ArchiveHoldback]] = ArchiveHoldback.none,
-    custom_attribute_1: Optional[str] = None,
-    custom_attribute_2: Optional[str] = None,
-    azimuth_angle_min: Optional[int] = None,
-    azimuth_angle_max: Optional[int] = None,
-    squint: Optional[Union[SquintMode, str]] = None,
-    max_squint_angle: Optional[int] = None,
-    contract_id: Optional[str] = None,
-) -> Dict[str, Any]:
+    description: str | None = "",
+    collection_type: CollectionType | str | None = CollectionType.SPOTLIGHT,
+    collection_tier: str | RepeatCollectionTier | None = RepeatCollectionTier.routine,
+    repeat_start: datetime | str | None = None,
+    repeat_end: datetime | str | None = None,
+    repetition_interval: RepeatCycle | int | None = RepeatCycle.WEEKLY,
+    repetition_count: int | None = None,
+    local_time: LocalTimeOption | list[int] | None = None,
+    product_types: list[ProductType | str] | None = None,
+    off_nadir_min: int | None = None,
+    off_nadir_max: int | None = None,
+    image_width: int | None = None,
+    orbital_planes: list[OrbitalPlane | int] | None = None,
+    asc_dsc: OrbitState | str | None = OrbitState.either,
+    look_direction: ObservationDirection | str | None = ObservationDirection.either,
+    polarization: Polarization | str | None = None,
+    archive_holdback: str | ArchiveHoldback | None = ArchiveHoldback.none,
+    custom_attribute_1: str | None = None,
+    custom_attribute_2: str | None = None,
+    azimuth_angle_min: int | None = None,
+    azimuth_angle_max: int | None = None,
+    squint: SquintMode | str | None = None,
+    max_squint_angle: int | None = None,
+    contract_id: str | None = None,
+) -> dict[str, Any]:
     repeat_start, repeat_end = _set_repetition_start_end(repeat_start, repeat_end, repetition_count)
 
     if squint is None:
@@ -96,10 +96,10 @@ def create_repeat_request(
 
 
 def _set_repetition_start_end(
-    repeat_start: Optional[Union[datetime, str]],
-    repeat_end: Optional[Union[datetime, str]],
-    repetition_count: Optional[int],
-) -> Tuple[str, Optional[str]]:
+    repeat_start: datetime | str | None,
+    repeat_end: datetime | str | None,
+    repetition_count: int | None,
+) -> tuple[str, str | None]:
     if repeat_end is not None and repetition_count is not None:
         raise RepeatRequestPayloadValidationError(
             "Only one of 'repeat_end' and 'repetition_count' can be defined. Please remove one of those values from your request and try again."
@@ -119,7 +119,7 @@ def _set_repetition_start_end(
 def cancel_repeat_requests(
     *repeat_request_ids: str,
     session: CapellaConsoleSession,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return _cancel_multi_parallel(*repeat_request_ids, session=session, cancel_fct=_cancel_repeat_request)
 
 

@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any
 from copy import deepcopy
 from capella_console_client.config import CATALOG_DEFAULT_LIMIT
 
@@ -258,7 +258,7 @@ REPEAT_REQUEST_2["properties"]["repeatrequestId"] = "BOAR"
 
 
 # GET
-def get_mock_responses(endpoint: str) -> Dict[str, Any]:
+def get_mock_responses(endpoint: str) -> dict[str, Any]:
     return {
         "/user": {
             "id": "MOCK_ID",
@@ -441,7 +441,7 @@ def get_mock_responses(endpoint: str) -> Dict[str, Any]:
     }[endpoint]
 
 
-def get_canned_search_results_single_page() -> Dict[str, Any]:
+def get_canned_search_results_single_page() -> dict[str, Any]:
     return {
         "features": [
             {
@@ -465,7 +465,7 @@ def get_canned_search_results_single_page() -> Dict[str, Any]:
     }
 
 
-def get_canned_search_results_multi_page_page1() -> Dict[str, Any]:
+def get_canned_search_results_multi_page_page1() -> dict[str, Any]:
     return {
         "features": [
             {
@@ -482,7 +482,7 @@ def get_canned_search_results_multi_page_page1() -> Dict[str, Any]:
     }
 
 
-def get_canned_search_results_multi_page_page2() -> Dict[str, Any]:
+def get_canned_search_results_multi_page_page2() -> dict[str, Any]:
     return {
         "features": [
             {
@@ -499,7 +499,7 @@ def get_canned_search_results_multi_page_page2() -> Dict[str, Any]:
     }
 
 
-def get_canned_search_results_with_collect_id() -> Dict[str, Any]:
+def get_canned_search_results_with_collect_id() -> dict[str, Any]:
     return {
         "features": [
             {
@@ -518,7 +518,7 @@ def get_canned_search_results_with_collect_id() -> Dict[str, Any]:
     }
 
 
-def post_mock_responses(endpoint: str) -> Dict[str, Any]:
+def post_mock_responses(endpoint: str) -> dict[str, Any]:
     return {
         "/token": {
             "accessToken": "MOCK_TOKEN",

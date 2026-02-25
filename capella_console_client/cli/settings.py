@@ -1,5 +1,3 @@
-from typing import List
-
 import typer
 import questionary
 import keyring
@@ -26,7 +24,7 @@ from capella_console_client.logconf import logger
 app = typer.Typer(help="fine tune settings")
 
 
-def _prompt_search_result_headers() -> List[str]:
+def _prompt_search_result_headers() -> list[str]:
     choices = [
         questionary.Choice(cur, checked=cur in CURRENT_SETTINGS["search_headers"])
         for cur in CLI_SUPPORTED_RESULT_HEADERS

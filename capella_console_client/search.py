@@ -1,6 +1,7 @@
 from copy import deepcopy
 from functools import partial, wraps
-from typing import Any, Callable, Dict, Tuple, DefaultDict, Optional, List, ClassVar
+from typing import Any, ClassVar, DefaultDict
+from collections.abc import Callable
 from collections import defaultdict
 from urllib.parse import urlparse
 from dataclasses import dataclass, field
@@ -59,7 +60,7 @@ class Groupby(metaclass=ABCMeta):
     def supported_fields(self):
         return self.ROOT_GROUPBY_FIELDS | self.PROPERTIES_GROUPBY_FIELDS
 
-    def groupby(self, features, field: str) -> Dict[str, Any]:
+    def groupby(self, features, field: str) -> dict[str, Any]:
         """
         group matched features by provided field name
 
@@ -80,15 +81,15 @@ class Groupby(metaclass=ABCMeta):
         return dict(features_by_field)
 
     @abstractmethod
-    def _get_safe_field_value(self, field: str, item: Dict[str, Any]):
+    def _get_safe_field_value(self, field: str, item: dict[str, Any]):
         pass
 
 
 @dataclass
 class SearchResult(metaclass=ABCMeta):
-    request_body: Dict[str, Any] = field(default_factory=dict)
-    _pages: List[Dict[str, Any]] = field(default_factory=list)
-    _features: List[Dict[str, Any]] = field(default_factory=list)
+    request_body: dict[str, Any] = field(default_factory=dict)
+    _pages: list[dict[str, Any]] = field(default_factory=list)
+    _features: list[dict[str, Any]] = field(default_factory=list)
 
     grouper: ClassVar[Groupby] = NotImplemented
 
@@ -125,7 +126,7 @@ class SearchResult(metaclass=ABCMeta):
         return {"type": "FeatureCollection", "features": self._features}
 
     @abstractmethod
-    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+    def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int:
         pass
 
     def merge(self, other: "SearchResult", keep_duplicates: bool = False) -> "SearchResult":
@@ -135,7 +136,7 @@ class SearchResult(metaclass=ABCMeta):
 
         return copy
 
-    def groupby(self, field: str) -> Dict[str, Any]:
+    def groupby(self, field: str) -> dict[str, Any]:
         """
         group matched features by provided field name
 
@@ -150,7 +151,7 @@ class StacGroupby(Groupby):
     ROOT_GROUPBY_FIELDS: ClassVar[set[str]] = STAC_ROOT_LEVEL_GROUPBY_FIELDS
     PROPERTIES_GROUPBY_FIELDS: ClassVar[set[str]] = STAC_SUPPORTED_QUERY_FIELDS
 
-    def _get_safe_field_value(self, field: str, item: Dict[str, Any]):
+    def _get_safe_field_value(self, field: str, item: dict[str, Any]):
         if field in STAC_ROOT_LEVEL_GROUPBY_FIELDS:
             return item[field]
 
@@ -182,14 +183,14 @@ class StacSearchResult(SearchResult):
     def collect_ids(self):
         return [item["properties"].get("capella:collect_id", "N/A") for item in self._features]
 
-    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+    def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int:
         if not keep_duplicates:
             page = self._filter_dupes(page)
         self._pages.append(page)
         self._features.extend(page["features"])
         return len(page["features"])
 
-    def _filter_dupes(self, page: Dict[str, Any]) -> Dict[str, Any]:
+    def _filter_dupes(self, page: dict[str, Any]) -> dict[str, Any]:
         # drop duplicates within page features
         page_stac_ids = [feat["id"] for feat in page["features"]]
         set_page_stac_ids = set(page_stac_ids)
@@ -211,7 +212,7 @@ class TaskingRequestGroupby(Groupby):
     ROOT_GROUPBY_FIELDS: ClassVar[set[str]] = set()
     PROPERTIES_GROUPBY_FIELDS: ClassVar[set[str]] = TR_SUPPORTED_GROUPBY_FIELDS
 
-    def _get_safe_field_value(self, field: str, item: Dict[str, Any]):
+    def _get_safe_field_value(self, field: str, item: dict[str, Any]):
         if field in self.ROOT_GROUPBY_FIELDS:
             return item[field]
 
@@ -247,7 +248,7 @@ class TaskingRequestSearchResult(SearchResult):
     def repeat_request_ids(self):
         return [item["properties"].get("repeatrequestId", "N/A") for item in self._features]
 
-    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+    def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int:
         self._pages.append(page)
         self._features.extend(page["results"])
         return len(page["results"])
@@ -264,7 +265,7 @@ class RepeatRequestSearchResult(SearchResult):
     def repeat_request_ids(self):
         return [item["properties"]["repeatrequestId"] for item in self._features]
 
-    def add(self, page: Dict[str, Any], keep_duplicates: bool = False) -> int:
+    def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int:
         self._pages.append(page)
         self._features.extend(page["results"])
         return len(page["results"])
@@ -273,14 +274,14 @@ class RepeatRequestSearchResult(SearchResult):
 class AbstractSearch(metaclass=ABCMeta):
 
     @abstractmethod
-    def _get_query_payload(self, kwargs) -> Dict[str, Any]:
+    def _get_query_payload(self, kwargs) -> dict[str, Any]:
         pass
 
     @abstractmethod
     def _get_sort_payload(self, sortby):
         pass
 
-    def _split_op(self, cur_field: str) -> Tuple[str, str]:
+    def _split_op(self, cur_field: str) -> tuple[str, str]:
         parts = cur_field.split("__")
         if len(parts) == 2:
             op = parts[1]
@@ -297,7 +298,7 @@ class StacSearch(AbstractSearch):
     def __init__(self, session: CapellaConsoleSession, **kwargs) -> None:
         cur_kwargs = deepcopy(kwargs)
         self.session = session
-        self.payload: Dict[str, Any] = {}
+        self.payload: dict[str, Any] = {}
         self.threaded = cur_kwargs.pop("threaded", False)
 
         sortby = cur_kwargs.pop("sortby", None)
@@ -321,8 +322,8 @@ class StacSearch(AbstractSearch):
             )
             self.payload["limit"] = CATALOG_STAC_MAX_ITEM_RETURN
 
-    def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
-        query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
+    def _get_query_payload(self, kwargs) -> DefaultDict[str, dict[str, Any]]:
+        query_payload: DefaultDict[str, dict[str, Any]] = defaultdict(dict)
 
         for cur_field, value in kwargs.items():
             cur_field, op = self._split_op(cur_field)
@@ -442,7 +443,7 @@ class StacSearch(AbstractSearch):
         search_result._report()
         return search_result
 
-    def _get_page_payloads(self) -> List[Dict[str, Any]]:
+    def _get_page_payloads(self) -> list[dict[str, Any]]:
         # ping for how many matches in total
         cur_payload = {**self.payload, "limit": 1}
         single_match_page = _page_search(self.session, cur_payload)
@@ -474,17 +475,17 @@ def _log_page_query(page_cnt: int, start: int, end: int):
         logger.info(f"\tpage {page_cnt} ({start} - {end})")
 
 
-def _get_next_page_href(page_data: Dict[str, Any]) -> Optional[str]:
+def _get_next_page_href(page_data: dict[str, Any]) -> str | None:
     links = page_data.get("links", [])
     try:
-        next_href: Optional[str] = next(filter(lambda c: c["rel"] == "next", links))["href"]
+        next_href: str | None = next(filter(lambda c: c["rel"] == "next", links))["href"]
     except StopIteration:
         next_href = None
 
     return next_href
 
 
-def _page_search(session: CapellaConsoleSession, payload: Dict[str, Any], next_href: str = None) -> Dict[str, Any]:
+def _page_search(session: CapellaConsoleSession, payload: dict[str, Any], next_href: str = None) -> dict[str, Any]:
     if next_href:
         # STAC API to return normalized asset hrefs, not api gateway - fixing this here ...
         url_parsed = urlparse(next_href)
@@ -494,12 +495,12 @@ def _page_search(session: CapellaConsoleSession, payload: Dict[str, Any], next_h
     url = session.search_url if next_href is None else next_href
     resp = session.post(url, json=payload)
 
-    data: Dict[str, Any] = resp.json()
+    data: dict[str, Any] = resp.json()
     return data
 
 
 class AbstractQuerySanitizer(metaclass=ABCMeta):
-    SUPPORTED: set[str] = set([])
+    SUPPORTED: set[str] = set()
 
     @staticmethod
     def single_or_list(func: Callable[..., list[Any]]) -> Callable[..., list[Any] | Any]:
@@ -623,7 +624,7 @@ class AbstractTaskRepeatSearch(AbstractSearch):
 
     def __init__(self, session: CapellaConsoleSession, **kwargs) -> None:
         self.session = session
-        self.payload: Dict[str, Any] = {}
+        self.payload: dict[str, Any] = {}
         self.page_size = kwargs.pop("page_size", None) or TR_SEARCH_DEFAULT_PAGE_SIZE
         self.threaded = kwargs.pop("threaded", True)
         # TODO: max results (limit)
@@ -639,8 +640,8 @@ class AbstractTaskRepeatSearch(AbstractSearch):
     def _get_sort_payload(self, sortby):
         raise RuntimeError("Not implemented")
 
-    def _get_query_payload(self, kwargs) -> Dict[str, Any]:
-        query_payload: Dict[str, Any] = defaultdict(dict)
+    def _get_query_payload(self, kwargs) -> dict[str, Any]:
+        query_payload: dict[str, Any] = defaultdict(dict)
 
         if self.SEARCH_ENTITY == SearchEntity.TASKING_REQUEST:
             query_payload["includeRepeatingTasks"] = {"eq": False}

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import Any
 from uuid import UUID
 import typer
 import questionary
@@ -46,7 +46,7 @@ class PostOrderListActions(str, BaseEnum):
         return order_id
 
 
-def _prompt_post_order_list_actions(orders: List[Dict[str, Any]]):
+def _prompt_post_order_list_actions(orders: list[dict[str, Any]]):
     choices = list(PostOrderListActions)
 
     action_selection = None
@@ -63,7 +63,7 @@ def _prompt_post_order_list_actions(orders: List[Dict[str, Any]]):
 
 def _list_orders_and_tabulate(
     is_active: bool, limit: int = CURRENT_SETTINGS["order_list_limit"]
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     orders = CLIENT.list_orders(is_active=is_active)
     if not orders:
         typer.echo("Currently no orders available")

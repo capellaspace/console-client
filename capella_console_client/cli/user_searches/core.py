@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Any, List
+from typing import Any
 from datetime import datetime
 
 import typer
@@ -33,7 +33,7 @@ def _load_and_prompt(
     question: str,
     search_entity: SearchEntity,
     multiple: bool = True,
-) -> Tuple[Dict[str, Any], List[str]]:
+) -> tuple[dict[str, Any], list[str]]:
     saved = _get_load_fct(search_entity)()
 
     if not saved:

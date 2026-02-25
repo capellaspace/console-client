@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 import re
 from dateutil.parser import parse, ParserError
-from typing import Union
 
 import typer
 
@@ -52,7 +51,7 @@ def _validate_uuid(val):
     return True
 
 
-def _validate_dir_exists(path_str: str) -> Union[bool, str]:
+def _validate_dir_exists(path_str: str) -> bool | str:
     err_msg = "please specify an existing directory path"
     p = Path(path_str).resolve()
     if p.exists() and p.is_dir():

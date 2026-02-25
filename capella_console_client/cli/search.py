@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any
 import json
 from collections import defaultdict
 import subprocess
@@ -97,7 +97,7 @@ class STACQueryPayload(dict):
         self[field_desc] = value
 
 
-def _prompt_search_operator(field: str, prev_selection: List[str]) -> List[str]:
+def _prompt_search_operator(field: str, prev_selection: list[str]) -> list[str]:
     choices = [questionary.Choice(cur, checked=cur in prev_selection) for cur in STACQueryPayload.OPS_MAP.keys()]
     operators = questionary.checkbox(
         f"{field}:",
@@ -108,7 +108,7 @@ def _prompt_search_operator(field: str, prev_selection: List[str]) -> List[str]:
     return operators
 
 
-def _prompt_enum_choices(field: str, init: Any = None) -> Optional[Dict[str, Any]]:
+def _prompt_enum_choices(field: str, init: Any = None) -> dict[str, Any] | None:
     if init is None:
         init = []
 
@@ -222,7 +222,7 @@ class PostSearchActions(str, BaseEnum):
         return path
 
     @classmethod
-    def refine_search_cmd(cls, prev_search: STACQueryPayload) -> Tuple[STACQueryPayload, StacSearchResult]:
+    def refine_search_cmd(cls, prev_search: STACQueryPayload) -> tuple[STACQueryPayload, StacSearchResult]:
         prev_search.pop("constellation", None)
         if prev_search["limit"][0][1] == CURRENT_SETTINGS["limit"]:
             prev_search.pop("limit")
@@ -233,14 +233,14 @@ class PostSearchActions(str, BaseEnum):
         return (search_query, stac_items)
 
     @classmethod
-    def _get_choices(cls, results_found: bool) -> List["PostSearchActions"]:
+    def _get_choices(cls, results_found: bool) -> list["PostSearchActions"]:
         if results_found:
             return list(PostSearchActions)
         else:
             return [PostSearchActions.refine_search, PostSearchActions.quit]
 
 
-def search_and_post_actions(search_query: STACQueryPayload, choices: List[PostSearchActions] = None):
+def search_and_post_actions(search_query: STACQueryPayload, choices: list[PostSearchActions] = None):
     result = CLIENT.search(**search_query)
     if result:
         show_tabulated(result, show_row_number=True)
@@ -252,7 +252,7 @@ def search_and_post_actions(search_query: STACQueryPayload, choices: List[PostSe
 def _prompt_post_search_actions(
     result: StacSearchResult,
     search_kwargs: STACQueryPayload,
-    choices: List[PostSearchActions] = None,
+    choices: list[PostSearchActions] = None,
 ):
     if not choices:
         choices = PostSearchActions._get_choices(results_found=len(result) > 0)

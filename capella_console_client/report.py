@@ -1,9 +1,9 @@
-from typing import Dict, Any
+from typing import Any
 
 from capella_console_client.logconf import logger
 
 
-def print_cancelation_result(results_by_tr_id: Dict[str, Any], task_type: str):
+def print_cancelation_result(results_by_tr_id: dict[str, Any], task_type: str):
     cancel_ids = list(results_by_tr_id.keys())
     success_ids = [k for k, v in results_by_tr_id.items() if v["success"]]
     cancel_error = {k: v for k, v in results_by_tr_id.items() if not v["success"]}

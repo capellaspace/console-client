@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List, Union, Tuple
+from typing import Any
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
@@ -34,30 +34,30 @@ def create_tasking_request(
     session: CapellaConsoleSession,
     geometry: geojson.geometry.Geometry,
     name: str,
-    description: Optional[str] = "",
-    collection_type: Optional[Union[CollectionType, str]] = CollectionType.SPOTLIGHT,
-    collection_tier: Optional[Union[CollectionTier, str]] = CollectionTier.standard,
-    window_open: Optional[Union[datetime, str]] = None,
-    window_close: Optional[Union[datetime, str]] = None,
-    local_time: Optional[Union[LocalTimeOption, List[int]]] = None,
-    product_types: Optional[List[Union[ProductType, str]]] = None,
-    off_nadir_min: Optional[int] = None,
-    off_nadir_max: Optional[int] = None,
-    image_width: Optional[int] = None,
-    orbital_planes: Optional[List[Union[OrbitalPlane, int]]] = None,
-    asc_dsc: Optional[Union[OrbitState, str]] = OrbitState.either,
-    look_direction: Optional[Union[ObservationDirection, str]] = ObservationDirection.either,
-    polarization: Optional[Union[Polarization, str]] = None,
-    archive_holdback: Optional[Union[ArchiveHoldback, str]] = ArchiveHoldback.none,
-    custom_attribute_1: Optional[str] = None,
-    custom_attribute_2: Optional[str] = None,
+    description: str | None = "",
+    collection_type: CollectionType | str | None = CollectionType.SPOTLIGHT,
+    collection_tier: CollectionTier | str | None = CollectionTier.standard,
+    window_open: datetime | str | None = None,
+    window_close: datetime | str | None = None,
+    local_time: LocalTimeOption | list[int] | None = None,
+    product_types: list[ProductType | str] | None = None,
+    off_nadir_min: int | None = None,
+    off_nadir_max: int | None = None,
+    image_width: int | None = None,
+    orbital_planes: list[OrbitalPlane | int] | None = None,
+    asc_dsc: OrbitState | str | None = OrbitState.either,
+    look_direction: ObservationDirection | str | None = ObservationDirection.either,
+    polarization: Polarization | str | None = None,
+    archive_holdback: ArchiveHoldback | str | None = ArchiveHoldback.none,
+    custom_attribute_1: str | None = None,
+    custom_attribute_2: str | None = None,
     pre_approval: bool = False,
-    azimuth_angle_min: Optional[int] = None,
-    azimuth_angle_max: Optional[int] = None,
-    squint: Optional[Union[SquintMode, str]] = None,
-    max_squint_angle: Optional[int] = None,
-    contract_id: Optional[str] = None,
-) -> Dict[str, Any]:
+    azimuth_angle_min: int | None = None,
+    azimuth_angle_max: int | None = None,
+    squint: SquintMode | str | None = None,
+    max_squint_angle: int | None = None,
+    contract_id: str | None = None,
+) -> dict[str, Any]:
 
     window_open, window_close = _set_window_open_close(window_open, window_close)
 
@@ -98,9 +98,7 @@ def create_tasking_request(
     return session.post("/task", json=payload).json()
 
 
-def _set_window_open_close(
-    window_open: Optional[Union[datetime, str]], window_close: Optional[Union[datetime, str]]
-) -> Tuple[str, str]:
+def _set_window_open_close(window_open: datetime | str | None, window_close: datetime | str | None) -> tuple[str, str]:
     # Normalize window_open to datetime
     if window_open is None:
         window_open_dt = datetime.utcnow()
@@ -121,19 +119,19 @@ def _set_window_open_close(
     return (_datetime_to_iso8601_str(window_open_dt), _datetime_to_iso8601_str(window_close_dt))
 
 
-def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession) -> Dict[str, Any]:
+def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession) -> dict[str, Any]:
     task_response = session.get(f"/task/{tasking_request_id}")
     return task_response.json()
 
 
-def _task_contains_status(task: Dict[str, Any], status_name: str) -> bool:
+def _task_contains_status(task: dict[str, Any], status_name: str) -> bool:
     return status_name.lower() in (s["code"] for s in task["properties"]["statusHistory"])
 
 
 def cancel_tasking_requests(
     *tasking_request_ids: str,
     session: CapellaConsoleSession,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return _cancel_multi_parallel(*tasking_request_ids, session=session, cancel_fct=_cancel_tasking_request)
 
 
