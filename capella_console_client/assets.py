@@ -9,7 +9,7 @@ from capella_console_client.s3 import S3Path
 
 import httpx
 import rich.progress
-from retrying import retry  # type: ignore
+from retrying import retry  # type: ignore[import-untyped]
 
 from capella_console_client.logconf import logger
 from capella_console_client.hooks import (

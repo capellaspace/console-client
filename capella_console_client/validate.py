@@ -4,7 +4,7 @@ from datetime import datetime
 from collections import Counter
 from dateutil.parser import parse, ParserError
 
-from typing import no_type_check, Optional, List, Dict, Any, Union, Iterable, TypeVar
+from typing import Optional, List, Dict, Any, Union, Iterable, TypeVar
 
 import geojson
 
@@ -14,7 +14,6 @@ from capella_console_client.logconf import logger
 STAC_ID_REGEX_STRICT = re.compile("^CAPELLA_C\\d{2}_\\w+_\\w+_\\w{2}_\\d{14}_\\d{14}$")
 
 
-@no_type_check
 def _validate_uuid(uuid_str: str) -> None:
     try:
         uuid.UUID(uuid_str)
@@ -22,8 +21,7 @@ def _validate_uuid(uuid_str: str) -> None:
         raise ValueError(f"{uuid_str} is not a valid uuid: {e}")
 
 
-@no_type_check
-def _validate_uuids(uuid_strs: List[str]):
+def _validate_uuids(uuid_strs: List[str]) -> None:
     assert len(uuid_strs) > 0, "No UUIDs provided"
     for uuid_str in uuid_strs:
         _validate_uuid(uuid_str)
@@ -31,13 +29,14 @@ def _validate_uuids(uuid_strs: List[str]):
 
 def _validate_stac_id_or_stac_items(
     stac_ids: Optional[List[str]] = None,
-    items: Optional[List[Dict[str, Any]]] = None,
+    items: Optional[Iterable[Dict[str, Any]]] = None,
 ) -> List[str]:
     if not stac_ids and not items:
         raise ValueError("Please provide stac_ids or items")
 
     if not stac_ids:
-        stac_ids = [f["id"] for f in items]  # type: ignore
+        assert items is not None  # Type narrowing: items cannot be None here
+        stac_ids = [f["id"] for f in items]
 
     return stac_ids
 

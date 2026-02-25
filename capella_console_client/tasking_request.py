@@ -121,7 +121,7 @@ def _set_window_open_close(
     return (_datetime_to_iso8601_str(window_open_dt), _datetime_to_iso8601_str(window_close_dt))
 
 
-def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession):
+def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession) -> Dict[str, Any]:
     task_response = session.get(f"/task/{tasking_request_id}")
     return task_response.json()
 

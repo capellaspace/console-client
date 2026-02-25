@@ -273,7 +273,7 @@ class RepeatRequestSearchResult(SearchResult):
 class AbstractSearch(metaclass=ABCMeta):
 
     @abstractmethod
-    def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
+    def _get_query_payload(self, kwargs) -> Dict[str, Any]:
         pass
 
     @abstractmethod
@@ -639,8 +639,8 @@ class AbstractTaskRepeatSearch(AbstractSearch):
     def _get_sort_payload(self, sortby):
         raise RuntimeError("Not implemented")
 
-    def _get_query_payload(self, kwargs) -> DefaultDict[str, Dict[str, Any]]:
-        query_payload: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
+    def _get_query_payload(self, kwargs) -> Dict[str, Any]:
+        query_payload: Dict[str, Any] = defaultdict(dict)
 
         if self.SEARCH_ENTITY == SearchEntity.TASKING_REQUEST:
             query_payload["includeRepeatingTasks"] = {"eq": False}
@@ -668,7 +668,7 @@ class AbstractTaskRepeatSearch(AbstractSearch):
             # op == in currently not supported by api
             # TODO: replace direct assignment (no operator) once in supported
             if isinstance(value, list):
-                query_payload[target_field] = value  # type: ignore[assignment]
+                query_payload[target_field] = value
                 continue
 
             query_payload[target_field][op] = value

@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from typing import List, Dict, Any, Union, Optional, no_type_check, Tuple, cast
+from typing import List, Dict, Any, Union, Optional, Tuple, cast
 from collections import defaultdict
 from pathlib import Path
 import tempfile
@@ -114,7 +114,7 @@ class CapellaConsoleClient:
         return resp.json()
 
     # TASKING
-    def create_tasking_request(self, **kwargs):
+    def create_tasking_request(self, **kwargs) -> Dict[str, Any]:
         """
         Create a new tasking request
 
@@ -266,7 +266,7 @@ class CapellaConsoleClient:
         return collects_list_resp.json()
 
     # REPEAT REQUESTS
-    def create_repeat_request(self, **kwargs):
+    def create_repeat_request(self, **kwargs) -> Dict[str, Any]:
         """
         Create a new repeat request
 
@@ -393,18 +393,21 @@ class CapellaConsoleClient:
         """
 
         if order_ids:
-            _validate_uuids(order_ids)
+            filtered_order_ids = _compact_unique(order_ids)
+            _validate_uuids(filtered_order_ids)
+        else:
+            filtered_order_ids = []
 
         # prefilter non expired
         if is_active:
             orders = get_non_expired_orders(session=self._sesh)
-            if order_ids:
-                orders = [o for o in orders if o["orderId"] in set(order_ids)]
+            if filtered_order_ids:
+                orders = [o for o in orders if o["orderId"] in set(filtered_order_ids)]
             return orders
 
         # list specific orders
-        if order_ids:
-            orders = [self._sesh.get(f"/orders/{order_id}").json() for order_id in order_ids]
+        if filtered_order_ids:
+            orders = [self._sesh.get(f"/orders/{order_id}").json() for order_id in filtered_order_ids]
             return orders
 
         # list all orders of customer
@@ -437,12 +440,14 @@ class CapellaConsoleClient:
         items: Optional[Union[List[Dict[str, Any]], StacSearchResult]] = None,
         contract_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)  # type: ignore
+        stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
         logger.info(f"reviewing order for {', '.join(stac_ids)}")
 
-        stac_items = items  # type: ignore
+        stac_items: Union[List[Dict[str, Any]], StacSearchResult]
         if not items:
             stac_items = self.search(ids=stac_ids)
+        else:
+            stac_items = items
 
         if not stac_items:
             raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
@@ -483,15 +488,16 @@ class CapellaConsoleClient:
             Returns:
                 str: order UUID
         """
-        stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)  # type: ignore
+        stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
 
         if check_active_orders:
-            order_id = get_order(session=self._sesh, stac_ids=stac_ids)
-            if order_id is not None:
-                logger.info(f"found existing order {order_id} containing all requested stac ids")
-                return order_id
+            existing_order_id = get_order(session=self._sesh, stac_ids=stac_ids)
+            if existing_order_id is not None:
+                logger.info(f"found existing order {existing_order_id} containing all requested stac ids")
+                return existing_order_id
 
-        def _get_stac_items():
+        def _get_stac_items() -> Union[List[Dict[str, Any]], StacSearchResult]:
+            stac_items: Union[List[Dict[str, Any]], StacSearchResult]
             if stac_ids and not omit_search:
                 stac_items = self.search(ids=stac_ids)
             else:
@@ -501,7 +507,8 @@ class CapellaConsoleClient:
                     )
                     stac_items = self.search(ids=stac_ids)
                 else:
-                    stac_items = items  # type: ignore
+                    assert items is not None  # Type narrowing: items cannot be None here
+                    stac_items = items
 
             if not stac_items:
                 raise NoValidStacIdsError(f"No valid STAC IDs in {', '.join(stac_ids)}")
@@ -523,7 +530,7 @@ class CapellaConsoleClient:
             raise OrderRejectedError(f"Order for {', '.join(stac_ids)} rejected.")
 
         logger.info(f"successfully submitted order {order_id}")
-        return order_id  # type: ignore
+        return order_id
 
     def _construct_order_payload(self, stac_items, contract_id: Optional[str] = None):
         by_collect_id = defaultdict(list)
@@ -534,9 +541,9 @@ class CapellaConsoleClient:
         for collection, stac_ids_of_coll in by_collect_id.items():
             order_items.extend([{"collectionId": collection, "granuleId": stac_id} for stac_id in stac_ids_of_coll])
 
-        payload = {"items": order_items}
+        payload: Dict[str, Any] = {"items": order_items}
         if contract_id:
-            payload["contractId"] = contract_id  # type: ignore
+            payload["contractId"] = contract_id
 
         return payload
 
@@ -680,7 +687,7 @@ class CapellaConsoleClient:
         separate_dirs: bool = True,
         product_types: List[Union[str, ProductType]] = None,
         contract_id: Optional[str] = None,
-    ) -> Dict[str, Dict[str, Path]]:
+    ) -> Dict[str, Dict[str, Union[Path, S3Path]]]:
         """
         download all assets of multiple products
 
@@ -760,7 +767,7 @@ class CapellaConsoleClient:
 
         # gather download requests
         download_requests = []
-        by_stac_id = {}
+        by_stac_id: Dict[str, Dict[str, Union[Path, S3Path]]] = {}
         for cur_item in items_presigned:
             cur_download_requests = _gather_download_requests(
                 cur_item["assets"], local_dir, include, exclude, separate_dirs
@@ -772,7 +779,7 @@ class CapellaConsoleClient:
 
         if not download_requests:
             logger.warning("Nothing to download")
-            return by_stac_id  # type: ignore
+            return by_stac_id
 
         # download
         _perform_download(
@@ -781,7 +788,7 @@ class CapellaConsoleClient:
             threaded=threaded,
             show_progress=show_progress,
         )
-        return by_stac_id  # type: ignore
+        return by_stac_id
 
     def _resolve_items_presigned(
         self,
@@ -791,7 +798,7 @@ class CapellaConsoleClient:
         product_types: List[str] = None,
         contract_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        stac_ids = None
+        stac_ids: Optional[List[str]] = None
 
         # 1 - resolve assets_presigned from order_id
         if order_id:
@@ -800,15 +807,18 @@ class CapellaConsoleClient:
             # 2 - submit order for tasking_request_id
             if tasking_request_id:
                 _validate_uuid(tasking_request_id)
-                order_id, stac_ids = self._order_products_for_task(tasking_request_id, product_types, contract_id)  # type: ignore
+                order_id, stac_ids = self._order_products_for_task(tasking_request_id, product_types, contract_id)
             # 3 - submit order for collect_id
             else:
+                assert (
+                    collect_id is not None
+                )  # Type narrowing: collect_id must be set if order_id and tasking_request_id are None
                 _validate_uuid(collect_id)
                 order_id, stac_ids = self._order_products_for_collect_ids(
-                    collect_ids=[collect_id], product_types=product_types, contract_id=contract_id  # type: ignore
+                    collect_ids=[collect_id], product_types=product_types, contract_id=contract_id
                 )
 
-        return self.get_presigned_items(order_id, stac_ids)  # type: ignore
+        return self.get_presigned_items(order_id, stac_ids)
 
     def _order_products_for_task(
         self, tasking_request_id: str, product_types: List[str] = None, contract_id: Optional[str] = None
@@ -892,12 +902,13 @@ class CapellaConsoleClient:
             raise ValueError("please provide either assets_presigned or order_id")
 
         if not assets_presigned:
+            assert order_id is not None  # Type narrowing: order_id must be set if assets_presigned is not
             _validate_uuid(order_id)
             assets_presigned = self._get_first_presigned_from_order(order_id)
 
         include = _validate_and_filter_asset_types(include)
         exclude = _validate_and_filter_asset_types(exclude)
-        download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)  # type: ignore
+        download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)
 
         if not download_requests:
             logger.warning("Nothing to download")
@@ -910,13 +921,11 @@ class CapellaConsoleClient:
             show_progress=show_progress,
         )
 
-    @no_type_check
     def _get_first_presigned_from_order(self, order_id: str) -> Dict[str, Any]:
         assets_presigned = self.get_presigned_assets(order_id)
         if len(assets_presigned) > 1:
-            logger.warning(
-                f"order {order_id} contains {len(assets_presigned)} products - using first one ({_derive_stac_id(assets_presigned)})"
-            )
+            stac_id = _derive_stac_id(assets_presigned[0])
+            logger.warning(f"order {order_id} contains {len(assets_presigned)} products - using first one ({stac_id})")
 
         return assets_presigned[0]
 
