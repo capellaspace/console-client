@@ -647,7 +647,7 @@ class CapellaConsoleClient:
     def download_asset(
         self,
         pre_signed_url: str,
-        local_path: Union[Path, str] = None,
+        local_path: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
         override: bool = False,
         show_progress: bool = False,
     ) -> Union[Path, S3Path]:
@@ -656,13 +656,24 @@ class CapellaConsoleClient:
 
         Args:
             pre_signed_url: presigned asset url, see :py:meth:`get_presigned_items`
-            local_path: local output path - file is written to OS's temp dir if not provided
+            local_path: output path - file is written to OS's temp dir if not provided, if directory provided filename will be set to original asset filename
             override: override already existing `local_path`
             show_progress: show download status progressbar
         """
+        # Convert str to Path/S3Path if needed
+        resolved_local_path: Union[Path, S3Path]
+        if isinstance(local_path, str):
+            if local_path.startswith("s3://"):
+                resolved_local_path = S3Path(local_path)
+            else:
+                resolved_local_path = Path(local_path)
+        else:
+            resolved_local_path = local_path
+
+        # _download_asset will handle directory paths by creating a file in them
         dl_request = DownloadRequest(
             url=pre_signed_url,
-            local_path=local_path,  # type: ignore
+            local_path=resolved_local_path,
             asset_key="asset",
         )
         return _perform_download(

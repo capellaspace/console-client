@@ -222,11 +222,66 @@ def multi_page_search_client(verbose_test_client, auth_httpx_mock):
 
 
 @pytest.fixture
-def s3path_mock():
-    mock_s3path = MagicMock(spec=S3Path)
-    mock_s3path.__truediv__.return_value = mock_s3path
-    mock_s3path.__str__ = MagicMock(return_value="s3://mock-bucket/mock-path")
-    yield mock_s3path
+def s3path_mock(monkeypatch):
+    call_tracker = {"calls": []}
+
+    class MockS3Path:
+        def __init__(self, path="s3://mock-bucket/mock-path"):
+            self._path = path
+
+        def __truediv__(self, other):
+            call_tracker["calls"].append(("truediv", other))
+            return MockS3Path(f"{self._path}/{other}")
+
+        def __itruediv__(self, other):
+            call_tracker["calls"].append(("itruediv", other))
+            self._path = f"{self._path}/{other}"
+            return self
+
+        def __str__(self):
+            return self._path
+
+        def exists(self):
+            return True
+
+        def is_file(self):
+            return True
+
+        def is_dir(self):
+            # Mock S3 paths are treated as directories if they don't have a file extension
+            # or are the root mock path
+            return self._path == "s3://mock-bucket/mock-path" or "." not in self._path.split("/")[-1]
+
+        def relative_to(self, other):
+            return self
+
+        def mkdir(self, **kwargs):
+            pass
+
+    mock_instance = MockS3Path()
+
+    # add assert_called method to __truediv__ for test compatibility
+    class TruedivProxy:
+        def assert_called(self):
+            if not call_tracker["calls"]:
+                raise AssertionError("Expected '__truediv__' to have been called")
+
+    # replace __truediv__ on the instance with a proxy that has assert_called
+    proxy = TruedivProxy()
+    original_truediv = mock_instance.__truediv__
+
+    # create a callable that wraps it
+    def truediv_wrapper(other):
+        return original_truediv(other)
+
+    truediv_wrapper.assert_called = proxy.assert_called
+    mock_instance.__truediv__ = truediv_wrapper
+
+    monkeypatch.setattr("capella_console_client.s3.S3Path", MockS3Path)
+    monkeypatch.setattr("tests.test_download.S3Path", MockS3Path)
+    monkeypatch.setattr("capella_console_client.assets.S3Path", MockS3Path)
+
+    yield mock_instance
 
 
 def patch_task_status_matcher(request: httpx.Request) -> bool:
