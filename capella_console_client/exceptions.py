@@ -8,11 +8,11 @@ class CapellaConsoleClientError(Exception):
     data: dict[str, Any] = {}
     message = "An unknown error occurred"
 
-    def __init__(self, message=None, code=None, data={}, response=None):
+    def __init__(self, message=None, code=None, data=None, response=None):
         self.response = response
         self.message = message or None
         self.code = code or None
-        self.data = data or {}
+        self.data = {} if data is None else data
 
         self.args = self._set_args()
 

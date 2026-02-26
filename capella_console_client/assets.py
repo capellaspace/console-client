@@ -62,7 +62,9 @@ def _gather_download_requests(
             local_dir = S3Path(local_dir)
         else:
             local_dir = Path(local_dir)
-    assert local_dir.exists(), f"{local_dir} does not exist"
+
+    if not local_dir.exists():
+        raise ValueError(f"{local_dir} does not exist")
 
     stac_id = _derive_stac_id(assets_presigned)
 
