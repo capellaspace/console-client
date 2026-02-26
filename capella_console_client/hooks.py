@@ -46,17 +46,8 @@ def log_on_4xx_5xx(response: httpx.Response) -> bool | None:
     return None
 
 
-def retry_if_http_status_error(exception: Exception) -> bool:
-    """Return upon httpx.HTTPStatusError"""
-    if getattr(exception, "code", None) in NON_RETRYABLE_ERROR_CODES:
-        return False
-    return isinstance(exception, CapellaConsoleClientError)
-
-
-def retry_if_httpx_status_error(exception: Exception) -> bool:
-    return isinstance(exception, httpx.HTTPStatusError)
-
-
-def log_attempt_delay(attempts: int, delay: int) -> int:
-    logger.info(f"Attempt #{attempts}, retrying in {delay} ms")
-    return delay
+def log_retry_attempt(retry_state) -> None:
+    """Tenacity callback to log retry attempts"""
+    attempt_number = retry_state.attempt_number
+    sleep_time = retry_state.next_action.sleep
+    logger.info(f"Attempt #{attempt_number}, retrying in {sleep_time * 1000:.0f} ms")
