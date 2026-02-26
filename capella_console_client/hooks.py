@@ -1,4 +1,3 @@
-from typing import List, Optional
 from dataclasses import dataclass
 
 import httpx
@@ -18,7 +17,7 @@ class RequestMeta:
 
 
 # do not log out the following requests
-SILENCE_REQUESTS: List[RequestMeta] = []
+SILENCE_REQUESTS: list[RequestMeta] = []
 
 
 def translate_error_to_exception(response: httpx.Response) -> None:
@@ -26,7 +25,7 @@ def translate_error_to_exception(response: httpx.Response) -> None:
         handle_error_response_and_raise(response)
 
 
-def log_on_4xx_5xx(response: httpx.Response) -> Optional[bool]:
+def log_on_4xx_5xx(response: httpx.Response) -> bool | None:
     try:
         response.raise_for_status()
     except httpx.HTTPError:

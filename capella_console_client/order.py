@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 import dateutil.parser
-from typing import List, Optional, Dict, Any
+from typing import Any
 
 from capella_console_client.session import CapellaConsoleSession
 
 
-def get_order(session: CapellaConsoleSession, stac_ids: List[str]) -> Optional[str]:
+def get_order(session: CapellaConsoleSession, stac_ids: list[str]) -> str | None:
     """
     find active order containing ALL specified `stac_ids`
 
@@ -18,14 +18,14 @@ def get_order(session: CapellaConsoleSession, stac_ids: List[str]) -> Optional[s
         return None
 
     for ord in active_orders:
-        granules = set([i["granuleId"] for i in ord["items"]])
+        granules = {i["granuleId"] for i in ord["items"]}
         if granules.issuperset(stac_ids):
             order_id = ord["orderId"]
             break
     return order_id
 
 
-def get_non_expired_orders(session: CapellaConsoleSession) -> List[Dict[str, Any]]:
+def get_non_expired_orders(session: CapellaConsoleSession) -> list[dict[str, Any]]:
     params = {"customerId": session.customer_id}
     res = session.get("/orders", params=params)
 

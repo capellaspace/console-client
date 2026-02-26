@@ -65,10 +65,11 @@ mypy = "^1.9.0"
 rope = "^1.3.0"
 types-python-dateutil = "^2.8.19"
 types-tabulate = "^0.9.0"
+pyupgrade = "^3.21.2"
 
 [tool.black]
 line-length = 120
-target-version = [ "py39", "py310", "py311", "py312", "py313" ]
+target-version = [ "py310", "py311", "py312", "py313" ]
 exclude = '''
 /(
     \.git

@@ -1,9 +1,9 @@
-from typing import Dict, List, Any, Optional
+from typing import Any
 
 from capella_console_client.logconf import logger
 
 
-def _sort_stac_items(items: List[Dict[str, Any]], stac_ids: List[str]) -> List[Dict[str, Any]]:
+def _sort_stac_items(items: list[dict[str, Any]], stac_ids: list[str]) -> list[dict[str, Any]]:
     """
     sort items by stac_ids
 

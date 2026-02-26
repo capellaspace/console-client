@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from typing import List, Dict, Any, Union, Optional, Tuple, cast
+from typing import Any, cast
 from collections import defaultdict
 from pathlib import Path
 import tempfile
@@ -82,12 +82,12 @@ class CapellaConsoleClient:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        token: Optional[str] = None,
+        api_key: str | None = None,
+        token: str | None = None,
         verbose: bool = False,
         no_token_check: bool = False,
-        base_url: Optional[str] = CONSOLE_API_URL,
-        search_url: Optional[str] = None,
+        base_url: str | None = CONSOLE_API_URL,
+        search_url: str | None = None,
         no_auth: bool = False,
     ):
         self._set_verbosity(verbose)
@@ -103,7 +103,7 @@ class CapellaConsoleClient:
             logger.setLevel(logging.INFO)
 
     # USER
-    def whoami(self) -> Dict[str, Any]:
+    def whoami(self) -> dict[str, Any]:
         """
         display user info
 
@@ -114,7 +114,7 @@ class CapellaConsoleClient:
         return resp.json()
 
     # TASKING
-    def create_tasking_request(self, **kwargs) -> Dict[str, Any]:
+    def create_tasking_request(self, **kwargs) -> dict[str, Any]:
         """
         Create a new tasking request
 
@@ -152,7 +152,7 @@ class CapellaConsoleClient:
         """
         return create_tasking_request(session=self._sesh, **kwargs)
 
-    def search_tasking_requests(self, **kwargs: Optional[Dict[str, Any]]) -> TaskingRequestSearchResult:
+    def search_tasking_requests(self, **kwargs: dict[str, Any] | None) -> TaskingRequestSearchResult:
         """
         search tasking requests
 
@@ -187,7 +187,7 @@ class CapellaConsoleClient:
         search = TaskingRequestSearch(session=self._sesh, **kwargs)
         return cast(TaskingRequestSearchResult, search.fetch_all())
 
-    def get_task(self, tasking_request_id: str) -> Dict[str, Any]:
+    def get_task(self, tasking_request_id: str) -> dict[str, Any]:
         """
         fetch task for the specified `tasking_request_id`
 
@@ -200,13 +200,13 @@ class CapellaConsoleClient:
         _validate_uuid(tasking_request_id)
         return get_tasking_request(tasking_request_id=tasking_request_id, session=self._sesh)
 
-    def is_task_completed(self, task: Dict[str, Any]) -> bool:
+    def is_task_completed(self, task: dict[str, Any]) -> bool:
         """
         check if a task has completed
         """
         return _task_contains_status(task, "completed")
 
-    def cancel_tasking_requests(self, *tasking_request_ids: Optional[str]) -> Dict[str, Any]:
+    def cancel_tasking_requests(self, *tasking_request_ids: str | None) -> dict[str, Any]:
         """
         cancel tasking requests
 
@@ -246,7 +246,7 @@ class CapellaConsoleClient:
 
     # COLLECTS
 
-    def get_collects_for_task(self, tasking_request_id: str) -> List[Dict[str, Any]]:
+    def get_collects_for_task(self, tasking_request_id: str) -> list[dict[str, Any]]:
         """
         get all the collects associated with this task (see :py:meth:`get_task()`)
 
@@ -266,7 +266,7 @@ class CapellaConsoleClient:
         return collects_list_resp.json()
 
     # REPEAT REQUESTS
-    def create_repeat_request(self, **kwargs) -> Dict[str, Any]:
+    def create_repeat_request(self, **kwargs) -> dict[str, Any]:
         """
         Create a new repeat request
 
@@ -305,7 +305,7 @@ class CapellaConsoleClient:
         """
         return create_repeat_request(session=self._sesh, **kwargs)
 
-    def search_repeat_requests(self, **kwargs: Optional[Dict[str, Any]]) -> RepeatRequestSearchResult:
+    def search_repeat_requests(self, **kwargs: dict[str, Any] | None) -> RepeatRequestSearchResult:
         """
         search repeat requests
 
@@ -341,7 +341,7 @@ class CapellaConsoleClient:
         search = RepeatRequestSearch(session=self._sesh, **kwargs)
         return cast(RepeatRequestSearchResult, search.fetch_all())
 
-    def cancel_repeat_requests(self, *repeat_request_ids: Optional[str]) -> Dict[str, Any]:
+    def cancel_repeat_requests(self, *repeat_request_ids: str | None) -> dict[str, Any]:
         """
         cancel repeat requests
 
@@ -380,7 +380,7 @@ class CapellaConsoleClient:
         return results_by_tr_id
 
     # ORDER
-    def list_orders(self, *order_ids: Optional[str], is_active: Optional[bool] = False) -> List[Dict[str, Any]]:
+    def list_orders(self, *order_ids: str | None, is_active: bool | None = False) -> list[dict[str, Any]]:
         """
         list orders
 
@@ -418,7 +418,7 @@ class CapellaConsoleClient:
         orders = resp.json()
         return orders
 
-    def get_stac_items_of_order(self, order_id: str, ids_only: bool = False) -> Union[List[str], StacSearchResult]:
+    def get_stac_items_of_order(self, order_id: str, ids_only: bool = False) -> list[str] | StacSearchResult:
         """
         get stac items of an existing order
 
@@ -436,14 +436,14 @@ class CapellaConsoleClient:
 
     def review_order(
         self,
-        stac_ids: Optional[List[str]] = None,
-        items: Optional[Union[List[Dict[str, Any]], StacSearchResult]] = None,
-        contract_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        stac_ids: list[str] | None = None,
+        items: list[dict[str, Any]] | StacSearchResult | None = None,
+        contract_id: str | None = None,
+    ) -> dict[str, Any]:
         stac_ids = _validate_stac_id_or_stac_items(stac_ids, items)
         logger.info(f"reviewing order for {', '.join(stac_ids)}")
 
-        stac_items: Union[List[Dict[str, Any]], StacSearchResult]
+        stac_items: list[dict[str, Any]] | StacSearchResult
         if not items:
             stac_items = self.search(ids=stac_ids)
         else:
@@ -462,12 +462,12 @@ class CapellaConsoleClient:
 
     def submit_order(
         self,
-        stac_ids: Optional[List[str]] = None,
-        items: Optional[Union[List[Dict[str, Any]], StacSearchResult]] = None,
+        stac_ids: list[str] | None = None,
+        items: list[dict[str, Any]] | StacSearchResult | None = None,
         check_active_orders: bool = False,
         omit_search: bool = False,
         omit_review: bool = False,
-        contract_id: Optional[str] = None,
+        contract_id: str | None = None,
     ) -> str:
         """
         submit an order by `stac_ids` or `items`.
@@ -496,8 +496,8 @@ class CapellaConsoleClient:
                 logger.info(f"found existing order {existing_order_id} containing all requested stac ids")
                 return existing_order_id
 
-        def _get_stac_items() -> Union[List[Dict[str, Any]], StacSearchResult]:
-            stac_items: Union[List[Dict[str, Any]], StacSearchResult]
+        def _get_stac_items() -> list[dict[str, Any]] | StacSearchResult:
+            stac_items: list[dict[str, Any]] | StacSearchResult
             if stac_ids and not omit_search:
                 stac_items = self.search(ids=stac_ids)
             else:
@@ -532,7 +532,7 @@ class CapellaConsoleClient:
         logger.info(f"successfully submitted order {order_id}")
         return order_id
 
-    def _construct_order_payload(self, stac_items, contract_id: Optional[str] = None):
+    def _construct_order_payload(self, stac_items, contract_id: str | None = None):
         by_collect_id = defaultdict(list)
         for item in stac_items:
             by_collect_id[item["collection"]].append(item["id"])
@@ -541,7 +541,7 @@ class CapellaConsoleClient:
         for collection, stac_ids_of_coll in by_collect_id.items():
             order_items.extend([{"collectionId": collection, "granuleId": stac_id} for stac_id in stac_ids_of_coll])
 
-        payload: Dict[str, Any] = {"items": order_items}
+        payload: dict[str, Any] = {"items": order_items}
         if contract_id:
             payload["contractId"] = contract_id
 
@@ -550,9 +550,9 @@ class CapellaConsoleClient:
     def get_presigned_items(
         self,
         order_id: str,
-        stac_ids: Optional[List[str]] = None,
-        sort_by: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
+        stac_ids: list[str] | None = None,
+        sort_by: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """
         get presigned items hrefs for all products contained in order
 
@@ -602,10 +602,10 @@ class CapellaConsoleClient:
     def get_presigned_assets(
         self,
         order_id: str,
-        stac_ids: Optional[List[str]] = None,
-        sort_by: Optional[List[str]] = None,
-        assets_only: Optional[bool] = True,
-    ) -> List[Dict[str, Any]]:
+        stac_ids: list[str] | None = None,
+        sort_by: list[str] | None = None,
+        assets_only: bool | None = True,
+    ) -> list[dict[str, Any]]:
         """
         get presigned assets hrefs for all products contained in order
 
@@ -647,10 +647,10 @@ class CapellaConsoleClient:
     def download_asset(
         self,
         pre_signed_url: str,
-        local_path: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
+        local_path: Path | S3Path | str = Path(tempfile.gettempdir()),
         override: bool = False,
         show_progress: bool = False,
-    ) -> Union[Path, S3Path]:
+    ) -> Path | S3Path:
         """
         downloads a presigned asset url to disk
 
@@ -661,7 +661,7 @@ class CapellaConsoleClient:
             show_progress: show download status progressbar
         """
         # Convert str to Path/S3Path if needed
-        resolved_local_path: Union[Path, S3Path]
+        resolved_local_path: Path | S3Path
         if isinstance(local_path, str):
             if local_path.startswith("s3://"):
                 resolved_local_path = S3Path(local_path)
@@ -685,20 +685,20 @@ class CapellaConsoleClient:
 
     def download_products(
         self,
-        items_presigned: Optional[List[Dict[str, Any]]] = None,
-        order_id: Optional[str] = None,
-        tasking_request_id: Optional[str] = None,
-        collect_id: Optional[str] = None,
-        local_dir: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
-        include: Union[List[Union[str, AssetType]], str] = None,
-        exclude: Union[List[Union[str, AssetType]], str] = None,
+        items_presigned: list[dict[str, Any]] | None = None,
+        order_id: str | None = None,
+        tasking_request_id: str | None = None,
+        collect_id: str | None = None,
+        local_dir: Path | S3Path | str = Path(tempfile.gettempdir()),
+        include: list[str | AssetType] | str | None = None,
+        exclude: list[str | AssetType] | str | None = None,
         override: bool = False,
         threaded: bool = True,
         show_progress: bool = False,
         separate_dirs: bool = True,
-        product_types: List[Union[str, ProductType]] = None,
-        contract_id: Optional[str] = None,
-    ) -> Dict[str, Dict[str, Union[Path, S3Path]]]:
+        product_types: list[str | ProductType] | None = None,
+        contract_id: str | None = None,
+    ) -> dict[str, dict[str, Path | S3Path]]:
         """
         download all assets of multiple products
 
@@ -760,8 +760,8 @@ class CapellaConsoleClient:
             raise ValueError("please provide one of assets_presigned, order_id, tasking_request_id or collect_id")
 
         product_types = _validate_and_filter_product_types(product_types)
-        include = _validate_and_filter_asset_types(include)
-        exclude = _validate_and_filter_asset_types(exclude)
+        include_filtered: list[str] | None = _validate_and_filter_asset_types(include)
+        exclude_filtered: list[str] | None = _validate_and_filter_asset_types(exclude)
 
         if not items_presigned:
             items_presigned = self._resolve_items_presigned(
@@ -778,10 +778,10 @@ class CapellaConsoleClient:
 
         # gather download requests
         download_requests = []
-        by_stac_id: Dict[str, Dict[str, Union[Path, S3Path]]] = {}
+        by_stac_id: dict[str, dict[str, Path | S3Path]] = {}
         for cur_item in items_presigned:
             cur_download_requests = _gather_download_requests(
-                cur_item["assets"], local_dir, include, exclude, separate_dirs
+                cur_item["assets"], local_dir, include_filtered, exclude_filtered, separate_dirs
             )
             by_stac_id[cur_download_requests[0].stac_id] = {
                 cur.asset_key: cur.local_path for cur in cur_download_requests
@@ -803,13 +803,13 @@ class CapellaConsoleClient:
 
     def _resolve_items_presigned(
         self,
-        order_id: Optional[str] = None,
-        tasking_request_id: Optional[str] = None,
-        collect_id: Optional[str] = None,
-        product_types: List[str] = None,
-        contract_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        stac_ids: Optional[List[str]] = None
+        order_id: str | None = None,
+        tasking_request_id: str | None = None,
+        collect_id: str | None = None,
+        product_types: list[str] = None,
+        contract_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        stac_ids: list[str] | None = None
 
         # 1 - resolve assets_presigned from order_id
         if order_id:
@@ -832,8 +832,8 @@ class CapellaConsoleClient:
         return self.get_presigned_items(order_id, stac_ids)
 
     def _order_products_for_task(
-        self, tasking_request_id: str, product_types: List[str] = None, contract_id: Optional[str] = None
-    ) -> Tuple[str, List[str]]:
+        self, tasking_request_id: str, product_types: list[str] = None, contract_id: str | None = None
+    ) -> tuple[str, list[str]]:
         """
         order all products associated with a tasking request
 
@@ -845,8 +845,8 @@ class CapellaConsoleClient:
         return self._order_products_for_collect_ids(collect_ids, product_types)
 
     def _order_products_for_collect_ids(
-        self, collect_ids: List[str], product_types: List[str] = None, contract_id: Optional[str] = None
-    ) -> Tuple[str, List[str]]:
+        self, collect_ids: list[str], product_types: list[str] = None, contract_id: str | None = None
+    ) -> tuple[str, list[str]]:
         search_kwargs = dict(
             collect_id__in=collect_ids,
         )
@@ -863,15 +863,15 @@ class CapellaConsoleClient:
 
     def download_product(
         self,
-        assets_presigned: Optional[Dict[str, Any]] = None,
-        order_id: Optional[str] = None,
-        local_dir: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
-        include: Union[List[Union[str, AssetType]], str] = None,
-        exclude: Union[List[Union[str, AssetType]], str] = None,
+        assets_presigned: dict[str, Any] | None = None,
+        order_id: str | None = None,
+        local_dir: Path | S3Path | str = Path(tempfile.gettempdir()),
+        include: list[str | AssetType] | str | None = None,
+        exclude: list[str | AssetType] | str | None = None,
         override: bool = False,
         threaded: bool = True,
         show_progress: bool = False,
-    ) -> Dict[str, Union[Path, S3Path]]:
+    ) -> dict[str, Path | S3Path]:
         """
         download all assets of a product (TO BE DEPRECATED)
 
@@ -917,9 +917,9 @@ class CapellaConsoleClient:
             _validate_uuid(order_id)
             assets_presigned = self._get_first_presigned_from_order(order_id)
 
-        include = _validate_and_filter_asset_types(include)
-        exclude = _validate_and_filter_asset_types(exclude)
-        download_requests = _gather_download_requests(assets_presigned, local_dir, include, exclude)
+        include_filtered: list[str] | None = _validate_and_filter_asset_types(include)
+        exclude_filtered: list[str] | None = _validate_and_filter_asset_types(exclude)
+        download_requests = _gather_download_requests(assets_presigned, local_dir, include_filtered, exclude_filtered)
 
         if not download_requests:
             logger.warning("Nothing to download")
@@ -932,7 +932,7 @@ class CapellaConsoleClient:
             show_progress=show_progress,
         )
 
-    def _get_first_presigned_from_order(self, order_id: str) -> Dict[str, Any]:
+    def _get_first_presigned_from_order(self, order_id: str) -> dict[str, Any]:
         assets_presigned = self.get_presigned_assets(order_id)
         if len(assets_presigned) > 1:
             stac_id = _derive_stac_id(assets_presigned[0])

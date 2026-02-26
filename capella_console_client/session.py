@@ -3,7 +3,6 @@ from enum import Enum
 import warnings
 from getpass import getpass
 
-from typing import Optional
 
 from capella_console_client.enumerations import AuthHeaderPrefix
 import httpx
@@ -41,7 +40,7 @@ class CapellaConsoleSession(httpx.Client):
         deprecation_warning_action = "once" if verbose else "ignore"
         warnings.simplefilter(action=deprecation_warning_action, category=AuthMethodDeprecationWarning)
 
-        super(CapellaConsoleSession, self).__init__(
+        super().__init__(
             *args,
             event_hooks={"response": event_hooks},
             timeout=DEFAULT_TIMEOUT,
@@ -58,8 +57,8 @@ class CapellaConsoleSession(httpx.Client):
 
     def authenticate(
         self,
-        api_key: Optional[str] = None,
-        token: Optional[str] = None,
+        api_key: str | None = None,
+        token: str | None = None,
         no_token_check: bool = False,
     ) -> None:
         try:
@@ -102,7 +101,7 @@ class CapellaConsoleSession(httpx.Client):
         ).strip()
         return api_key
 
-    def _set_bearer_auth_header(self, token: Optional[str]):
+    def _set_bearer_auth_header(self, token: str | None):
         assert isinstance(token, str)
         token = token.strip()
         if not token.lower().startswith(AuthHeaderPrefix.TOKEN.value.lower()):
@@ -120,7 +119,7 @@ class CapellaConsoleSession(httpx.Client):
         self.organization_id = con["organizationId"]
         self.email = con["email"]
 
-    def _set_api_key_auth_header(self, api_key: Optional[str]):
+    def _set_api_key_auth_header(self, api_key: str | None):
         assert isinstance(api_key, str)
         api_key = api_key.strip()
         if not api_key.lower().startswith(AuthHeaderPrefix.API_KEY.value.lower()):
@@ -129,7 +128,7 @@ class CapellaConsoleSession(httpx.Client):
         self.headers[AUTHORIZATION_HEADER_NAME] = api_key
 
 
-def _get_auth_method(token: Optional[str], api_key: Optional[str]) -> AuthMethod:
+def _get_auth_method(token: str | None, api_key: str | None) -> AuthMethod:
     token_provided = bool(token)
     api_key_provided = bool(api_key)
 

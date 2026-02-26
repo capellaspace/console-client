@@ -1,11 +1,11 @@
-from typing import Dict, Any
+from typing import Any
 
 from capella_console_client.enumerations import AuthHeaderPrefix
 
 
 class CapellaConsoleClientError(Exception):
     response = None
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
     message = "An unknown error occurred"
 
     def __init__(self, message=None, code=None, data={}, response=None):

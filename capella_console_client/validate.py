@@ -4,7 +4,8 @@ from datetime import datetime
 from collections import Counter
 from dateutil.parser import parse, ParserError
 
-from typing import Optional, List, Dict, Any, Union, Iterable, TypeVar
+from typing import Any, TypeVar
+from collections.abc import Iterable
 
 import geojson
 
@@ -21,16 +22,16 @@ def _validate_uuid(uuid_str: str) -> None:
         raise ValueError(f"{uuid_str} is not a valid uuid: {e}")
 
 
-def _validate_uuids(uuid_strs: List[str]) -> None:
+def _validate_uuids(uuid_strs: list[str]) -> None:
     assert len(uuid_strs) > 0, "No UUIDs provided"
     for uuid_str in uuid_strs:
         _validate_uuid(uuid_str)
 
 
 def _validate_stac_id_or_stac_items(
-    stac_ids: Optional[List[str]] = None,
-    items: Optional[Iterable[Dict[str, Any]]] = None,
-) -> List[str]:
+    stac_ids: list[str] | None = None,
+    items: Iterable[dict[str, Any]] | None = None,
+) -> list[str]:
     if not stac_ids and not items:
         raise ValueError("Please provide stac_ids or items")
 
@@ -42,8 +43,8 @@ def _validate_stac_id_or_stac_items(
 
 
 def _validate_and_filter_product_types(
-    product_types: Optional[Union[List[str], str]],
-) -> Optional[List[str]]:
+    product_types: list[str] | str | None,
+) -> list[str] | None:
     if isinstance(product_types, str):
         product_types = [product_types]
     if not product_types:
@@ -52,8 +53,8 @@ def _validate_and_filter_product_types(
 
 
 def _validate_and_filter_asset_types(
-    asset_types: Union[List[str], str, None],
-) -> Optional[List[str]]:
+    asset_types: list[str] | str | None,
+) -> list[str] | None:
     if not asset_types:
         return None
     if isinstance(asset_types, str):
@@ -61,7 +62,7 @@ def _validate_and_filter_asset_types(
     return [a for a in asset_types if a in AssetType]
 
 
-def _validate_and_filter_stac_ids(stac_ids: Optional[List[str]]) -> List[str]:
+def _validate_and_filter_stac_ids(stac_ids: list[str] | None) -> list[str]:
     if not stac_ids:
         return []
 
@@ -87,7 +88,7 @@ def _snake_to_camel(snake):
     return re.sub(REG, lambda x: x.group(1) + x.group(2).upper(), snake, 0)
 
 
-def _datetime_to_iso8601_str(dt: Union[datetime, str]) -> str:
+def _datetime_to_iso8601_str(dt: datetime | str) -> str:
     dt_value: datetime
     if isinstance(dt, str):
         try:
@@ -111,7 +112,7 @@ def _set_squint_default(geometry: geojson.geometry.Geometry) -> SquintMode:
 T = TypeVar("T")
 
 
-def _compact_unique(items: Iterable[T | None]) -> List[T]:
+def _compact_unique(items: Iterable[T | None]) -> list[T]:
     """Return unique non-None values from iterable, preserving order."""
     seen = set()
     result = []

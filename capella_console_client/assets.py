@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from dataclasses import dataclass
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Union, Dict, Any
+from typing import Any
 import re
 from capella_console_client.s3 import S3Path
 
@@ -28,7 +28,7 @@ ASSET_KEYS_NOT_DOWNLOADABLE = {"license"}
 @dataclass
 class DownloadRequest:
     url: str
-    local_path: Union[Path, S3Path]
+    local_path: Path | S3Path
     asset_key: str
     stac_id: str = ""
 
@@ -52,12 +52,12 @@ def _flush_progress_bar(progress: rich.progress.Progress) -> None:
 
 
 def _gather_download_requests(
-    assets_presigned: Dict[str, Any],
-    local_dir: Union[Path, S3Path, str] = Path(tempfile.gettempdir()),
-    include: Union[List[str], str] = None,
-    exclude: Union[List[str], str] = None,
+    assets_presigned: dict[str, Any],
+    local_dir: Path | S3Path | str = Path(tempfile.gettempdir()),
+    include: list[str] | str | None = None,
+    exclude: list[str] | str | None = None,
     separate_dirs: bool = True,
-) -> List[DownloadRequest]:
+) -> list[DownloadRequest]:
     if isinstance(local_dir, str):
         if local_dir.startswith("s3://"):
             local_dir = S3Path(local_dir)
@@ -107,7 +107,7 @@ def _gather_download_requests(
     return download_requests
 
 
-def _get_main_asset_href(assets_presigned: Dict[str, Any]) -> str:
+def _get_main_asset_href(assets_presigned: dict[str, Any]) -> str:
     try:
         intersect = set(assets_presigned).intersection(MAIN_ASSET_KEY_OPTIONS)
         main_asset_key = list(intersect)[0]
@@ -118,7 +118,7 @@ def _get_main_asset_href(assets_presigned: Dict[str, Any]) -> str:
     return main_asset["href"]
 
 
-def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
+def _derive_stac_id(assets_presigned: dict[str, Any]) -> str:
     raster_asset_href = _get_main_asset_href(assets_presigned)
     try:
         stac_id: str = STAC_ID_REGEX.findall(raster_asset_href)[0]
@@ -128,8 +128,8 @@ def _derive_stac_id(assets_presigned: Dict[str, Any]) -> str:
 
 
 def _filter_items_by_product_types(
-    items_presigned: List[Dict[str, Any]], product_types: List[str]
-) -> List[Dict[str, Any]]:
+    items_presigned: list[dict[str, Any]], product_types: list[str]
+) -> list[dict[str, Any]]:
     logger.info(f'filtering by product_types: {", ".join(product_types)}')
     filtered_items = []
     for cur_item in items_presigned:
@@ -139,7 +139,7 @@ def _filter_items_by_product_types(
     return filtered_items
 
 
-def _prep_include_exclude(filter_stmnt: Union[str, List[str]]) -> List[str]:
+def _prep_include_exclude(filter_stmnt: str | list[str]) -> list[str]:
     if isinstance(filter_stmnt, str):
         filter_stmnt = [filter_stmnt]
 
@@ -151,11 +151,11 @@ def _prep_include_exclude(filter_stmnt: Union[str, List[str]]) -> List[str]:
 
 
 def _perform_download(
-    download_requests: List[DownloadRequest],
+    download_requests: list[DownloadRequest],
     override: bool,
     threaded: bool,
     show_progress: bool = False,
-) -> Dict[str, Union[Path, S3Path]]:
+) -> dict[str, Path | S3Path]:
     local_paths_by_key = {}
 
     with progress_bar as progress:
@@ -197,7 +197,7 @@ def _download_asset(
     override: bool,
     show_progress: bool,
     progress: rich.progress.Progress,
-) -> Union[Path, S3Path]:
+) -> Path | S3Path:
     # If a directory is provided, create a file path in it
     if hasattr(dl_request.local_path, "is_dir") and dl_request.local_path.is_dir():
         local_file = _get_filename(dl_request.url)

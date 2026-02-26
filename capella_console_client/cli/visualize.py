@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional
+from typing import Any
 from collections import defaultdict
 
 import typer
@@ -16,7 +16,7 @@ from capella_console_client.cli.config import (
 
 def show_tabulated(
     stac_items: StacSearchResult,
-    search_headers: Optional[List[str]] = None,
+    search_headers: list[str] | None = None,
     show_row_number: bool = False,
 ):
     if not search_headers:
@@ -49,7 +49,7 @@ def show_tabulated(
     typer.echo("\n")
 
 
-def show_orders_tabulated(orders: List[Dict[str, Any]]):
+def show_orders_tabulated(orders: list[dict[str, Any]]):
     fields = ["orderId", "orderDate", "expirationDate", "orderStatus"]
     table_data = []
     for i, order in enumerate(orders):
@@ -63,7 +63,7 @@ def show_orders_tabulated(orders: List[Dict[str, Any]]):
     typer.echo(tabulate(table_data, tablefmt="fancy_grid", headers=headers))
 
 
-def show_order_review_tabulated(order_review: Dict[str, Any]):
+def show_order_review_tabulated(order_review: dict[str, Any]):
     order_summary = order_review["orderDetails"]["summary"]
     typer.secho("summary:\n", bold=True)
     table_data = [
@@ -85,7 +85,7 @@ def show_order_review_tabulated(order_review: Dict[str, Any]):
     typer.echo(tabulate(line_item_table, tablefmt="fancy_grid", headers=["STAC id", "cost"]))
 
 
-def show_cancel_result_tabulated(cancel_result: Dict[str, Any]):
+def show_cancel_result_tabulated(cancel_result: dict[str, Any]):
     table_data = []
 
     for tr_id, status in cancel_result.items():
