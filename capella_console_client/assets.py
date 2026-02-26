@@ -9,12 +9,11 @@ from capella_console_client.s3 import S3Path
 
 import httpx
 import rich.progress
-from retrying import retry  # type: ignore[import-untyped]
+from tenacity import retry, retry_if_exception_type, wait_exponential, before_sleep_log
 
 from capella_console_client.logconf import logger
 from capella_console_client.hooks import (
-    retry_if_httpx_status_error,
-    log_attempt_delay,
+    log_retry_attempt,
 )
 from capella_console_client.exceptions import ConnectError
 
@@ -225,10 +224,9 @@ def _download_asset(
 
 
 @retry(
-    retry_on_exception=retry_if_httpx_status_error,
-    wait_func=log_attempt_delay,
-    wait_exponential_multiplier=2000,
-    wait_exponential_max=16000,
+    retry=retry_if_exception_type(httpx.HTTPStatusError),
+    wait=wait_exponential(multiplier=2, max=16),
+    before_sleep=log_retry_attempt,
 )
 def _fetch(
     dl_request: DownloadRequest,
