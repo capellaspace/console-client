@@ -23,7 +23,8 @@ def _validate_uuid(uuid_str: str) -> None:
 
 
 def _validate_uuids(uuid_strs: list[str]) -> None:
-    assert len(uuid_strs) > 0, "No UUIDs provided"
+    if len(uuid_strs) == 0:
+        raise ValueError("No UUIDs provided")
     for uuid_str in uuid_strs:
         _validate_uuid(uuid_str)
 
@@ -36,7 +37,8 @@ def _validate_stac_id_or_stac_items(
         raise ValueError("Please provide stac_ids or items")
 
     if not stac_ids:
-        assert items is not None  # Type narrowing: items cannot be None here
+        if items is None:
+            raise ValueError("items must be provided when stac_ids is not provided")
         stac_ids = [f["id"] for f in items]
 
     return stac_ids

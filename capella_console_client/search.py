@@ -338,7 +338,7 @@ class StacSearch(AbstractSearch):
             if cur_field in STAC_SUPPORTED_ROOT_FIELDS:
                 self.payload[cur_field] = value
             elif cur_field in STAC_SUPPORTED_QUERY_FIELDS:
-                if type(value) == list:
+                if isinstance(value, list):
                     op = "in"
 
                 target_field = STAC_PREFIXED_BY_QUERY_FIELDS.get(cur_field, cur_field)
@@ -690,7 +690,6 @@ class AbstractTaskRepeatSearch(AbstractSearch):
             query_payload["organizationIds"] = [self.session.organization_id]
             return query_payload
 
-        # TODO: should the endpoint fill this in?
         query_payload["userId"] = self.session.customer_id
         return query_payload
 

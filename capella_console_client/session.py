@@ -102,7 +102,8 @@ class CapellaConsoleSession(httpx.Client):
         return api_key
 
     def _set_bearer_auth_header(self, token: str | None):
-        assert isinstance(token, str)
+        if not isinstance(token, str):
+            raise ValueError("Token must be a string")
         token = token.strip()
         if not token.lower().startswith(AuthHeaderPrefix.TOKEN.value.lower()):
             token = f"{AuthHeaderPrefix.TOKEN.value} {token}"
@@ -120,7 +121,8 @@ class CapellaConsoleSession(httpx.Client):
         self.email = con["email"]
 
     def _set_api_key_auth_header(self, api_key: str | None):
-        assert isinstance(api_key, str)
+        if not isinstance(api_key, str):
+            raise ValueError("API key must be a string")
         api_key = api_key.strip()
         if not api_key.lower().startswith(AuthHeaderPrefix.API_KEY.value.lower()):
             api_key = f"{AuthHeaderPrefix.API_KEY.value} {api_key}"

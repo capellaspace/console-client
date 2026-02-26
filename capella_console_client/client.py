@@ -507,7 +507,8 @@ class CapellaConsoleClient:
                     )
                     stac_items = self.search(ids=stac_ids)
                 else:
-                    assert items is not None  # Type narrowing: items cannot be None here
+                    if items is None:
+                        raise ValueError("items must be provided when omit_search is True")
                     stac_items = items
 
             if not stac_items:
@@ -821,9 +822,8 @@ class CapellaConsoleClient:
                 order_id, stac_ids = self._order_products_for_task(tasking_request_id, product_types, contract_id)
             # 3 - submit order for collect_id
             else:
-                assert (
-                    collect_id is not None
-                )  # Type narrowing: collect_id must be set if order_id and tasking_request_id are None
+                if collect_id is None:
+                    raise ValueError("One of order_id, tasking_request_id, or collect_id must be provided")
                 _validate_uuid(collect_id)
                 order_id, stac_ids = self._order_products_for_collect_ids(
                     collect_ids=[collect_id], product_types=product_types, contract_id=contract_id
@@ -913,7 +913,8 @@ class CapellaConsoleClient:
             raise ValueError("please provide either assets_presigned or order_id")
 
         if not assets_presigned:
-            assert order_id is not None  # Type narrowing: order_id must be set if assets_presigned is not
+            if order_id is None:
+                raise ValueError("Either assets_presigned or order_id must be provided")
             _validate_uuid(order_id)
             assets_presigned = self._get_first_presigned_from_order(order_id)
 
