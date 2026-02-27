@@ -97,7 +97,7 @@ def _fetch_orgs() -> list[dict[str, Any]]:
         BarColumn(),
         TaskProgressColumn(),
     ) as progress:
-        resp = CLIENT._sesh.get(f"/organizations/?limit=1000&page={page_cnt}")
+        resp = CLIENT._sesh.get(f"/organizations/?limit=5000&page={page_cnt}&fields=id,name")
         page = resp.json()
         total_pages = page["totalPages"]
 
@@ -112,7 +112,7 @@ def _fetch_orgs() -> list[dict[str, Any]]:
         page_cnt += 1
 
         while page_cnt <= total_pages:
-            resp = CLIENT._sesh.get(f"/organizations/?limit=1000&page={page_cnt}")
+            resp = CLIENT._sesh.get(f"/organizations/?limit=5000&page={page_cnt}&fields=id,email")
             page = resp.json()
             orgs.extend(page["results"])
             progress.update(task, advance=1)
@@ -289,7 +289,7 @@ def _cancel_trs():
         tr_ids = [tr_id.strip() for tr_id in tr_ids_input.split(",")]
         tr_search_kwargs["tasking_request_id"] = tr_ids
 
-    trs = CLIENT.search_tasking_requests(**tr_search_kwargs)
+    trs = CLIENT.search_tasking_requests(**tr_search_kwargs, show_progress=True)
 
     if not trs:
         typer.echo(f"No cancelable tasking requests found for {tr_search_kwargs=}...")
