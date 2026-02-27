@@ -11,6 +11,16 @@ from capella_console_client.cli.validate import _validate_uuid
 app = typer.Typer(help="Manage Tasking requests")
 
 
+@app.command(help="interactively manage tasking requests")
+def interactive():
+    interactive_manage_trs()
+
+
+@app.command(help="cancel tasking requests")
+def cancel():
+    _cancel_trs()
+
+
 class TrManageOptions(str, BaseEnum):
     cancel = "cancel"
 

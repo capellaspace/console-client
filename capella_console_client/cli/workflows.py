@@ -2,7 +2,7 @@ import typer
 
 from capella_console_client.cli.search import interactive_search, from_saved
 from capella_console_client.cli.checkout import interactive_search_order_and_download
-from capella_console_client.cli.trs import interactive_manage_trs
+import capella_console_client.cli.trs
 
 app = typer.Typer(help="interactive workflows")
 
@@ -22,6 +22,4 @@ def checkout():
     interactive_search_order_and_download()
 
 
-@app.command(help="interactively manage tasking request")
-def manage_trs():
-    interactive_manage_trs()
+app.add_typer(capella_console_client.cli.trs.app, name="manage-trs")
