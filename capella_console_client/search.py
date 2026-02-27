@@ -590,10 +590,10 @@ class RepeatRequestQuerySanitizer(AbstractQuerySanitizer):
         return self._sanitize_enum(field=field, value=value, enum_cls=RepeatCollectionTier)
 
 
-def _fetch_page(params, session, search_endpoint, search_entity, search_payload):
+def _fetch_page(params, session, search_endpoint, search_entity, search_payload, silent=False):
     resp = session.post(search_endpoint, params=params, json=search_payload)
     page = resp.json()
-    if page["currentPage"] > 1:
+    if page["currentPage"] > 1 and not silent:
         logger.info(f"page {page['currentPage']} out of {page['totalPages']}: {len(page['results'])} {search_entity}")
     return page
 
@@ -722,37 +722,10 @@ class AbstractTaskRepeatSearch(AbstractSearch):
             search_endpoint=self.SEARCH_ENDPOINT,
             search_entity=self.SEARCH_ENTITY,
             search_payload=self.payload,
+            silent=self.show_progress,
         )
 
-        if self.show_progress:
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                BarColumn(),
-                TaskProgressColumn(),
-            ) as progress:
-                task = progress.add_task(
-                    f"[cyan]Fetching {self.SEARCH_ENTITY.value}s...",
-                    total=total_pages
-                )
-                # Already fetched first page
-                progress.update(task, advance=1)
-
-                if self.threaded:
-                    with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
-                        futures = {executor.submit(_fetch_worker, params): params for params in page_params}
-
-                        for future in as_completed(futures):
-                            page = future.result()
-                            search_result.add(page)
-                            progress.update(task, advance=1)
-                else:
-                    for params in page_params:
-                        page = _fetch_worker(params)
-                        search_result.add(page)
-                        progress.update(task, advance=1)
-        else:
-            # No progress bar - original behavior
+        if not self.show_progress:
             if self.threaded:
                 with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
                     results = executor.map(_fetch_worker, page_params)
@@ -763,6 +736,32 @@ class AbstractTaskRepeatSearch(AbstractSearch):
                 for params in page_params:
                     page = _fetch_worker(params)
                     search_result.add(page)
+            print_task_search_result(search_result._features, search_entity=self.SEARCH_ENTITY.value)
+            return search_result
+
+        # with progress bar
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+        ) as progress:
+            task = progress.add_task(f"[cyan]Fetching {self.SEARCH_ENTITY.value}s...", total=total_pages)
+            progress.update(task, advance=1)
+
+            if self.threaded:
+                with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
+                    futures = {executor.submit(_fetch_worker, params): params for params in page_params}
+
+                    for future in as_completed(futures):
+                        page = future.result()
+                        search_result.add(page)
+                        progress.update(task, advance=1)
+            else:
+                for params in page_params:
+                    page = _fetch_worker(params)
+                    search_result.add(page)
+                    progress.update(task, advance=1)
 
         print_task_search_result(search_result._features, search_entity=self.SEARCH_ENTITY.value)
         return search_result
