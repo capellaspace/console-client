@@ -110,7 +110,7 @@ def _fetch_orgs() -> list[dict[str, Any]]:
     return orgs
 
 
-def _prompt_admin_target() -> tuple[str, str] | None:
+def _prompt_admin_target() -> tuple[str | None, str | None]:
     """
     Prompt admin to select a target user or organization for tasking request operations.
 
@@ -146,7 +146,7 @@ def _prompt_admin_target() -> tuple[str, str] | None:
     selection_method = admin_responses.get("selection_method")
 
     if not admin_for_who or not selection_method:
-        return None
+        return (None, None)
 
     admin_uuid = None
 
@@ -157,7 +157,7 @@ def _prompt_admin_target() -> tuple[str, str] | None:
         ).ask()
 
         if not uuid_response:
-            return None
+            return (None, None)
 
         admin_uuid = uuid_response
     else:
@@ -186,7 +186,7 @@ def _prompt_admin_target() -> tuple[str, str] | None:
 
             if not orgs:
                 typer.echo("No organizations found")
-                return None
+                return (None, None)
 
             # Create name -> org_id mapping
             name_to_id = {org["name"]: org["id"] for org in orgs}
@@ -198,12 +198,12 @@ def _prompt_admin_target() -> tuple[str, str] | None:
             ).ask()
 
             if not selected_name:
-                return None
+                return (None, None)
 
             admin_uuid = name_to_id[selected_name]
 
         if not admin_uuid:
-            return None
+            return (None, None)
 
     return (admin_for_who, admin_uuid)
 
@@ -253,26 +253,23 @@ def _cancel_trs():
     else:
         for_who = TrCancelOptions.user
 
-    tr_search_payload = dict(status=["received", "review", "submitted", "active", "accepted"])
+    tr_search_kwargs = dict(status=["received", "review", "submitted", "active", "accepted"])
     if for_who == TrCancelOptions.org:
-        tr_search_payload["for_org"] = True
+        tr_search_kwargs["for_org"] = True
     elif for_who == TrCancelOptions.admin:
-        admin_target = _prompt_admin_target()
-
-        if not admin_target:
+        admin_for_who, admin_uuid = _prompt_admin_target()
+        if not admin_for_who:
             return
 
-        admin_for_who, admin_uuid = admin_target
-
         if admin_for_who == "user":
-            tr_search_payload["userId"] = admin_uuid
+            tr_search_kwargs["user_id"] = admin_uuid
         elif admin_for_who == "org":
-            tr_search_payload["organizationIds"] = [admin_uuid]
+            tr_search_kwargs["org_id"] = [admin_uuid]
 
-    trs = CLIENT.search_tasking_requests(**tr_search_payload)
+    trs = CLIENT.search_tasking_requests(**tr_search_kwargs)
 
     if not trs:
-        typer.echo(f"No cancelable tasking requests found for {tr_search_payload=}...")
+        typer.echo(f"No cancelable tasking requests found for {tr_search_kwargs=}...")
         return
 
     id_by_tr_option = {_form_tr_overview(tr): tr["properties"]["taskingrequestId"] for tr in trs}
