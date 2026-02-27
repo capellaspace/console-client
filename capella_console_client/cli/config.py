@@ -36,7 +36,6 @@ DEFAULT_SETTINGS = {
     "search_filter_order": SearchFilterOrderOption.console_ui.name,
 }
 
-
 USER_SETTINGS = CLICache.load_user_settings()
 
 CURRENT_SETTINGS: dict[str, Any] = {**DEFAULT_SETTINGS, **USER_SETTINGS}
