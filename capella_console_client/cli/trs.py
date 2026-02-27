@@ -1,6 +1,7 @@
 import typer
 import questionary
 from typing import Any
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.enumerations import BaseEnum
@@ -26,37 +27,85 @@ def _fetch_users() -> list[dict[str, Any]]:
     Fetch users from the API and prompt the user to select one.
     Returns the selected user's UUID or None if cancelled.
     """
-    typer.echo("Fetching all users")
-
     users = []
     page_cnt = 1
-    while True:
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+    ) as progress:
+        # First request to get total pages
         resp = CLIENT._sesh.get(f"/users/?limit=1000&page={page_cnt}")
         page = resp.json()
-        typer.echo(f"{page['currentPage']=}, {page['totalPages']=}")
+        total_pages = page["totalPages"]
+
+        task = progress.add_task(f"[cyan]Fetching users...", total=total_pages)
+
         users.extend(page["results"])
+        progress.update(task, advance=1)
+
         if page["currentPage"] == page["totalPages"]:
-            break
+            return users
 
         page_cnt += 1
+
+        # Fetch remaining pages
+        while page_cnt <= total_pages:
+            resp = CLIENT._sesh.get(f"/users/?limit=1000&page={page_cnt}")
+            page = resp.json()
+            users.extend(page["results"])
+            progress.update(task, advance=1)
+
+            if page["currentPage"] == page["totalPages"]:
+                break
+
+            page_cnt += 1
 
     return users
 
 
 def _fetch_orgs() -> list[dict[str, Any]]:
-    typer.echo("Fetching all users")
-
+    """
+    Fetch organizations from the API.
+    Returns list of organization dictionaries.
+    """
     orgs = []
     page_cnt = 1
-    while True:
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+    ) as progress:
+        # First request to get total pages
         resp = CLIENT._sesh.get(f"/organizations/?limit=1000&page={page_cnt}")
         page = resp.json()
-        typer.echo(f"{page['currentPage']=}, {page['totalPages']=}")
+        total_pages = page["totalPages"]
+
+        task = progress.add_task(f"[cyan]Fetching organizations...", total=total_pages)
+
         orgs.extend(page["results"])
+        progress.update(task, advance=1)
+
         if page["currentPage"] == page["totalPages"]:
-            break
+            return orgs
 
         page_cnt += 1
+
+        # Fetch remaining pages
+        while page_cnt <= total_pages:
+            resp = CLIENT._sesh.get(f"/organizations/?limit=1000&page={page_cnt}")
+            page = resp.json()
+            orgs.extend(page["results"])
+            progress.update(task, advance=1)
+
+            if page["currentPage"] == page["totalPages"]:
+                break
+
+            page_cnt += 1
 
     return orgs
 
