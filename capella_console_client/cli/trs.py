@@ -12,6 +12,24 @@ from capella_console_client.cli.validate import _validate_uuid
 app = typer.Typer(help="Manage Tasking requests")
 
 
+def _validate_tr_ids(text: str) -> bool | str:
+    """
+    Validate comma-separated tasking request IDs (UUIDs).
+    Returns True if valid, error message string if invalid.
+    """
+    if not text or not text.strip():
+        return "At least one tasking request ID is required"
+
+    tr_ids = [tr_id.strip() for tr_id in text.split(",")]
+
+    for tr_id in tr_ids:
+        result = _validate_uuid(tr_id)
+        if result is not True:
+            return f"Invalid UUID '{tr_id}': {result}"
+
+    return True
+
+
 @app.command(help="interactively manage tasking requests")
 def interactive():
     interactive_manage_trs()
@@ -212,13 +230,14 @@ class TrCancelOptions(str, BaseEnum):
     user = "current user"
     org = "current organization (requires elevated perms)"
     admin = "admin (requires elevated perms)"
+    tasking_request_id = "by tasking request ID"
 
     @classmethod
     def _get_choices(cls):
         # sub-select valid choices
         whoami = CLIENT.whoami()
 
-        valid = [TrCancelOptions.user]
+        valid = [TrCancelOptions.user, TrCancelOptions.tasking_request_id]
 
         if "organization-manager" in whoami["roles"]:
             valid.append(TrCancelOptions.org)
@@ -257,6 +276,18 @@ def _cancel_trs():
             tr_search_kwargs["user_id"] = admin_uuid
         elif admin_for_who == "org":
             tr_search_kwargs["org_id"] = [admin_uuid]
+    elif for_who == TrCancelOptions.tasking_request_id:
+        tr_ids_input = questionary.text(
+            "Enter tasking request ID(s) (comma-separated for multiple):",
+            validate=lambda text: _validate_tr_ids(text),
+        ).ask()
+
+        if not tr_ids_input:
+            return
+
+        # Parse comma-separated IDs
+        tr_ids = [tr_id.strip() for tr_id in tr_ids_input.split(",")]
+        tr_search_kwargs["tasking_request_id"] = tr_ids
 
     trs = CLIENT.search_tasking_requests(**tr_search_kwargs)
 

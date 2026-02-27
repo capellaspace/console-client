@@ -4,6 +4,7 @@ import keyring
 
 from tabulate import tabulate
 
+from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.cli.validate import (
     _must_be_type,
     _validate_dir_exists,
@@ -82,6 +83,21 @@ def limit():
 
 
 @app.command()
+def api_url():
+    """
+    set Capella API url
+    """
+    api_url = questionary.text(
+        "API url:",
+        default=CURRENT_SETTINGS.get("capella_api_url", CONSOLE_API_URL),
+    ).ask()
+    _no_selection_bye(api_url)
+
+    CLICache.write_user_settings("capella_api_url", api_url)
+    typer.echo("updated capella API URL")
+
+
+@app.command()
 def api_key():
     """
     set API key for Capella Console
@@ -136,6 +152,7 @@ def search_filter_order():
 def configure():
     logger.info(typer.style("let's get you all setup using capella-console-wizard:", bold=True))
     logger.info("\t\tPress Ctrl + C anytime to quit\n")
+    api_url()
     # Don't prompt for user if there is an api key
     api_key()
     output()
