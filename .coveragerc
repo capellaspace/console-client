@@ -1,6 +1,0 @@
-[run]
-omit =
-        *__init__*
-        *version.py
-        *hooks.py
-        */cli/*

@@ -89,3 +89,25 @@ build-backend = "poetry.core.masonry.api"
 warn_unused_configs = true
 ignore_missing_imports = true
 no_implicit_optional = false
+
+[tool.coverage.run]
+omit = [
+    "*__init__*",
+    "*version.py",
+    "*hooks.py",
+    "*/cli/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+    "\\.\\.\\.",
+    "pass",
+]

@@ -173,6 +173,8 @@ class CapellaConsoleClient:
          • window_open: str, Earliest UTC datetime of collection, e.g. "2020-02-11"
          • window_close: str, Latest UTC datetime of collection, e.g. "2020-02-12"
          • page_size: int, page size, default: 250, needs to be between 250 and 500
+         • show_progress: bool, display interactive progress bar during pagination, default: False
+         • threaded: bool, enable parallel pagination requests, default: True
 
         supported operators:
          • eq: equality search
@@ -327,6 +329,8 @@ class CapellaConsoleClient:
          • submission_time: str, UTC datetime of task submission, e.g. "2020-02-12T00:00:00Z", "2020-02-12"
          • user_id: str, user id to list repeat requests for (requires elevated permissions) -- takes precedence over for_org -- , e.g. "34c78a57-2d68-4b4a-a7ba-c188f9e2645d"
          • page_size: int, page size, default: 250, needs to be between 250 and 500
+         • show_progress: bool, display interactive progress bar during pagination, default: False
+         • threaded: bool, enable parallel pagination requests, default: True
 
         supported operators:
          • eq: equality search

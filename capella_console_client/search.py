@@ -6,9 +6,10 @@ from collections import defaultdict
 from urllib.parse import urlparse
 from dataclasses import dataclass, field
 from math import ceil
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import repeat
 from abc import ABCMeta, abstractmethod
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from capella_console_client.logconf import logger
 from capella_console_client.report import print_task_search_result
@@ -81,8 +82,7 @@ class Groupby(metaclass=ABCMeta):
         return dict(features_by_field)
 
     @abstractmethod
-    def _get_safe_field_value(self, field: str, item: dict[str, Any]):
-        pass
+    def _get_safe_field_value(self, field: str, item: dict[str, Any]): ...
 
 
 @dataclass
@@ -126,8 +126,7 @@ class SearchResult(metaclass=ABCMeta):
         return {"type": "FeatureCollection", "features": self._features}
 
     @abstractmethod
-    def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int:
-        pass
+    def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int: ...
 
     def merge(self, other: "SearchResult", keep_duplicates: bool = False) -> "SearchResult":
         copy = deepcopy(self)
@@ -274,12 +273,10 @@ class RepeatRequestSearchResult(SearchResult):
 class AbstractSearch(metaclass=ABCMeta):
 
     @abstractmethod
-    def _get_query_payload(self, kwargs) -> dict[str, Any]:
-        pass
+    def _get_query_payload(self, kwargs) -> dict[str, Any]: ...
 
     @abstractmethod
-    def _get_sort_payload(self, sortby):
-        pass
+    def _get_sort_payload(self, sortby): ...
 
     def _split_op(self, cur_field: str) -> tuple[str, str]:
         parts = cur_field.split("__")
@@ -290,8 +287,7 @@ class AbstractSearch(metaclass=ABCMeta):
         return (parts[0], op)
 
     @abstractmethod
-    def fetch_all(self) -> SearchResult:
-        pass
+    def fetch_all(self) -> SearchResult: ...
 
 
 class StacSearch(AbstractSearch):
@@ -557,8 +553,7 @@ class AbstractQuerySanitizer(metaclass=ABCMeta):
         return sanitizer_rules[field](field=field, value=value)
 
     @abstractmethod
-    def _get_custom_sanitizer_rules(self):
-        pass
+    def _get_custom_sanitizer_rules(self): ...
 
 
 class TaskingRequestQuerySanitizer(AbstractQuerySanitizer):
@@ -589,10 +584,10 @@ class RepeatRequestQuerySanitizer(AbstractQuerySanitizer):
         return self._sanitize_enum(field=field, value=value, enum_cls=RepeatCollectionTier)
 
 
-def _fetch_page(params, session, search_endpoint, search_entity, search_payload):
+def _fetch_page(params, session, search_endpoint, search_entity, search_payload, silent=False):
     resp = session.post(search_endpoint, params=params, json=search_payload)
     page = resp.json()
-    if page["currentPage"] > 1:
+    if page["currentPage"] > 1 and not silent:
         logger.info(f"page {page['currentPage']} out of {page['totalPages']}: {len(page['results'])} {search_entity}")
     return page
 
@@ -627,6 +622,7 @@ class AbstractTaskRepeatSearch(AbstractSearch):
         self.payload: dict[str, Any] = {}
         self.page_size = kwargs.pop("page_size", None) or TR_SEARCH_DEFAULT_PAGE_SIZE
         self.threaded = kwargs.pop("threaded", True)
+        self.show_progress = kwargs.pop("show_progress", False)
         # TODO: max results (limit)
 
         query_payload = self._get_query_payload(kwargs)
@@ -720,25 +716,52 @@ class AbstractTaskRepeatSearch(AbstractSearch):
             search_endpoint=self.SEARCH_ENDPOINT,
             search_entity=self.SEARCH_ENTITY,
             search_payload=self.payload,
+            silent=self.show_progress,
         )
 
-        if self.threaded:
-            with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
-                results = executor.map(_fetch_worker, page_params)
+        if not self.show_progress:
+            if self.threaded:
+                with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
+                    results = executor.map(_fetch_worker, page_params)
 
-            for page in results:
-                search_result.add(page)
-        else:
-            for params in page_params:
-                page = _fetch_worker(params)
-                search_result.add(page)
+                for page in results:
+                    search_result.add(page)
+            else:
+                for params in page_params:
+                    page = _fetch_worker(params)
+                    search_result.add(page)
+            print_task_search_result(search_result._features, search_entity=self.SEARCH_ENTITY.value)
+            return search_result
+
+        # with progress bar
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+        ) as progress:
+            task = progress.add_task(f"[cyan]Fetching {self.SEARCH_ENTITY.value}s...", total=total_pages)
+            progress.update(task, advance=1)
+
+            if self.threaded:
+                with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
+                    futures = {executor.submit(_fetch_worker, params): params for params in page_params}
+
+                    for future in as_completed(futures):
+                        page = future.result()
+                        search_result.add(page)
+                        progress.update(task, advance=1)
+            else:
+                for params in page_params:
+                    page = _fetch_worker(params)
+                    search_result.add(page)
+                    progress.update(task, advance=1)
 
         print_task_search_result(search_result._features, search_entity=self.SEARCH_ENTITY.value)
         return search_result
 
     @abstractmethod
-    def _init_search_result(self) -> TaskingRequestSearchResult | RepeatRequestSearchResult:
-        pass
+    def _init_search_result(self) -> TaskingRequestSearchResult | RepeatRequestSearchResult: ...
 
 
 class TaskingRequestSearch(AbstractTaskRepeatSearch):
