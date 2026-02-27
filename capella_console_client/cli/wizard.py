@@ -31,7 +31,7 @@ def auto_auth_callback(ctx: typer.Context):
         return
 
     if "capella_api_url" in CURRENT_SETTINGS:
-        breakpoint()
+        CLIENT._sesh.base_url = CURRENT_SETTINGS["capella_api_url"]
 
     if "console_api_key" in CURRENT_SETTINGS:
         CLIENT._sesh.authenticate(api_key=CURRENT_SETTINGS["console_api_key"], no_token_check=False)

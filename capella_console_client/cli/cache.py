@@ -82,16 +82,13 @@ class CLICache:
         profile_path = cls._get_profile_path(profile_name)
 
         if copy_from:
-            # Copy settings from another profile
             source_settings = cls._load_profile_settings(copy_from)
             profile_path.write_text(json.dumps(source_settings, indent=2))
 
-            # Copy API key from source profile
             source_key = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(copy_from))
             if source_key:
                 keyring.set_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(profile_name), source_key)
         else:
-            # Create empty profile
             profile_path.write_text(json.dumps({}, indent=2))
 
         # Add to profiles list
@@ -147,49 +144,20 @@ class CLICache:
         if profile_name not in meta["profiles"]:
             raise ValueError(f"Profile '{profile_name}' does not exist")
 
-        # If deleting active profile, switch to default
         if meta["active"] == profile_name:
             meta["active"] = cls.DEFAULT_PROFILE
 
-        # Remove profile file
         profile_path = cls._get_profile_path(profile_name)
         if profile_path.exists():
             profile_path.unlink()
 
-        # Remove API key from keyring
         try:
             keyring.delete_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(profile_name))
         except:
-            pass  # Key might not exist
+            # key might not exist
+            pass
 
-        # Remove from profiles list
         meta["profiles"].remove(profile_name)
-        cls._save_profiles_meta(meta)
-
-    @classmethod
-    def _migrate_legacy_settings(cls):
-        """Migrate legacy settings.json to default profile."""
-        # Create profiles directory
-        cls.PROFILES_DIR.mkdir(exist_ok=True, parents=True)
-
-        # Load legacy settings
-        legacy_settings = {}
-        if cls.SETTINGS.exists():
-            legacy_settings = _safe_load_json(cls.SETTINGS)
-            # Remove api_key if present (should have been migrated to keyring already)
-            legacy_settings.pop("console_api_key", None)
-
-        # Save to default profile
-        default_profile_path = cls._get_profile_path(cls.DEFAULT_PROFILE)
-        default_profile_path.write_text(json.dumps(legacy_settings, indent=2))
-
-        # Migrate API key from legacy keyring location
-        legacy_key = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls.KEYRING_USERNAME)
-        if legacy_key:
-            keyring.set_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(cls.DEFAULT_PROFILE), legacy_key)
-
-        # Create profiles metadata
-        meta = {"active": cls.DEFAULT_PROFILE, "profiles": [cls.DEFAULT_PROFILE]}
         cls._save_profiles_meta(meta)
 
     @classmethod
@@ -203,7 +171,6 @@ class CLICache:
     @classmethod
     def write_user_settings(cls, key: str, value: Any):
         """Write a setting to the active profile."""
-        # Ensure migration has happened
         if not cls.PROFILES_META.exists():
             cls._migrate_legacy_settings()
 
@@ -219,20 +186,36 @@ class CLICache:
         """Load settings from the active profile."""
         # Check if we need to migrate from legacy settings
         if not cls.PROFILES_META.exists():
-            # First time using profiles - migrate legacy settings
             cls._migrate_legacy_settings()
 
-        # Get active profile
         active_profile = cls.get_active_profile()
-
-        # Load profile settings
         settings = cls._load_profile_settings(active_profile)
-
-        # Load API key from keyring for this profile
         profile_key = cls._get_profile_keyring_key(active_profile)
         settings["console_api_key"] = keyring.get_password(cls.KEYRING_SYSTEM_NAME, profile_key) or ""
 
         return settings
+
+    @classmethod
+    def _migrate_legacy_settings(cls):
+        """Migrate legacy settings.json to default profile."""
+        cls.PROFILES_DIR.mkdir(exist_ok=True, parents=True)
+
+        legacy_settings = {}
+        if cls.SETTINGS.exists():
+            legacy_settings = _safe_load_json(cls.SETTINGS)
+            # Remove api_key if present (should have been migrated to keyring already)
+            legacy_settings.pop("console_api_key", None)
+
+        default_profile_path = cls._get_profile_path(cls.DEFAULT_PROFILE)
+        default_profile_path.write_text(json.dumps(legacy_settings, indent=2))
+
+        # Migrate API key from legacy keyring location
+        legacy_key = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls.KEYRING_USERNAME)
+        if legacy_key:
+            keyring.set_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(cls.DEFAULT_PROFILE), legacy_key)
+
+        meta = {"active": cls.DEFAULT_PROFILE, "profiles": [cls.DEFAULT_PROFILE]}
+        cls._save_profiles_meta(meta)
 
     @classmethod
     def add_timestamps(cls, data: dict[str, Any] | list[str], is_new: bool = False) -> dict[str, Any]:
