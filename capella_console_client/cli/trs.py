@@ -51,7 +51,6 @@ def _fetch_users() -> list[dict[str, Any]]:
 
         page_cnt += 1
 
-        # Fetch remaining pages
         while page_cnt <= total_pages:
             resp = CLIENT._sesh.get(f"/users/?limit=1000&page={page_cnt}")
             page = resp.json()
@@ -80,7 +79,6 @@ def _fetch_orgs() -> list[dict[str, Any]]:
         BarColumn(),
         TaskProgressColumn(),
     ) as progress:
-        # First request to get total pages
         resp = CLIENT._sesh.get(f"/organizations/?limit=1000&page={page_cnt}")
         page = resp.json()
         total_pages = page["totalPages"]
@@ -95,7 +93,6 @@ def _fetch_orgs() -> list[dict[str, Any]]:
 
         page_cnt += 1
 
-        # Fetch remaining pages
         while page_cnt <= total_pages:
             resp = CLIENT._sesh.get(f"/organizations/?limit=1000&page={page_cnt}")
             page = resp.json()
@@ -123,29 +120,24 @@ def _prompt_admin_target() -> tuple[str | None, str | None]:
         Tuple of (target_type, target_uuid) where:
         - target_type is "user" or "org"
         - target_uuid is the selected entity's UUID
-        Returns None if user cancels at any prompt.
+        Returns (None, None) if user cancels at any prompt.
     """
-    admin_responses = questionary.prompt(
-        [
-            {
-                "type": "select",
-                "name": "for_who",
-                "message": "for who:",
-                "choices": ["user", "org"],
-            },
-            {
-                "type": "select",
-                "name": "selection_method",
-                "message": "how to select:",
-                "choices": ["Enter UUID manually", "Fetch from API"],
-            },
-        ]
-    )
+    # First prompt: select user or org
+    admin_for_who = questionary.select(
+        "for who:",
+        choices=["user", "org"],
+    ).ask()
 
-    admin_for_who = admin_responses.get("for_who")
-    selection_method = admin_responses.get("selection_method")
+    if not admin_for_who:
+        return (None, None)
 
-    if not admin_for_who or not selection_method:
+    # Second prompt: selection method (customized based on first choice)
+    selection_method = questionary.select(
+        "how to select:",
+        choices=["Enter UUID manually", f"Fetch {admin_for_who} from API"],
+    ).ask()
+
+    if not selection_method:
         return (None, None)
 
     admin_uuid = None
@@ -166,7 +158,7 @@ def _prompt_admin_target() -> tuple[str | None, str | None]:
 
             if not users:
                 typer.echo("No users found")
-                return None
+                return (None, None)
 
             # Create email -> user_id mapping
             email_to_id = {user["email"]: user["id"] for user in users}
@@ -178,7 +170,7 @@ def _prompt_admin_target() -> tuple[str | None, str | None]:
             ).ask()
 
             if not selected_email:
-                return None
+                return (None, None)
 
             admin_uuid = email_to_id[selected_email]
         else:
