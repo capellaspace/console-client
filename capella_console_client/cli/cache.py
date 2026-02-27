@@ -16,25 +16,183 @@ def _safe_load_json(file_path: Path) -> dict[str, Any]:
 
 class CLICache:
     ROOT = Path.home() / ".capella-console-wizard"
-    SETTINGS = ROOT / "settings.json"
+    SETTINGS = ROOT / "settings.json"  # LEGACY - for migration
+    PROFILES_DIR = ROOT / "profiles"
+    PROFILES_META = ROOT / "profiles.json"
     MY_SEARCH_RESULTS = ROOT / "my-search-results.json"
     MY_SEARCH_QUERIES = ROOT / "my-search-queries.json"
     KEYRING_SYSTEM_NAME = "capella-console-wizard"
-    KEYRING_USERNAME = "console-api-key"
+    KEYRING_USERNAME = "console-api-key"  # LEGACY - for migration
+    DEFAULT_PROFILE = "default"
+
+    @classmethod
+    def _get_profile_path(cls, profile_name: str) -> Path:
+        """Get the settings file path for a specific profile."""
+        return cls.PROFILES_DIR / f"{profile_name}.json"
+
+    @classmethod
+    def _get_profile_keyring_key(cls, profile_name: str) -> str:
+        """Get the keyring username for a specific profile."""
+        return f"{cls.KEYRING_USERNAME}-{profile_name}"
+
+    @classmethod
+    def _load_profiles_meta(cls) -> dict[str, Any]:
+        """Load profiles metadata (active profile and list of profiles)."""
+        if not cls.PROFILES_META.exists():
+            return {"active": cls.DEFAULT_PROFILE, "profiles": [cls.DEFAULT_PROFILE]}
+        return _safe_load_json(cls.PROFILES_META)
+
+    @classmethod
+    def _save_profiles_meta(cls, meta: dict[str, Any]):
+        """Save profiles metadata."""
+        cls.PROFILES_META.write_text(json.dumps(meta, indent=2))
+
+    @classmethod
+    def get_active_profile(cls) -> str:
+        """Get the name of the currently active profile."""
+        meta = cls._load_profiles_meta()
+        return meta.get("active", cls.DEFAULT_PROFILE)
+
+    @classmethod
+    def set_active_profile(cls, profile_name: str):
+        """Set the active profile."""
+        meta = cls._load_profiles_meta()
+        if profile_name not in meta["profiles"]:
+            raise ValueError(f"Profile '{profile_name}' does not exist")
+        meta["active"] = profile_name
+        cls._save_profiles_meta(meta)
+
+    @classmethod
+    def list_profiles(cls) -> list[str]:
+        """List all available profiles."""
+        meta = cls._load_profiles_meta()
+        return meta.get("profiles", [cls.DEFAULT_PROFILE])
+
+    @classmethod
+    def create_profile(cls, profile_name: str, copy_from: str | None = None):
+        """Create a new profile, optionally copying settings from another profile."""
+        meta = cls._load_profiles_meta()
+
+        if profile_name in meta["profiles"]:
+            raise ValueError(f"Profile '{profile_name}' already exists")
+
+        # Create profiles directory if it doesn't exist
+        cls.PROFILES_DIR.mkdir(exist_ok=True, parents=True)
+
+        profile_path = cls._get_profile_path(profile_name)
+
+        if copy_from:
+            # Copy settings from another profile
+            source_settings = cls._load_profile_settings(copy_from)
+            profile_path.write_text(json.dumps(source_settings, indent=2))
+
+            # Copy API key from source profile
+            source_key = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(copy_from))
+            if source_key:
+                keyring.set_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(profile_name), source_key)
+        else:
+            # Create empty profile
+            profile_path.write_text(json.dumps({}, indent=2))
+
+        # Add to profiles list
+        meta["profiles"].append(profile_name)
+        cls._save_profiles_meta(meta)
+
+    @classmethod
+    def delete_profile(cls, profile_name: str):
+        """Delete a profile."""
+        if profile_name == cls.DEFAULT_PROFILE:
+            raise ValueError("Cannot delete the default profile")
+
+        meta = cls._load_profiles_meta()
+
+        if profile_name not in meta["profiles"]:
+            raise ValueError(f"Profile '{profile_name}' does not exist")
+
+        # If deleting active profile, switch to default
+        if meta["active"] == profile_name:
+            meta["active"] = cls.DEFAULT_PROFILE
+
+        # Remove profile file
+        profile_path = cls._get_profile_path(profile_name)
+        if profile_path.exists():
+            profile_path.unlink()
+
+        # Remove API key from keyring
+        try:
+            keyring.delete_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(profile_name))
+        except:
+            pass  # Key might not exist
+
+        # Remove from profiles list
+        meta["profiles"].remove(profile_name)
+        cls._save_profiles_meta(meta)
+
+    @classmethod
+    def _migrate_legacy_settings(cls):
+        """Migrate legacy settings.json to default profile."""
+        # Create profiles directory
+        cls.PROFILES_DIR.mkdir(exist_ok=True, parents=True)
+
+        # Load legacy settings
+        legacy_settings = {}
+        if cls.SETTINGS.exists():
+            legacy_settings = _safe_load_json(cls.SETTINGS)
+            # Remove api_key if present (should have been migrated to keyring already)
+            legacy_settings.pop("console_api_key", None)
+
+        # Save to default profile
+        default_profile_path = cls._get_profile_path(cls.DEFAULT_PROFILE)
+        default_profile_path.write_text(json.dumps(legacy_settings, indent=2))
+
+        # Migrate API key from legacy keyring location
+        legacy_key = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls.KEYRING_USERNAME)
+        if legacy_key:
+            keyring.set_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(cls.DEFAULT_PROFILE), legacy_key)
+
+        # Create profiles metadata
+        meta = {"active": cls.DEFAULT_PROFILE, "profiles": [cls.DEFAULT_PROFILE]}
+        cls._save_profiles_meta(meta)
+
+    @classmethod
+    def _load_profile_settings(cls, profile_name: str) -> dict[str, Any]:
+        """Load settings for a specific profile."""
+        profile_path = cls._get_profile_path(profile_name)
+        if not profile_path.exists():
+            return {}
+        return _safe_load_json(profile_path)
 
     @classmethod
     def write_user_settings(cls, key: str, value: Any):
-        settings = cls.load_user_settings()
+        """Write a setting to the active profile."""
+        # Ensure migration has happened
+        if not cls.PROFILES_META.exists():
+            cls._migrate_legacy_settings()
+
+        active_profile = cls.get_active_profile()
+        settings = cls._load_profile_settings(active_profile)
         settings[key] = value
-        cls.SETTINGS.write_text(json.dumps(settings))
+
+        profile_path = cls._get_profile_path(active_profile)
+        profile_path.write_text(json.dumps(settings, indent=2))
 
     @classmethod
     def load_user_settings(cls) -> dict[str, Any]:
-        settings = _safe_load_json(cls.SETTINGS)
-        if "console_api_key" in settings:
-            cls._migrate_api_key_to_keychain(settings)
+        """Load settings from the active profile."""
+        # Check if we need to migrate from legacy settings
+        if not cls.PROFILES_META.exists():
+            # First time using profiles - migrate legacy settings
+            cls._migrate_legacy_settings()
 
-        settings["console_api_key"] = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls.KEYRING_USERNAME) or ""
+        # Get active profile
+        active_profile = cls.get_active_profile()
+
+        # Load profile settings
+        settings = cls._load_profile_settings(active_profile)
+
+        # Load API key from keyring for this profile
+        profile_key = cls._get_profile_keyring_key(active_profile)
+        settings["console_api_key"] = keyring.get_password(cls.KEYRING_SYSTEM_NAME, profile_key) or ""
 
         return settings
 

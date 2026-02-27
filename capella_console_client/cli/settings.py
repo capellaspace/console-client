@@ -23,6 +23,7 @@ from capella_console_client.logconf import logger
 
 
 app = typer.Typer(help="fine tune settings")
+profile_app = typer.Typer(help="manage settings profiles")
 
 
 def _prompt_search_result_headers() -> list[str]:
@@ -100,18 +101,20 @@ def api_url():
 @app.command()
 def api_key():
     """
-    set API key for Capella Console
+    set API key for Capella Console (for active profile)
     """
+    active_profile = CLICache.get_active_profile()
     console_api_key = questionary.password(
-        "Console API key:",
+        f"Console API key (for profile '{active_profile}'):",
         default=CURRENT_SETTINGS.get("console_api_key", ""),
         validate=_validate_api_key,
     ).ask()
     _no_selection_bye(console_api_key)
 
     if console_api_key:
-        keyring.set_password(CLICache.KEYRING_SYSTEM_NAME, CLICache.KEYRING_USERNAME, console_api_key)
-        typer.echo("updated API key for Capella Console")
+        profile_key = CLICache._get_profile_keyring_key(active_profile)
+        keyring.set_password(CLICache.KEYRING_SYSTEM_NAME, profile_key, console_api_key)
+        typer.echo(f"updated API key for profile '{active_profile}'")
         return True
 
     return False
@@ -149,8 +152,166 @@ def search_filter_order():
     typer.echo("updated order of search filters to be used in searches")
 
 
+@profile_app.command("list")
+def profile_list():
+    """
+    list all profiles
+    """
+    profiles = CLICache.list_profiles()
+    active = CLICache.get_active_profile()
+
+    typer.secho("\nAvailable profiles:\n", underline=True)
+    for profile in profiles:
+        marker = " (active)" if profile == active else ""
+        typer.echo(f"  • {profile}{marker}")
+    typer.echo()
+
+
+@profile_app.command("show")
+def profile_show(profile_name: str | None = None):
+    """
+    show settings for a specific profile
+    """
+    if not profile_name:
+        profile_name = CLICache.get_active_profile()
+
+    if profile_name not in CLICache.list_profiles():
+        typer.secho(f"Profile '{profile_name}' does not exist", fg="red")
+        raise typer.Exit(1)
+
+    settings = CLICache._load_profile_settings(profile_name)
+    profile_key = CLICache._get_profile_keyring_key(profile_name)
+    api_key_set = bool(keyring.get_password(CLICache.KEYRING_SYSTEM_NAME, profile_key))
+
+    settings_display = {**settings, "console_api_key": "***" if api_key_set else "(not set)"}
+
+    typer.secho(f"\nSettings for profile '{profile_name}':\n", underline=True)
+    table_data = list(settings_display.items())
+    typer.echo(tabulate(table_data, tablefmt="fancy_grid", headers=["setting", "value"]))
+
+
+@profile_app.command("create")
+def profile_create(
+    profile_name: str | None = typer.Argument(None, help="Name of the new profile"),
+    copy_from: str | None = typer.Option(None, "--copy-from", help="Copy settings from this profile"),
+):
+    """
+    create a new profile
+    """
+    # Prompt for profile name if not provided
+    if not profile_name:
+        profile_name = questionary.text(
+            "Profile name:", validate=lambda text: True if text.strip() else "Profile name cannot be empty"
+        ).ask()
+
+        if not profile_name:
+            typer.echo("Profile creation cancelled")
+            return
+
+    try:
+        if copy_from and copy_from not in CLICache.list_profiles():
+            typer.secho(f"Source profile '{copy_from}' does not exist", fg="red")
+            raise typer.Exit(1)
+
+        CLICache.create_profile(profile_name, copy_from=copy_from)
+
+        if copy_from:
+            typer.secho(f"Created profile '{profile_name}' (copied from '{copy_from}')", fg="green")
+        else:
+            typer.secho(f"Created profile '{profile_name}'", fg="green")
+
+        # Always prompt to configure after creation
+        if questionary.confirm(f"Would you like to configure profile '{profile_name}' now?").ask():
+            # Save current active profile
+            original_profile = CLICache.get_active_profile()
+
+            # Switch to new profile
+            CLICache.set_active_profile(profile_name)
+            typer.secho(f"\nConfiguring profile '{profile_name}'...\n", fg="cyan")
+
+            try:
+                configure()
+            except (KeyboardInterrupt, Exception):
+                # Restore original profile on error or Ctrl+C
+                CLICache.set_active_profile(original_profile)
+                typer.secho(f"\nConfiguration interrupted. Switched back to '{original_profile}'", fg="yellow")
+                return
+
+            # Ask if they want to keep new profile active
+            typer.echo()
+            if questionary.confirm(f"Keep '{profile_name}' as active profile?").ask():
+                typer.secho(f"Profile '{profile_name}' is now active", fg="green")
+            else:
+                CLICache.set_active_profile(original_profile)
+                typer.secho(f"Switched back to '{original_profile}'", fg="green")
+
+    except ValueError as e:
+        typer.secho(str(e), fg="red")
+        raise typer.Exit(1)
+
+
+@profile_app.command("switch")
+def profile_switch(profile_name: str = typer.Argument(..., help="Name of the profile to activate")):
+    """
+    switch to a different profile
+    """
+    try:
+        CLICache.set_active_profile(profile_name)
+        typer.secho(f"Switched to profile '{profile_name}'", fg="green")
+    except ValueError as e:
+        typer.secho(str(e), fg="red")
+        raise typer.Exit(1)
+
+
+@profile_app.command("delete")
+def profile_delete(profile_name: str = typer.Argument(..., help="Name of the profile to delete")):
+    """
+    delete a profile
+    """
+    # Confirm deletion
+    if not questionary.confirm(
+        f"Are you sure you want to delete profile '{profile_name}'? This cannot be undone."
+    ).ask():
+        typer.echo("Deletion cancelled")
+        return
+
+    try:
+        CLICache.delete_profile(profile_name)
+        typer.secho(f"Deleted profile '{profile_name}'", fg="green")
+    except ValueError as e:
+        typer.secho(str(e), fg="red")
+        raise typer.Exit(1)
+
+
+@profile_app.command("copy")
+def profile_copy(
+    source: str = typer.Argument(..., help="Source profile name"),
+    destination: str = typer.Argument(..., help="Destination profile name"),
+):
+    """
+    copy a profile to a new profile
+    """
+    try:
+        if source not in CLICache.list_profiles():
+            typer.secho(f"Source profile '{source}' does not exist", fg="red")
+            raise typer.Exit(1)
+
+        CLICache.create_profile(destination, copy_from=source)
+        typer.secho(f"Copied profile '{source}' to '{destination}'", fg="green")
+    except ValueError as e:
+        typer.secho(str(e), fg="red")
+        raise typer.Exit(1)
+
+
+# Mount profile commands to main app
+app.add_typer(profile_app, name="profile")
+
+
 def configure():
-    logger.info(typer.style("let's get you all setup using capella-console-wizard:", bold=True))
+    active_profile = CLICache.get_active_profile()
+    logger.info(
+        typer.style(f"let's get you all setup using capella-console-wizard (profile: {active_profile}):", bold=True)
+    )
     logger.info("\t\tPress Ctrl + C anytime to quit\n")
     api_url()
     # Don't prompt for user if there is an api key
