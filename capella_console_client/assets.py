@@ -156,7 +156,18 @@ def _perform_download(
     override: bool,
     threaded: bool,
     show_progress: bool = False,
+    enable_resume: bool = True,
 ) -> dict[str, Path | S3Path]:
+    """
+    Perform downloads for multiple assets
+
+    Args:
+        download_requests: List of download requests
+        override: Whether to override existing files
+        threaded: Whether to use threaded downloads
+        show_progress: Whether to show progress bar
+        enable_resume: Whether to enable resuming partial downloads (default: True)
+    """
     local_paths_by_key = {}
 
     with progress_bar as progress:
@@ -170,6 +181,7 @@ def _perform_download(
                     override=override,
                     show_progress=show_progress,
                     progress=progress,
+                    enable_resume=enable_resume,
                 )
 
         # threaded
@@ -185,6 +197,7 @@ def _perform_download(
                         override=override,
                         show_progress=show_progress,
                         progress=progress,
+                        enable_resume=enable_resume,
                     )
 
             for key, fut in futures_by_key.items():
@@ -198,13 +211,30 @@ def _download_asset(
     override: bool,
     show_progress: bool,
     progress: rich.progress.Progress,
+    enable_resume: bool = True,
 ) -> Path | S3Path:
+    """
+    Download a single asset
+
+    Args:
+        dl_request: Download request containing URL and local path
+        override: Whether to override existing files
+        show_progress: Whether to show progress bar
+        progress: Rich progress instance
+        enable_resume: Whether to enable resuming partial downloads (default: True)
+    """
     # If a directory is provided, create a file path in it
     if hasattr(dl_request.local_path, "is_dir") and dl_request.local_path.is_dir():
         local_file = _get_filename(dl_request.url)
         dl_request.local_path = dl_request.local_path / local_file
 
-    if not override and dl_request.local_path.exists():
+    # S3Path compatibility check
+    if isinstance(dl_request.local_path, S3Path) and enable_resume:  # type: ignore[misc]
+        logger.warning("resume not fully supported for S3 paths, disabling")
+        enable_resume = False
+
+    # Early exit if file exists, resume is disabled, and not overriding
+    if dl_request.local_path.exists() and not override and not enable_resume:
         logger.info(f"already downloaded to {dl_request.local_path}")
         return dl_request.local_path
 
@@ -213,16 +243,52 @@ def _download_asset(
     except Exception:
         asset_size = -1
 
+    resume_from: int | None = None
+    file_exists = dl_request.local_path.exists()
+
+    if file_exists and not override:
+        if enable_resume and asset_size > 0:
+            existing_size = dl_request.local_path.stat().st_size
+
+            file_completed = existing_size == asset_size
+            if file_completed:
+                logger.info(f"already fully downloaded to {dl_request.local_path}")
+                return dl_request.local_path
+
+            resume_from = _get_resume_from(existing_size, asset_size)
+
+        elif enable_resume and asset_size == -1:
+            logger.info(f"unknown asset size, cannot resume. Skipping existing file at {dl_request.local_path}")
+            return dl_request.local_path
+        else:
+            # Resume disabled, skip download
+            logger.info(f"already downloaded to {dl_request.local_path}")
+            return dl_request.local_path
+
     if not show_progress:
         size_suffix = f"({_sizeof_fmt(asset_size)})" if asset_size != -1 else ""
-        logger.info(f"downloading to {dl_request.local_path} {size_suffix}")
+        action = "resuming" if resume_from else "downloading"
+        logger.info(f"{action} to {dl_request.local_path} {size_suffix}")
 
-    _fetch(dl_request, asset_size, show_progress, progress)
+    _fetch(dl_request, asset_size, show_progress, progress, resume_from=resume_from)
 
     if not show_progress:
         logger.info(f"successfully downloaded to {dl_request.local_path}")
 
     return dl_request.local_path
+
+
+def _get_resume_from(existing_size: int, asset_size: int) -> int | None:
+    # Partial file detected
+    if 0 < existing_size < asset_size:
+        logger.info(f"partial download detected ({existing_size}/{asset_size} bytes), resuming")
+        return existing_size
+
+    # Corrupted file (larger than expected or zero bytes)
+    if existing_size > asset_size:
+        logger.warning(f"file size mismatch ({existing_size} vs {asset_size}), re-downloading")
+
+    return None
 
 
 @retry(
@@ -235,23 +301,173 @@ def _fetch(
     asset_size: int,
     show_progress: bool,
     progress: rich.progress.Progress,
-):
+    resume_from: int | None = None,
+) -> Path | S3Path:
+    """
+    Fetch asset from URL with optional resume support.
+
+    Args:
+        dl_request: Download request containing URL and local path
+        asset_size: Total size of the asset in bytes
+        show_progress: Whether to show progress bar
+        progress: Rich progress instance
+        resume_from: Byte offset to resume from (None for fresh download)
+
+    Returns:
+        Path to the downloaded file
+    """
+    headers, file_mode, initial_bytes = _prepare_resume_context(resume_from)
+
     try:
-        with dl_request.local_path.open("wb") as f:
-            with httpx.stream("GET", dl_request.url) as response:
+        with httpx.stream("GET", dl_request.url, headers=headers) as response:
+            if response.status_code == 206:
+                return _handle_partial_content(
+                    dl_request, response, file_mode, asset_size, show_progress, progress, initial_bytes
+                )
+            elif response.status_code == 200:
+                return _handle_full_content(dl_request, response, asset_size, show_progress, progress, resume_from)
+            elif response.status_code == 416:
+                return _handle_range_not_satisfiable(dl_request)
+            else:
                 response.raise_for_status()
-                if show_progress:
-                    download_task_id = _register_progress_task(dl_request, progress, asset_size)
-
-                for chunk in response.iter_bytes():
-                    f.write(chunk)
-
-                    if show_progress:
-                        progress.update(download_task_id, completed=response.num_bytes_downloaded)
+                # Fallback (unreachable if raise_for_status raises)
+                return dl_request.local_path
     except httpx.ConnectError as e:
         raise ConnectError(f"Could not connect to {dl_request.url}: {e}") from None
 
+
+def _prepare_resume_context(resume_from: int | None) -> tuple[dict[str, str], str, int]:
+    """
+    Prepare HTTP headers, file mode, and initial byte count for resume.
+
+    Args:
+        resume_from: Byte offset to resume from (None for fresh download)
+
+    Returns:
+        Tuple of (headers dict, file mode, initial bytes)
+    """
+    headers: dict[str, str] = {}
+    file_mode = "wb"
+    initial_bytes = 0
+
+    if resume_from is not None and resume_from > 0:
+        headers["Range"] = f"bytes={resume_from}-"
+        file_mode = "ab"
+        initial_bytes = resume_from
+        logger.info(f"resuming download from byte {resume_from}")
+
+    return headers, file_mode, initial_bytes
+
+
+def _handle_partial_content(
+    dl_request: DownloadRequest,
+    response: httpx.Response,
+    file_mode: str,
+    asset_size: int,
+    show_progress: bool,
+    progress: rich.progress.Progress,
+    initial_bytes: int,
+) -> Path | S3Path:
+    """
+    Handle 206 Partial Content response (server supports Range).
+
+    Args:
+        dl_request: Download request containing URL and local path
+        response: HTTP response object
+        file_mode: File open mode ("wb" or "ab")
+        asset_size: Total size of the asset in bytes
+        show_progress: Whether to show progress bar
+        progress: Rich progress instance
+        initial_bytes: Number of bytes already downloaded
+
+    Returns:
+        Path to the downloaded file
+    """
+    logger.debug("server supports Range header (206 Partial Content)")
+
+    with dl_request.local_path.open(file_mode) as f:
+        _download_with_progress(response, f, dl_request, asset_size, show_progress, progress, initial_bytes)
+
     return dl_request.local_path
+
+
+def _handle_full_content(
+    dl_request: DownloadRequest,
+    response: httpx.Response,
+    asset_size: int,
+    show_progress: bool,
+    progress: rich.progress.Progress,
+    resume_from: int | None,
+) -> Path | S3Path:
+    """
+    Handle 200 OK response (server doesn't support Range or fresh download).
+
+    Args:
+        dl_request: Download request containing URL and local path
+        response: HTTP response object
+        asset_size: Total size of the asset in bytes
+        show_progress: Whether to show progress bar
+        progress: Rich progress instance
+        resume_from: Byte offset that was requested (for logging)
+
+    Returns:
+        Path to the downloaded file
+    """
+    if resume_from is not None and resume_from > 0:
+        logger.warning("server doesn't support Range header, re-downloading from start")
+
+    with dl_request.local_path.open("wb") as f:
+        _download_with_progress(response, f, dl_request, asset_size, show_progress, progress, initial_bytes=0)
+
+    return dl_request.local_path
+
+
+def _handle_range_not_satisfiable(dl_request: DownloadRequest) -> Path | S3Path:
+    """
+    Handle 416 Range Not Satisfiable (file already complete).
+
+    Args:
+        dl_request: Download request containing URL and local path
+
+    Returns:
+        Path to the existing complete file
+    """
+    logger.info(f"file already complete at {dl_request.local_path}")
+    return dl_request.local_path
+
+
+def _download_with_progress(
+    response: httpx.Response,
+    file_handle,
+    dl_request: DownloadRequest,
+    asset_size: int,
+    show_progress: bool,
+    progress: rich.progress.Progress,
+    initial_bytes: int,
+) -> None:
+    """
+    Write response chunks to file with optional progress tracking.
+
+    Args:
+        response: HTTP response object to stream from
+        file_handle: Open file handle to write to
+        dl_request: Download request containing URL and local path
+        asset_size: Total size of the asset in bytes
+        show_progress: Whether to show progress bar
+        progress: Rich progress instance
+        initial_bytes: Number of bytes already downloaded (for progress offset)
+    """
+    download_task_id = None
+
+    if show_progress:
+        download_task_id = _register_progress_task(dl_request, progress, asset_size)
+        if initial_bytes > 0:
+            progress.update(download_task_id, completed=initial_bytes)
+
+    for chunk in response.iter_bytes():
+        file_handle.write(chunk)
+        if show_progress and download_task_id is not None:
+            progress.update(download_task_id, completed=response.num_bytes_downloaded + initial_bytes)
 
 
 def _register_progress_task(
