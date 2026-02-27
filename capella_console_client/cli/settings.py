@@ -251,10 +251,31 @@ def profile_create(
 
 
 @profile_app.command("switch")
-def profile_switch(profile_name: str = typer.Argument(..., help="Name of the profile to activate")):
+def profile_switch(profile_name: str | None = typer.Argument(None, help="Name of the profile to activate")):
     """
     switch to a different profile
     """
+    # Prompt for profile if not provided
+    if not profile_name:
+        profiles = CLICache.list_profiles()
+        active = CLICache.get_active_profile()
+
+        # Filter out current active profile from choices
+        available = [p for p in profiles if p != active]
+
+        if not available:
+            typer.secho("No other profiles available to switch to", fg="yellow")
+            return
+
+        profile_name = questionary.select(
+            f"Switch from '{active}' to:",
+            choices=available,
+        ).ask()
+
+        if not profile_name:
+            typer.echo("Profile switch cancelled")
+            return
+
     try:
         CLICache.set_active_profile(profile_name)
         typer.secho(f"Switched to profile '{profile_name}'", fg="green")
@@ -301,6 +322,118 @@ def profile_copy(
     except ValueError as e:
         typer.secho(str(e), fg="red")
         raise typer.Exit(1)
+
+
+@profile_app.command("update")
+def profile_update(profile_name: str | None = typer.Argument(None, help="Name of the profile to update")):
+    """
+    update profile name or settings
+    """
+    # Prompt for profile if not provided
+    if not profile_name:
+        profiles = CLICache.list_profiles()
+        profile_name = questionary.select(
+            "Which profile would you like to update?",
+            choices=profiles,
+        ).ask()
+
+        if not profile_name:
+            typer.echo("Update cancelled")
+            return
+
+    # Verify profile exists
+    if profile_name not in CLICache.list_profiles():
+        typer.secho(f"Profile '{profile_name}' does not exist", fg="red")
+        raise typer.Exit(1)
+
+    # Show update menu
+    update_choice = questionary.select(
+        f"What would you like to update for profile '{profile_name}'?",
+        choices=[
+            "Rename profile",
+            "Update all settings (configure)",
+            "Update API URL",
+            "Update API key",
+            "Update output path",
+            "Update search filter order",
+            "Update result table fields",
+            "Update search limit",
+            "Cancel",
+        ],
+    ).ask()
+
+    if not update_choice or update_choice == "Cancel":
+        typer.echo("Update cancelled")
+        return
+
+    # Save current active profile
+    original_profile = CLICache.get_active_profile()
+    needs_switch = profile_name != original_profile
+
+    try:
+        if update_choice == "Rename profile":
+            # Rename profile
+            new_name = questionary.text(
+                f"New name for profile '{profile_name}':",
+                validate=lambda text: True if text.strip() else "Profile name cannot be empty",
+            ).ask()
+
+            if not new_name:
+                typer.echo("Rename cancelled")
+                return
+
+            try:
+                CLICache.rename_profile(profile_name, new_name)
+                typer.secho(f"Renamed profile '{profile_name}' to '{new_name}'", fg="green")
+            except ValueError as e:
+                typer.secho(str(e), fg="red")
+                raise typer.Exit(1)
+
+        elif update_choice == "Update all settings (configure)":
+            # Switch to profile temporarily
+            if needs_switch:
+                CLICache.set_active_profile(profile_name)
+                typer.secho(f"\nConfiguring profile '{profile_name}'...\n", fg="cyan")
+
+            configure()
+
+            if needs_switch:
+                CLICache.set_active_profile(original_profile)
+                typer.secho(f"\nSwitched back to '{original_profile}'", fg="green")
+
+        else:
+            # Switch to profile temporarily for individual setting updates
+            if needs_switch:
+                CLICache.set_active_profile(profile_name)
+
+            # Update individual settings
+            if update_choice == "Update API URL":
+                api_url()
+            elif update_choice == "Update API key":
+                api_key()
+            elif update_choice == "Update output path":
+                output()
+            elif update_choice == "Update search filter order":
+                search_filter_order()
+            elif update_choice == "Update result table fields":
+                result_table()
+            elif update_choice == "Update search limit":
+                limit()
+
+            if needs_switch:
+                CLICache.set_active_profile(original_profile)
+                typer.secho(f"Updated '{profile_name}'. Active profile is still '{original_profile}'", fg="green")
+            else:
+                typer.secho(f"Updated '{profile_name}'", fg="green")
+
+    except (KeyboardInterrupt, Exception) as e:
+        # Restore original profile on error or Ctrl+C
+        if needs_switch:
+            CLICache.set_active_profile(original_profile)
+        if isinstance(e, KeyboardInterrupt):
+            typer.secho("\nUpdate interrupted", fg="yellow")
+        else:
+            raise
 
 
 # Mount profile commands to main app

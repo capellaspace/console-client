@@ -99,6 +99,44 @@ class CLICache:
         cls._save_profiles_meta(meta)
 
     @classmethod
+    def rename_profile(cls, old_name: str, new_name: str):
+        """Rename a profile."""
+        if old_name == cls.DEFAULT_PROFILE:
+            raise ValueError("Cannot rename the default profile")
+
+        meta = cls._load_profiles_meta()
+
+        if old_name not in meta["profiles"]:
+            raise ValueError(f"Profile '{old_name}' does not exist")
+
+        if new_name in meta["profiles"]:
+            raise ValueError(f"Profile '{new_name}' already exists")
+
+        # Rename profile file
+        old_path = cls._get_profile_path(old_name)
+        new_path = cls._get_profile_path(new_name)
+        if old_path.exists():
+            old_path.rename(new_path)
+
+        # Rename API key in keyring
+        old_key = keyring.get_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(old_name))
+        if old_key:
+            keyring.set_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(new_name), old_key)
+            try:
+                keyring.delete_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(old_name))
+            except:
+                pass
+
+        # Update profiles list
+        meta["profiles"] = [new_name if p == old_name else p for p in meta["profiles"]]
+
+        # Update active profile if needed
+        if meta["active"] == old_name:
+            meta["active"] = new_name
+
+        cls._save_profiles_meta(meta)
+
+    @classmethod
     def delete_profile(cls, profile_name: str):
         """Delete a profile."""
         if profile_name == cls.DEFAULT_PROFILE:
