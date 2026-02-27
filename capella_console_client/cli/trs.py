@@ -1,6 +1,6 @@
 import typer
 import questionary
-
+from typing import Any
 
 from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.enumerations import BaseEnum
@@ -19,6 +19,144 @@ def interactive():
 @app.command(help="cancel tasking requests")
 def cancel():
     _cancel_trs()
+
+
+def _fetch_users() -> list[dict[str, Any]]:
+    """
+    Fetch users from the API and prompt the user to select one.
+    Returns the selected user's UUID or None if cancelled.
+    """
+    typer.echo("Fetching all users")
+
+    users = []
+    page_cnt = 1
+    while True:
+        resp = CLIENT._sesh.get(f"/users/?limit=1000&page={page_cnt}")
+        page = resp.json()
+        typer.echo(f"{page['currentPage']=}, {page['totalPages']=}")
+        users.extend(page["results"])
+        if page["currentPage"] == page["totalPages"]:
+            break
+
+        page_cnt += 1
+
+    return users
+
+
+def _fetch_orgs() -> list[dict[str, Any]]:
+    typer.echo("Fetching all users")
+
+    orgs = []
+    page_cnt = 1
+    while True:
+        resp = CLIENT._sesh.get(f"/organizations/?limit=1000&page={page_cnt}")
+        page = resp.json()
+        typer.echo(f"{page['currentPage']=}, {page['totalPages']=}")
+        orgs.extend(page["results"])
+        if page["currentPage"] == page["totalPages"]:
+            break
+
+        page_cnt += 1
+
+    return orgs
+
+
+def _prompt_admin_target() -> tuple[str, str] | None:
+    """
+    Prompt admin to select a target user or organization for tasking request operations.
+
+    Prompts the admin to:
+    1. Choose between user or org
+    2. Choose selection method (manual UUID entry or fetch from API)
+    3. If fetching from API, select from autocomplete list
+
+    Returns:
+        Tuple of (target_type, target_uuid) where:
+        - target_type is "user" or "org"
+        - target_uuid is the selected entity's UUID
+        Returns None if user cancels at any prompt.
+    """
+    admin_responses = questionary.prompt(
+        [
+            {
+                "type": "select",
+                "name": "for_who",
+                "message": "for who:",
+                "choices": ["user", "org"],
+            },
+            {
+                "type": "select",
+                "name": "selection_method",
+                "message": "how to select:",
+                "choices": ["Enter UUID manually", "Fetch from API"],
+            },
+        ]
+    )
+
+    admin_for_who = admin_responses.get("for_who")
+    selection_method = admin_responses.get("selection_method")
+
+    if not admin_for_who or not selection_method:
+        return None
+
+    admin_uuid = None
+
+    if selection_method == "Enter UUID manually":
+        uuid_response = questionary.text(
+            "uuid:",
+            validate=_validate_uuid,
+        ).ask()
+
+        if not uuid_response:
+            return None
+
+        admin_uuid = uuid_response
+    else:
+        if admin_for_who == "user":
+            users = _fetch_users()
+
+            if not users:
+                typer.echo("No users found")
+                return None
+
+            # Create email -> user_id mapping
+            email_to_id = {user["email"]: user["id"] for user in users}
+            email_choices = list(email_to_id.keys())
+
+            selected_email = questionary.autocomplete(
+                "Select user by email:",
+                choices=email_choices,
+            ).ask()
+
+            if not selected_email:
+                return None
+
+            admin_uuid = email_to_id[selected_email]
+        else:
+            orgs = _fetch_orgs()
+
+            if not orgs:
+                typer.echo("No organizations found")
+                return None
+
+            # Create name -> org_id mapping
+            name_to_id = {org["name"]: org["id"] for org in orgs}
+            name_choices = list(name_to_id.keys())
+
+            selected_name = questionary.autocomplete(
+                "Select organization by name:",
+                choices=name_choices,
+            ).ask()
+
+            if not selected_name:
+                return None
+
+            admin_uuid = name_to_id[selected_name]
+
+        if not admin_uuid:
+            return None
+
+    return (admin_for_who, admin_uuid)
 
 
 class TrManageOptions(str, BaseEnum):
@@ -70,33 +208,16 @@ def _cancel_trs():
     if for_who == TrCancelOptions.org:
         tr_search_payload["for_org"] = True
     elif for_who == TrCancelOptions.admin:
-        admin_responses = questionary.prompt(
-            [
-                {
-                    "type": "select",
-                    "name": "for_who",
-                    "message": "for who:",
-                    "choices": ["user", "org"],
-                },
-                {
-                    "type": "text",
-                    "name": "uuid",
-                    "message": "uuid:",
-                    "validate": _validate_uuid,
-                },
-            ]
-        )
+        admin_target = _prompt_admin_target()
 
-        admin_for_who = admin_responses.get("for_who")
-        admin_uuid = admin_responses.get("uuid")
-
-        if not admin_for_who or not admin_uuid:
+        if not admin_target:
             return
+
+        admin_for_who, admin_uuid = admin_target
 
         if admin_for_who == "user":
             tr_search_payload["userId"] = admin_uuid
-
-        if admin_for_who == "org":
+        elif admin_for_who == "org":
             tr_search_payload["organizationIds"] = [admin_uuid]
 
     trs = CLIENT.search_tasking_requests(**tr_search_payload)
