@@ -1,9 +1,54 @@
 from unittest.mock import ANY
 from capella_console_client.config import CONSOLE_API_URL
 from tests.test_data import get_mock_responses
-
-
+import pytest
 import json
+
+
+@pytest.fixture
+def two_page_trs_mock(authed_tasking_request_mock):
+    """Fixture providing a mock with 2 pages of tasking request data"""
+    authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
+
+    page1_response = {
+        "results": [
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [-100.0, 40.0]},
+                "properties": {"taskingrequestId": "tr-page1-1", "userId": "MOCK_ID"},
+            },
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [-100.0, 40.0]},
+                "properties": {"taskingrequestId": "tr-page1-2", "userId": "MOCK_ID"},
+            },
+        ],
+        "currentPage": 1,
+        "totalPages": 2,
+    }
+
+    page2_response = {
+        "results": [
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [-100.0, 40.0]},
+                "properties": {"taskingrequestId": "tr-page2-1", "userId": "MOCK_ID"},
+            },
+        ],
+        "currentPage": 2,
+        "totalPages": 2,
+    }
+
+    authed_tasking_request_mock.add_response(
+        url=f"{CONSOLE_API_URL}/tasks/search?page=1&limit=250",
+        json=page1_response,
+    )
+    authed_tasking_request_mock.add_response(
+        url=f"{CONSOLE_API_URL}/tasks/search?page=2&limit=250",
+        json=page2_response,
+    )
+
+    yield authed_tasking_request_mock
 
 
 def test_search_all_trs_for_user(test_client, authed_tasking_request_mock):
@@ -61,7 +106,7 @@ def test_search_trs_with_id_multiple(test_client, authed_tasking_request_mock, d
     assert "def" in found_ids
 
 
-def test_serch_trs_with_id_single_status(test_client, authed_tasking_request_mock, disable_validate_uuid):
+def test_serch_trs_with_id_single_with_filters(test_client, authed_tasking_request_mock, disable_validate_uuid):
     authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
     mock_id = "/tasks/search?page=1&limit=250#SINGLETASK"
     mock_response = get_mock_responses(mock_id)
@@ -70,12 +115,20 @@ def test_serch_trs_with_id_single_status(test_client, authed_tasking_request_moc
     authed_tasking_request_mock.add_response(
         url=f"{CONSOLE_API_URL}{mock_id.split('#')[0]}",
         match_json={
-            "query": {"includeRepeatingTasks": {"eq": False}, "lastStatusCode": {"eq": "completed"}, "userId": ANY}
+            "query": {
+                "includeRepeatingTasks": {"eq": False},
+                "lastStatusCode": {"eq": "completed"},
+                "collectionType": ANY,
+                "collectionTier": ANY,
+                "userId": ANY,
+            }
         },
         json=mock_response,
     )
 
-    tr_results = test_client.search_tasking_requests(status="completed")
+    tr_results = test_client.search_tasking_requests(
+        status="completed", collection_tier="urgent", collection_type="spotlight_ultra"
+    )
     assert len(tr_results) == 1
     assert tr_results[0]["properties"]["taskingrequestId"] == single_tr_id
 
@@ -112,3 +165,33 @@ def test_search_trs_with_id_single_status_nonexistent_omitted(
     assert len(tr_results) == 2
     assert tr_results[0]["properties"]["taskingrequestId"] == "abc"
     assert tr_results[1]["properties"]["taskingrequestId"] == "def"
+
+
+def test_search_trs_threaded_two_pages(test_client, two_page_trs_mock, disable_validate_uuid):
+    tr_results = test_client.search_tasking_requests(threaded=True)
+
+    assert len(tr_results) == 3
+    tr_ids = [tr["properties"]["taskingrequestId"] for tr in tr_results]
+    assert "tr-page1-1" in tr_ids
+    assert "tr-page1-2" in tr_ids
+    assert "tr-page2-1" in tr_ids
+
+
+def test_search_trs_show_progress_sequential(test_client, two_page_trs_mock, disable_validate_uuid):
+    tr_results = test_client.search_tasking_requests(show_progress=True, threaded=False)
+
+    assert len(tr_results) == 3
+    tr_ids = [tr["properties"]["taskingrequestId"] for tr in tr_results]
+    assert "tr-page1-1" in tr_ids
+    assert "tr-page1-2" in tr_ids
+    assert "tr-page2-1" in tr_ids
+
+
+def test_search_trs_show_progress_threaded(test_client, two_page_trs_mock, disable_validate_uuid):
+    tr_results = test_client.search_tasking_requests(show_progress=True, threaded=True)
+
+    assert len(tr_results) == 3
+    tr_ids = [tr["properties"]["taskingrequestId"] for tr in tr_results]
+    assert "tr-page1-1" in tr_ids
+    assert "tr-page1-2" in tr_ids
+    assert "tr-page2-1" in tr_ids

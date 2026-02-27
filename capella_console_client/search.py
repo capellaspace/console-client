@@ -82,8 +82,7 @@ class Groupby(metaclass=ABCMeta):
         return dict(features_by_field)
 
     @abstractmethod
-    def _get_safe_field_value(self, field: str, item: dict[str, Any]):
-        pass
+    def _get_safe_field_value(self, field: str, item: dict[str, Any]): ...
 
 
 @dataclass
@@ -127,8 +126,7 @@ class SearchResult(metaclass=ABCMeta):
         return {"type": "FeatureCollection", "features": self._features}
 
     @abstractmethod
-    def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int:
-        pass
+    def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int: ...
 
     def merge(self, other: "SearchResult", keep_duplicates: bool = False) -> "SearchResult":
         copy = deepcopy(self)
@@ -275,12 +273,10 @@ class RepeatRequestSearchResult(SearchResult):
 class AbstractSearch(metaclass=ABCMeta):
 
     @abstractmethod
-    def _get_query_payload(self, kwargs) -> dict[str, Any]:
-        pass
+    def _get_query_payload(self, kwargs) -> dict[str, Any]: ...
 
     @abstractmethod
-    def _get_sort_payload(self, sortby):
-        pass
+    def _get_sort_payload(self, sortby): ...
 
     def _split_op(self, cur_field: str) -> tuple[str, str]:
         parts = cur_field.split("__")
@@ -291,8 +287,7 @@ class AbstractSearch(metaclass=ABCMeta):
         return (parts[0], op)
 
     @abstractmethod
-    def fetch_all(self) -> SearchResult:
-        pass
+    def fetch_all(self) -> SearchResult: ...
 
 
 class StacSearch(AbstractSearch):
@@ -558,8 +553,7 @@ class AbstractQuerySanitizer(metaclass=ABCMeta):
         return sanitizer_rules[field](field=field, value=value)
 
     @abstractmethod
-    def _get_custom_sanitizer_rules(self):
-        pass
+    def _get_custom_sanitizer_rules(self): ...
 
 
 class TaskingRequestQuerySanitizer(AbstractQuerySanitizer):
@@ -767,8 +761,7 @@ class AbstractTaskRepeatSearch(AbstractSearch):
         return search_result
 
     @abstractmethod
-    def _init_search_result(self) -> TaskingRequestSearchResult | RepeatRequestSearchResult:
-        pass
+    def _init_search_result(self) -> TaskingRequestSearchResult | RepeatRequestSearchResult: ...
 
 
 class TaskingRequestSearch(AbstractTaskRepeatSearch):
