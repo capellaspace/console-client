@@ -719,6 +719,26 @@ advanced tasking request search
     2026-02-24 13:33:22,086 - 🛰️  Capella 🐐 - INFO - page 4 out of 4: 200 SearchEntity.TASKING_REQUEST
     2026-02-24 13:33:29,135 - 🛰️  Capella 🐐 - INFO - found 1200 tasking requests matching search query
 
+    # ⌛ like to watch progress bars? ⌛ - set show_progress = True to display an interactive progress bar during pagination
+    client.search_tasking_requests(
+        status="completed",
+        for_org=True,
+        show_progress=True
+    )
+
+    # progress bar works with both threaded and sequential modes
+    client.search_tasking_requests(
+        status="completed",
+        for_org=True,
+        threaded=False,
+        show_progress=True
+    )
+
+Output with progress bar
+
+.. code:: sh
+
+    ⠋ Fetching tasking requests... ━━━━━━━━━━━━━━━━━━ 3/4 75%
 
 
 repeat requests
@@ -867,6 +887,27 @@ advanced repeat request search
         collection_type=["spotlight", "spotlight_ultra"],
         collection_tier="routine"
     )
+
+    # ⌛ like to watch progress bars? ⌛ - set show_progress = True to display an interactive progress bar during pagination
+    client.search_repeat_requests(
+        status="active",
+        for_org=True,
+        show_progress=True
+    )
+
+    # progress bar works with both threaded and sequential modes
+    client.search_repeat_requests(
+        status="active",
+        for_org=True,
+        threaded=False,
+        show_progress=True
+    )
+
+Output with progress bar
+
+.. code:: sh
+
+    ⠋ Fetching repeat requests... ━━━━━━━━━━━━━━━━━━ 2/3 67%
 
 
 .. _example-consume:

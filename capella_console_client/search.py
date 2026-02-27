@@ -6,9 +6,10 @@ from collections import defaultdict
 from urllib.parse import urlparse
 from dataclasses import dataclass, field
 from math import ceil
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import repeat
 from abc import ABCMeta, abstractmethod
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from capella_console_client.logconf import logger
 from capella_console_client.report import print_task_search_result
@@ -627,6 +628,7 @@ class AbstractTaskRepeatSearch(AbstractSearch):
         self.payload: dict[str, Any] = {}
         self.page_size = kwargs.pop("page_size", None) or TR_SEARCH_DEFAULT_PAGE_SIZE
         self.threaded = kwargs.pop("threaded", True)
+        self.show_progress = kwargs.pop("show_progress", False)
         # TODO: max results (limit)
 
         query_payload = self._get_query_payload(kwargs)
@@ -722,16 +724,45 @@ class AbstractTaskRepeatSearch(AbstractSearch):
             search_payload=self.payload,
         )
 
-        if self.threaded:
-            with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
-                results = executor.map(_fetch_worker, page_params)
+        if self.show_progress:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+            ) as progress:
+                task = progress.add_task(
+                    f"[cyan]Fetching {self.SEARCH_ENTITY.value}s...",
+                    total=total_pages
+                )
+                # Already fetched first page
+                progress.update(task, advance=1)
 
-            for page in results:
-                search_result.add(page)
+                if self.threaded:
+                    with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
+                        futures = {executor.submit(_fetch_worker, params): params for params in page_params}
+
+                        for future in as_completed(futures):
+                            page = future.result()
+                            search_result.add(page)
+                            progress.update(task, advance=1)
+                else:
+                    for params in page_params:
+                        page = _fetch_worker(params)
+                        search_result.add(page)
+                        progress.update(task, advance=1)
         else:
-            for params in page_params:
-                page = _fetch_worker(params)
-                search_result.add(page)
+            # No progress bar - original behavior
+            if self.threaded:
+                with ThreadPoolExecutor(max_workers=TR_MAX_CONCURRENCY) as executor:
+                    results = executor.map(_fetch_worker, page_params)
+
+                for page in results:
+                    search_result.add(page)
+            else:
+                for params in page_params:
+                    page = _fetch_worker(params)
+                    search_result.add(page)
 
         print_task_search_result(search_result._features, search_entity=self.SEARCH_ENTITY.value)
         return search_result
