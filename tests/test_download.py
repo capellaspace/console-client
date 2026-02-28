@@ -400,15 +400,9 @@ def test_get_asset_bytesize_raises(test_client, auth_httpx_mock: HTTPXMock):
         test_client.get_asset_bytesize(MOCK_ASSET_HREF)
 
 
-# Resume functionality integration tests
-
-
-def test_download_asset_resume_partial_file(download_client, auth_httpx_mock: HTTPXMock):
+def test_download_asset_resume_partial_file(download_client, auth_httpx_mock: HTTPXMock, temp_download_file):
     """Test that client.download_asset() successfully resumes a partial download"""
-    local_path = Path(tempfile.NamedTemporaryFile(delete=False).name)
-
-    # Create partial file (6 of 12 bytes)
-    local_path.write_text("MOCK_C")
+    local_path = temp_download_file(initial_content="MOCK_C")
 
     # Mock all requests to the asset URL with a single callback
     def asset_callback(request):
@@ -430,13 +424,10 @@ def test_download_asset_resume_partial_file(download_client, auth_httpx_mock: HT
     assert len(asset_requests) == 2
     assert asset_requests[1].headers["Range"] == "bytes=6-"
 
-    local_path.unlink()
 
-
-def test_download_asset_resume_disabled_skips_existing(download_client):
+def test_download_asset_resume_disabled_skips_existing(download_client, temp_download_file):
     """Test that download_asset with enable_resume=False skips existing files"""
-    local_path = Path(tempfile.NamedTemporaryFile(delete=False).name)
-    local_path.write_text("PARTIAL")
+    local_path = temp_download_file(initial_content="PARTIAL")
 
     result = download_client.download_asset(
         pre_signed_url=MOCK_ASSET_HREF, local_path=local_path, enable_resume=False, override=False
@@ -445,14 +436,10 @@ def test_download_asset_resume_disabled_skips_existing(download_client):
     assert result == local_path
     assert local_path.read_text() == "PARTIAL"  # Unchanged
 
-    local_path.unlink()
 
-
-def test_download_asset_complete_file_skipped(download_client, auth_httpx_mock: HTTPXMock):
+def test_download_asset_complete_file_skipped(download_client, auth_httpx_mock: HTTPXMock, temp_download_file):
     """Test that download_asset recognizes complete files and doesn't re-download"""
-    local_path = Path(tempfile.NamedTemporaryFile(delete=False).name)
-    # Use bytes to ensure exact size
-    local_path.write_bytes(b"MOCK_CONTENT")
+    local_path = temp_download_file(initial_content=b"MOCK_CONTENT")
 
     # Verify file size is exactly 12 bytes
     assert local_path.stat().st_size == 12
@@ -468,8 +455,6 @@ def test_download_asset_complete_file_skipped(download_client, auth_httpx_mock: 
     assert result == local_path
     # File should remain unchanged
     assert local_path.read_bytes() == b"MOCK_CONTENT"
-
-    local_path.unlink()
 
 
 def test_download_products_resume_partial_files(download_client, auth_httpx_mock: HTTPXMock):
@@ -514,10 +499,11 @@ def test_download_products_resume_partial_files(download_client, auth_httpx_mock
                 assert path.read_text() == "MOCK_CONTENT"
 
 
-def test_download_asset_fallback_when_range_unsupported(download_client, auth_httpx_mock: HTTPXMock):
+def test_download_asset_fallback_when_range_unsupported(
+    download_client, auth_httpx_mock: HTTPXMock, temp_download_file
+):
     """Test that download falls back to full download when server doesn't support Range"""
-    local_path = Path(tempfile.NamedTemporaryFile(delete=False).name)
-    local_path.write_text("PARTIAL")
+    local_path = temp_download_file(initial_content="PARTIAL")
 
     # Mock file size check
     auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
@@ -529,5 +515,3 @@ def test_download_asset_fallback_when_range_unsupported(download_client, auth_ht
 
     assert result == local_path
     assert local_path.read_text() == "MOCK_CONTENT"
-
-    local_path.unlink()

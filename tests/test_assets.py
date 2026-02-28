@@ -26,6 +26,40 @@ def mock_sleep(monkeypatch):
     return sleep_calls
 
 
+@pytest.fixture
+def resume_test_setup(tmp_path):
+    """Shared setup for resume functionality tests."""
+
+    def _setup(partial_bytes: bytes | None = None):
+        """
+        Create test objects for resume tests.
+
+        Args:
+            partial_bytes: Initial bytes to write to file (None for no file)
+
+        Returns:
+            Tuple of (test_url, local_path, dl_request, mock_progress)
+        """
+        test_url = "https://example.com/test-asset.tif"
+        local_path = tmp_path / "test-asset.tif"
+
+        if partial_bytes is not None:
+            local_path.write_bytes(partial_bytes)
+
+        dl_request = DownloadRequest(
+            url=test_url,
+            local_path=local_path,
+            asset_key="HH",
+            stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
+        )
+
+        mock_progress = MagicMock()
+
+        return test_url, local_path, dl_request, mock_progress
+
+    return _setup
+
+
 def test_derive_stac_id():
     STAC_ID = "CAPELLA_C05_SM_GEO_HH_20210727091736_20210727091740"
     assert _derive_stac_id({"HH": {"href": STAC_ID}}) == STAC_ID
@@ -135,28 +169,14 @@ def test_fetch_no_retry_on_success(httpx_mock: HTTPXMock, tmp_path: Path):
     assert len(httpx_mock.get_requests()) == 1
 
 
-# Resume functionality tests
-
-
-def test_fetch_resume_partial_download(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_fetch_resume_partial_download(httpx_mock: HTTPXMock, resume_test_setup):
     """Test that _fetch successfully resumes a partial download using 206 Partial Content"""
-    test_url = "https://example.com/test-asset.tif"
-    local_path = tmp_path / "test-asset.tif"
-
-    # Create partial file (1000 bytes)
-    local_path.write_bytes(b"A" * 1000)
-
-    dl_request = DownloadRequest(
-        url=test_url,
-        local_path=local_path,
-        asset_key="HH",
-        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
-    )
+    test_url, local_path, dl_request, mock_progress = resume_test_setup(partial_bytes=b"A" * 1000)
 
     # Mock 206 response with remaining bytes
     httpx_mock.add_response(status_code=206, content=b"B" * 500, headers={"Content-Range": "bytes 1000-1499/1500"})
 
-    result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=MagicMock(), resume_from=1000)
+    result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=mock_progress, resume_from=1000)
 
     assert result == local_path
     assert local_path.stat().st_size == 1500
@@ -168,49 +188,27 @@ def test_fetch_resume_partial_download(httpx_mock: HTTPXMock, tmp_path: Path):
     assert requests[0].headers["Range"] == "bytes=1000-"
 
 
-def test_fetch_resume_fallback_no_range_support(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_fetch_resume_fallback_no_range_support(httpx_mock: HTTPXMock, resume_test_setup):
     """Test that _fetch falls back to full download when server doesn't support Range"""
-    test_url = "https://example.com/test-asset.tif"
-    local_path = tmp_path / "test-asset.tif"
-
-    # Create partial file
-    local_path.write_bytes(b"A" * 1000)
-
-    dl_request = DownloadRequest(
-        url=test_url,
-        local_path=local_path,
-        asset_key="HH",
-        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
-    )
+    test_url, local_path, dl_request, mock_progress = resume_test_setup(partial_bytes=b"A" * 1000)
 
     # Server returns 200 (ignores Range header)
     httpx_mock.add_response(status_code=200, content=b"X" * 1500)
 
-    result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=MagicMock(), resume_from=1000)
+    result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=mock_progress, resume_from=1000)
 
     assert result == local_path
     # Should re-download full file
     assert local_path.read_bytes() == b"X" * 1500
 
 
-def test_fetch_resume_416_range_not_satisfiable(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_fetch_resume_416_range_not_satisfiable(httpx_mock: HTTPXMock, resume_test_setup):
     """Test that _fetch handles 416 Range Not Satisfiable (file already complete)"""
-    test_url = "https://example.com/test-asset.tif"
-    local_path = tmp_path / "test-asset.tif"
-
-    # File already complete
-    local_path.write_bytes(b"A" * 1500)
-
-    dl_request = DownloadRequest(
-        url=test_url,
-        local_path=local_path,
-        asset_key="HH",
-        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
-    )
+    test_url, local_path, dl_request, mock_progress = resume_test_setup(partial_bytes=b"A" * 1500)
 
     httpx_mock.add_response(status_code=416)
 
-    result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=MagicMock(), resume_from=1500)
+    result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=mock_progress, resume_from=1500)
 
     assert result == local_path
     # File should remain unchanged
@@ -350,25 +348,13 @@ def test_download_asset_unknown_size_skips_resume(httpx_mock: HTTPXMock, tmp_pat
     assert local_path.read_bytes() == b"A" * 500
 
 
-def test_fetch_resume_with_progress(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_fetch_resume_with_progress(httpx_mock: HTTPXMock, resume_test_setup):
     """Test that progress tracking works correctly with resume"""
-    test_url = "https://example.com/test-asset.tif"
-    local_path = tmp_path / "test-asset.tif"
-
-    # Create partial file (1000 bytes)
-    local_path.write_bytes(b"A" * 1000)
-
-    dl_request = DownloadRequest(
-        url=test_url,
-        local_path=local_path,
-        asset_key="HH",
-        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
-    )
+    test_url, local_path, dl_request, mock_progress = resume_test_setup(partial_bytes=b"A" * 1000)
 
     # Mock 206 response with remaining bytes
     httpx_mock.add_response(status_code=206, content=b"B" * 500, headers={"Content-Range": "bytes 1000-1499/1500"})
 
-    mock_progress = MagicMock()
     result = _fetch(dl_request, asset_size=1500, show_progress=True, progress=mock_progress, resume_from=1000)
 
     assert result == local_path
