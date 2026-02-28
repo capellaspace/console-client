@@ -9,7 +9,7 @@ def _safe_load_json(file_path: Path) -> dict[str, Any]:
     content = {}
     try:
         content = json.loads(file_path.read_text())
-    except:
+    except (FileNotFoundError, json.JSONDecodeError):
         pass
     return content
 
@@ -121,7 +121,7 @@ class CLICache:
             keyring.set_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(new_name), old_key)
             try:
                 keyring.delete_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(old_name))
-            except:
+            except keyring.errors.PasswordDeleteError:
                 pass
 
         # Update profiles list
@@ -153,8 +153,7 @@ class CLICache:
 
         try:
             keyring.delete_password(cls.KEYRING_SYSTEM_NAME, cls._get_profile_keyring_key(profile_name))
-        except:
-            # key might not exist
+        except keyring.errors.PasswordDeleteError:
             pass
 
         meta["profiles"].remove(profile_name)

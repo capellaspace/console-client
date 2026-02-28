@@ -1,8 +1,9 @@
 import os
+import sys
 from typing import Any
 import json
 from collections import defaultdict
-import subprocess
+import subprocess  # nosec B404
 
 import typer
 import questionary
@@ -277,8 +278,7 @@ def _prompt_post_search_actions(
 
         if action_selection == PostSearchActions.export_json:
             path = PostSearchActions.export_search(result, search_kwargs)
-            if questionary.confirm("Would you like to open it?").ask():
-                subprocess.run(["open", path], check=True)
+            _prompt_file_open(path)
 
         if action_selection == PostSearchActions.refine_search:
             prev_search = STACQueryPayload.unflatten(search_kwargs)
@@ -288,6 +288,16 @@ def _prompt_post_search_actions(
 
         if action_selection == PostSearchActions.continue_flow:
             return result
+
+
+def _prompt_file_open(path) -> None:
+    if questionary.confirm("Would you like to open it?").ask():
+        if sys.platform == "win32":
+            os.startfile(path)  # nosec B606 - internally-generated path
+        elif sys.platform == "darwin":
+            subprocess.run(["open", path], check=True)  # nosec B603, B607
+        else:
+            subprocess.run(["xdg-open", path], check=True)  # nosec B603, B607
 
 
 def from_saved():
