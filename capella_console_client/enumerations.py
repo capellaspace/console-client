@@ -166,5 +166,5 @@ class SquintMode(str, BaseEnum):
 
 class AuthHeaderPrefix(Enum):
     BASIC = "Basic"
-    TOKEN = "Bearer"
+    TOKEN = "Bearer"  # nosec B105 - HTTP auth scheme name, not a password
     API_KEY = "ApiKey"

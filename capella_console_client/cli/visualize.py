@@ -24,7 +24,8 @@ def show_tabulated(
 
     table_data = defaultdict(list)
 
-    assert search_headers is not None
+    if search_headers is None:
+        raise ValueError("search_headers could not be resolved from settings")
     # force id left if specified
     if "id" in search_headers:
         del search_headers[search_headers.index("id")]
