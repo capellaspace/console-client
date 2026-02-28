@@ -1955,6 +1955,19 @@ standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
 
 [[package]]
+name = "standard-imghdr"
+version = "3.13.0"
+description = "Standard library imghdr redistribution. \"dead battery\"."
+optional = true
+python-versions = "*"
+groups = ["main"]
+markers = "extra == \"docs\""
+files = [
+    {file = "standard_imghdr-3.13.0-py3-none-any.whl", hash = "sha256:30a1bff5465605bb496f842a6ac3cc1f2131bf3025b0da28d4877d6d4b7cc8e9"},
+    {file = "standard_imghdr-3.13.0.tar.gz", hash = "sha256:8d9c68058d882f6fc3542a8d39ef9ff94d2187dc90bd0c851e0902776b7b7a42"},
+]
+
+[[package]]
 name = "tabulate"
 version = "0.8.10"
 description = "Pretty-print tabular data"
@@ -2189,11 +2202,11 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more_it
 type = ["pytest-mypy"]
 
 [extras]
-docs = ["Sphinx", "sphinx-autobuild", "sphinx-autodoc-typehints", "sphinx-copybutton", "sphinx-rtd-theme"]
+docs = ["Sphinx", "sphinx-autobuild", "sphinx-autodoc-typehints", "sphinx-copybutton", "sphinx-rtd-theme", "standard-imghdr"]
 s3 = ["botocore", "cloudpathlib"]
 wizard = ["click", "keyring", "prompt-toolkit", "questionary", "tabulate", "typer"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "533d32295a530465dc69b11dc04b4665b46e94fc80901e3633f554781b7719a6"
+content-hash = "242b5dd55f4c0c44e82313405857bdd0515aeac63c14d6a81d22f47939f16967"

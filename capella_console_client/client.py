@@ -655,6 +655,7 @@ class CapellaConsoleClient:
         local_path: Path | S3Path | str = Path(tempfile.gettempdir()),
         override: bool = False,
         show_progress: bool = False,
+        enable_resume: bool = True,
     ) -> Path | S3Path:
         """
         downloads a presigned asset url to disk
@@ -664,6 +665,7 @@ class CapellaConsoleClient:
             local_path: output path - file is written to OS's temp dir if not provided, if directory provided filename will be set to original asset filename
             override: override already existing `local_path`
             show_progress: show download status progressbar
+            enable_resume: enable resuming partial downloads (default: True). If enabled, partially downloaded files will be resumed from the last byte using HTTP Range headers. If the server doesn't support Range, the file will be re-downloaded from the start.
         """
         # Convert str to Path/S3Path if needed
         resolved_local_path: Path | S3Path
@@ -686,6 +688,7 @@ class CapellaConsoleClient:
             override=override,
             threaded=False,
             show_progress=show_progress,
+            enable_resume=enable_resume,
         )["asset"]
 
     def download_products(
@@ -703,6 +706,7 @@ class CapellaConsoleClient:
         separate_dirs: bool = True,
         product_types: list[str | ProductType] | None = None,
         contract_id: str | None = None,
+        enable_resume: bool = True,
     ) -> dict[str, dict[str, Path | S3Path]]:
         """
         download all assets of multiple products
@@ -744,6 +748,7 @@ class CapellaConsoleClient:
                                ...
             product_types: filter by product type, e.g. ["SLC", "GEO"]
             contract_id: charge order on explicit contract (if omitted default contract is used)
+            enable_resume: enable resuming partial downloads (default: True). If enabled, partially downloaded files will be resumed from the last byte using HTTP Range headers. If the server doesn't support Range, files will be re-downloaded from the start.
 
         Returns:
             Dict[str, Dict[str, Path]]: Local paths of downloaded files keyed by STAC id and asset type, e.g.
@@ -803,6 +808,7 @@ class CapellaConsoleClient:
             override=override,
             threaded=threaded,
             show_progress=show_progress,
+            enable_resume=enable_resume,
         )
         return by_stac_id
 

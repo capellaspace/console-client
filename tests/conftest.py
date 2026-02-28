@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock
 from copy import deepcopy
 from datetime import datetime, timedelta
+from pathlib import Path
+import tempfile
 import re
 
 import httpx
@@ -46,6 +48,50 @@ def auth_httpx_mock(httpx_mock: HTTPXMock):
 
     httpx_mock.add_response(url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user"))
     yield httpx_mock
+
+
+@pytest.fixture
+def temp_download_file():
+    """
+    Create a temporary file for download tests with automatic cleanup.
+
+    Returns a factory function that creates a temp file with optional initial content.
+    """
+
+    def _create_temp_file(initial_content: str | bytes | None = None):
+        """
+        Create a temporary file with optional initial content.
+
+        Args:
+            initial_content: Optional content to write to the file (str or bytes)
+
+        Returns:
+            Path object for the temporary file (auto-cleaned up after test)
+        """
+        file_path = Path(tempfile.NamedTemporaryFile(delete=False).name)
+
+        if initial_content is not None:
+            if isinstance(initial_content, str):
+                file_path.write_text(initial_content)
+            else:
+                file_path.write_bytes(initial_content)
+
+        return file_path
+
+    files_created = []
+
+    # Create factory that tracks files
+    def factory(initial_content: str | bytes | None = None):
+        file_path = _create_temp_file(initial_content)
+        files_created.append(file_path)
+        return file_path
+
+    yield factory
+
+    # Cleanup all created files
+    for file_path in files_created:
+        if file_path.exists():
+            file_path.unlink()
 
 
 @pytest.fixture

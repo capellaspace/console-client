@@ -368,6 +368,50 @@ single assets can be downloaded to gven paths
     assert local_thumb_path == Path(dest_path)
 
 
+resume download
+***************
+
+**Automatic resume for Interrupted Downloads**
+
+Downloads automatically resume from the last byte if interrupted (network failure, timeout, user cancellation), which is enabled by default.
+
+.. code:: python3
+
+    # Start downloading a large file
+    client.download_asset(
+        presigned_url,
+        local_path="/tmp/img.tif",
+        show_progress=True
+    )
+    # ... download interrupted at 60% ...
+
+    # download resumes from 60% when running the same command again
+    client.download_asset(
+        presigned_url,
+        local_path="/tmp/img.tif",
+        show_progress=True
+    )
+
+**Note**
+
+- Downloads use HTTP Range headers to resume from the last already downloaded byte
+- If the server doesn't support Range headers, the file is re-downloaded from the start
+- Complete files are skipped entirely (no unnecessary downloads)
+- Destination S3 paths have limited resume support (logged warning if detected)
+- Unknown file sizes skip resume for safety
+- Resume works for both single assets and batch product downloads:
+
+.. code:: python3
+
+    # All products resume automatically if interrupted
+    product_paths = client.download_products(
+        order_id=order_id,
+        local_dir="/tmp",
+        show_progress=True,
+        enable_resume=True  # default
+    )
+
+
 order filters
 *************
 
@@ -664,7 +708,8 @@ A multitude of :ref:`query fields <tr-query-fields>` and :ref:`query operators <
 
 advanced tasking request search
 
-.. code:: python3
+
+.. code:: sh
 
     # get ALL completed tasking requests of user
     user_completed_trs_result = client.search_tasking_requests(status="completed")
@@ -734,9 +779,7 @@ advanced tasking request search
         show_progress=True
     )
 
-Output with progress bar
-
-.. code:: sh
+    # Output with progress bar
 
     ⠋ Fetching tasking requests... ━━━━━━━━━━━━━━━━━━ 3/4 75%
 
@@ -749,7 +792,7 @@ create
 
 NOTE: `geometry` and `name` are the only required properties to create a repeat request.
 
-.. code:: python3
+.. code:: python
 
     # create above tasking request as repeat series
     from capella_console_client.enumerations import (
@@ -789,7 +832,7 @@ NOTE: `geometry` and `name` are the only required properties to create a repeat 
 
 repeat requests repeat cadence can be configured in multiple ways
 
-.. code:: python3
+.. code:: python
 
     # A) until cancelled, e.g. weekly starting now (defaults)
     client.create_repeat_request(
