@@ -99,10 +99,10 @@ jobs:
     - name: Checkout git repository 🕝
       uses: actions/checkout@v4
 
-    - name: Set up Python3.11 🐍
+    - name: Set up Python3.14 🐍
       uses: actions/setup-python@v5
       with:
-        python-version: 3.11
+        python-version: 3.14
 
     - name: Install poetry 🦄
       uses: Gr1N/setup-poetry@v9
@@ -114,8 +114,6 @@ jobs:
 
     - name: Build docs ⚒️
       run: make docs
-      # TODO: /bin/sh: 1: sphinx-build: not found, e.g. https://github.com/capellaspace/console-client/actions/runs/3115544245/jobs/5052547042
-      continue-on-error: true
 
   # deploy:
   #   name: Deploy to PyPI
