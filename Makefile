@@ -54,5 +54,5 @@ livedocs:
 	poetry run sphinx-autobuild docs docs/build/html
 
 security:
-	poetry run bandit -r capella_console_client -ll -ii
+	poetry run bandit -r capella_console_client -f json --exit-zero 2>/dev/null | python3 scripts/bandit_report.py
 	poetry run pip-audit
