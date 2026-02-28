@@ -349,7 +349,7 @@ class CapellaConsoleClient:
         """
         cancel repeat requests
 
-        Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`_.
+        Find more information `here <https://docs.capellaspace.com/constellation-tasking/cancel-task>`__.
         For Cancellation fees please refer to `Capella's Tasking Cancellation Policy Overview <https://support.capellaspace.com/what-is-the-tasking-cancellation-policy>`_.
 
         Args:
@@ -956,7 +956,7 @@ class CapellaConsoleClient:
         """
         search Capella's [S]patio [T]emporal [A]ssets [C]atalog
 
-        Find more information `here <https://docs.capellaspace.com/accessing-data/searching-for-data>`_.
+        Find more information `here <https://docs.capellaspace.com/accessing-data/searching-for-data>`__.
 
         supported query filters:
 

@@ -46,7 +46,7 @@ test:
 types:
 	poetry run mypy --install-types --non-interactive capella_console_client --tb
 docs:
-	poetry run make -C docs html
+	poetry run make -C docs html O=-v
 
 livedocs:
 	poetry run sphinx-autobuild docs docs/build/html
