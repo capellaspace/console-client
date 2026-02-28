@@ -87,7 +87,7 @@ def _validate_and_filter_stac_ids(stac_ids: list[str] | None) -> list[str]:
 
 def _snake_to_camel(snake):
     REG = r"(.*?)_([a-zA-Z])"
-    return re.sub(REG, lambda x: x.group(1) + x.group(2).upper(), snake, 0)
+    return re.sub(REG, lambda x: x.group(1) + x.group(2).upper(), snake)
 
 
 def _datetime_to_iso8601_str(dt: datetime | str) -> str:

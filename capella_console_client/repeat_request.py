@@ -1,5 +1,5 @@
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 import geojson
 
@@ -106,7 +106,7 @@ def _set_repetition_start_end(
         )
 
     if repeat_start is None:
-        repeat_start = datetime.utcnow()
+        repeat_start = datetime.now(timezone.utc)
 
     repeat_start = _datetime_to_iso8601_str(repeat_start)
 
