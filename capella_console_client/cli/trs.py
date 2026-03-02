@@ -4,8 +4,8 @@ from typing import Any
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from capella_console_client.cli.client_singleton import CLIENT
-from capella_console_client.enumerations import BaseEnum
-from capella_console_client.cli.visualize import show_cancel_result_tabulated
+from capella_console_client.enumerations import BaseEnum, ProductType
+from capella_console_client.cli.visualize import show_cancel_result_tabulated, show_update_result_tabulated
 from capella_console_client.cli.validate import _validate_uuid
 
 
@@ -38,6 +38,11 @@ def interactive():
 @app.command(help="cancel tasking requests")
 def cancel():
     _cancel_trs()
+
+
+@app.command(help="update tasking requests")
+def update():
+    _update_trs()
 
 
 def _fetch_users() -> list[dict[str, Any]]:
@@ -220,13 +225,14 @@ def _prompt_admin_target() -> tuple[str | None, str | None]:
 
 class TrManageOptions(str, BaseEnum):
     cancel = "cancel"
+    update = "update"
 
     @classmethod
     def _get_choices(cls):
         return list(TrManageOptions)
 
 
-class TrCancelOptions(str, BaseEnum):
+class TrScopeOptions(str, BaseEnum):
     user = "current user"
     org = "current organization (requires elevated perms)"
     admin = "admin (requires elevated perms)"
@@ -234,18 +240,62 @@ class TrCancelOptions(str, BaseEnum):
 
     @classmethod
     def _get_choices(cls):
-        # sub-select valid choices
         whoami = CLIENT.whoami()
-
-        valid = [TrCancelOptions.user, TrCancelOptions.tasking_request_id]
-
+        valid = [cls.user, cls.tasking_request_id]
         if "organization-manager" in whoami["roles"]:
-            valid.append(TrCancelOptions.org)
-
+            valid.append(cls.org)
         if "admin" in whoami["roles"]:
-            valid.append(TrCancelOptions.admin)
-
+            valid.append(cls.admin)
         return valid
+
+
+def _prompt_tr_selection(action: str, base_search_kwargs: dict | None = None) -> list[str] | None:
+    """
+    Prompt for scope, search for matching TRs, and let the user pick via checkbox.
+    Returns the selected tasking request IDs, or None if the user aborted at any step.
+    """
+    for_who_choices = TrScopeOptions._get_choices()
+
+    if len(for_who_choices) > 1:
+        for_who = questionary.select(f"{action.capitalize()} tasking requests of ?", choices=for_who_choices).ask()
+    else:
+        for_who = TrScopeOptions.user
+
+    tr_search_kwargs = {**(base_search_kwargs or {})}
+
+    if for_who == TrScopeOptions.org:
+        tr_search_kwargs["for_org"] = True
+    elif for_who == TrScopeOptions.admin:
+        admin_for_who, admin_uuid = _prompt_admin_target()
+        if not admin_for_who:
+            return None
+        if admin_for_who == "user":
+            tr_search_kwargs["user_id"] = admin_uuid
+        elif admin_for_who == "org":
+            tr_search_kwargs["org_id"] = [admin_uuid]
+    elif for_who == TrScopeOptions.tasking_request_id:
+        tr_ids_input = questionary.text(
+            "Enter tasking request ID(s) (comma-separated for multiple):",
+            validate=lambda text: _validate_tr_ids(text),
+        ).ask()
+        if not tr_ids_input:
+            return None
+        tr_search_kwargs["tasking_request_id"] = [tr_id.strip() for tr_id in tr_ids_input.split(",")]
+
+    trs = CLIENT.search_tasking_requests(**tr_search_kwargs, show_progress=True)
+
+    if not trs:
+        typer.echo(f"No {action}able tasking requests found for {tr_search_kwargs=}...")
+        return None
+
+    id_by_tr_option = {_form_tr_overview(tr): tr["properties"]["taskingrequestId"] for tr in trs}
+    selection = questionary.checkbox("Which tasking request?", choices=list(id_by_tr_option.keys())).ask()
+
+    if not selection:
+        typer.echo("Nothing selected ... aborting")
+        return None
+
+    return [id_by_tr_option[t] for t in selection]
 
 
 def interactive_manage_trs():
@@ -253,63 +303,100 @@ def interactive_manage_trs():
 
     if start_from_opt == TrManageOptions.cancel:
         _cancel_trs()
+    elif start_from_opt == TrManageOptions.update:
+        _update_trs()
 
 
 def _cancel_trs():
-    for_who_choices = TrCancelOptions._get_choices()
-    should_prompt = len(for_who_choices) > 1
-
-    if should_prompt:
-        for_who = questionary.select("Cancel tasking requests of ?", choices=TrCancelOptions._get_choices()).ask()
-    else:
-        for_who = TrCancelOptions.user
-
-    tr_search_kwargs = dict(status=["received", "review", "submitted", "active", "accepted"])
-    if for_who == TrCancelOptions.org:
-        tr_search_kwargs["for_org"] = True
-    elif for_who == TrCancelOptions.admin:
-        admin_for_who, admin_uuid = _prompt_admin_target()
-        if not admin_for_who:
-            return
-
-        if admin_for_who == "user":
-            tr_search_kwargs["user_id"] = admin_uuid
-        elif admin_for_who == "org":
-            tr_search_kwargs["org_id"] = [admin_uuid]
-    elif for_who == TrCancelOptions.tasking_request_id:
-        tr_ids_input = questionary.text(
-            "Enter tasking request ID(s) (comma-separated for multiple):",
-            validate=lambda text: _validate_tr_ids(text),
-        ).ask()
-
-        if not tr_ids_input:
-            return
-
-        # Parse comma-separated IDs
-        tr_ids = [tr_id.strip() for tr_id in tr_ids_input.split(",")]
-        tr_search_kwargs["tasking_request_id"] = tr_ids
-
-    trs = CLIENT.search_tasking_requests(**tr_search_kwargs, show_progress=True)
-
-    if not trs:
-        typer.echo(f"No cancelable tasking requests found for {tr_search_kwargs=}...")
+    tr_ids = _prompt_tr_selection(
+        action="cancel", base_search_kwargs={"status": ["received", "review", "submitted", "active", "accepted"]}
+    )
+    if tr_ids is None:
         return
 
-    id_by_tr_option = {_form_tr_overview(tr): tr["properties"]["taskingrequestId"] for tr in trs}
-    selection = questionary.checkbox("Which tasking request?", choices=id_by_tr_option.keys()).ask()
-
-    if not selection:
-        typer.echo("Nothing selected ... aborting")
-        return
-
-    trs_ids_to_cancel = [id_by_tr_option[t] for t in selection]
-
-    selection_str = [f" - {cur}" for cur in selection]
+    selection_str = "\n".join(f" - {tr_id}" for tr_id in tr_ids)
     if questionary.confirm(
-        f"Please confirm you'd like to cancel the following tasking requests (cancelation charges might apply):\n\n{'\n'.join(selection_str)}\n"
+        f"Please confirm you'd like to cancel the following tasking requests (cancelation charges might apply):\n\n{selection_str}\n"
     ).ask():
-        cancel_result = CLIENT.cancel_tasking_requests(*trs_ids_to_cancel)
+        cancel_result = CLIENT.cancel_tasking_requests(*tr_ids)
         show_cancel_result_tabulated(cancel_result)
+
+
+_TRS_UPDATABLE_FIELD_LABELS: dict[str, str] = {
+    "name": "name",
+    "description": "description",
+    "custom_attribute_1": "custom attribute 1",
+    "custom_attribute_2": "custom attribute 2",
+    "product_types": "product types",
+}
+
+
+UPDATABLE_PRODUCT_TYPES = [
+    ProductType.SLC,
+    ProductType.GEO,
+    ProductType.SICD,
+    ProductType.GEC,
+    ProductType.SIDD,
+    ProductType.CPHD,
+    ProductType.CSI,
+    ProductType.CSIDD,
+    ProductType.VC,
+]
+
+
+def _prompt_update_fields() -> dict | None:
+    selected_labels = questionary.checkbox(
+        "Which fields to update?",
+        choices=list(_TRS_UPDATABLE_FIELD_LABELS.values()),
+    ).ask()
+
+    if not selected_labels:
+        return None
+
+    label_to_kwarg = {v: k for k, v in _TRS_UPDATABLE_FIELD_LABELS.items()}
+    update_kwargs: dict = {}
+
+    for label in selected_labels:
+        kwarg = label_to_kwarg[label]
+
+        if kwarg == "product_types":
+            selected = questionary.checkbox(
+                "select product types:",
+                choices=[pt.value for pt in UPDATABLE_PRODUCT_TYPES],
+            ).ask()
+            if not selected:
+                return None
+            update_kwargs[kwarg] = selected
+        else:
+            value = questionary.text(
+                f"new {label}:",
+                validate=lambda t: "value cannot be empty" if not t.strip() else True,
+            ).ask()
+            if value is None:
+                return None
+            update_kwargs[kwarg] = value
+
+    return update_kwargs
+
+
+def _update_trs():
+    tr_ids = _prompt_tr_selection(action="update")
+    if tr_ids is None:
+        return
+
+    update_kwargs = _prompt_update_fields()
+    if not update_kwargs:
+        return
+
+    fields_str = "\n".join(f"  {_TRS_UPDATABLE_FIELD_LABELS[k]}: {v!r}" for k, v in update_kwargs.items())
+    tr_ids_str = "\n".join(f" - {tr_id}" for tr_id in tr_ids)
+    if not questionary.confirm(
+        f"Apply the following updates:\n{fields_str}\n\nto {len(tr_ids)} tasking request(s):\n{tr_ids_str}\n"
+    ).ask():
+        return
+
+    result = CLIENT.update_tasking_requests(*tr_ids, **update_kwargs)
+    show_update_result_tabulated(result)
 
 
 def _form_tr_overview(tr):

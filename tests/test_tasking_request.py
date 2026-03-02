@@ -115,3 +115,45 @@ def test_cancel_success_partial_fail(verbose_test_client, task_cancel_partial_su
     assert result[tr_id_success]["success"]
     assert not result[tr_id_error]["success"]
     assert result[tr_id_error]["error"]["code"] == "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION"
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        pytest.param({"name": "updated name"}, id="name"),
+        pytest.param({"description": "new description"}, id="description"),
+        pytest.param({"custom_attribute_1": "foo", "custom_attribute_2": "bar"}, id="custom_attributes"),
+        pytest.param({"product_types": ["VC"]}, id="product_types"),
+        pytest.param({}, id="no_fields"),
+    ],
+)
+def test_update_task_fields(test_client, task_update_mock, disable_validate_uuid, kwargs):
+    tr_id = str(uuid.uuid4())
+    result = test_client.update_tasking_requests(tr_id, **kwargs)
+    assert result[tr_id] == get_mock_responses("/task/abc")
+
+
+def test_update_tasks_success_multiple(test_client, task_update_mock, disable_validate_uuid):
+    tr_ids = [str(uuid.uuid4()) for _ in range(3)]
+    result = test_client.update_tasking_requests(*tr_ids, name="bulk update")
+    assert set(result.keys()) == set(tr_ids)
+    for tr_id in tr_ids:
+        assert result[tr_id] == get_mock_responses("/task/abc")
+
+
+def test_update_tasks_all_error(test_client, task_update_error_mock, disable_validate_uuid):
+    tr_ids = [str(uuid.uuid4()) for _ in range(2)]
+    result = test_client.update_tasking_requests(*tr_ids, name="bulk update")
+    assert set(result.keys()) == set(tr_ids)
+    for tr_id in tr_ids:
+        assert result[tr_id]["success"] is False
+        assert result[tr_id]["error"]["code"] == "UNABLE_TO_UPDATE_TASKING_REQUEST"
+
+
+def test_update_tasks_partial_failure(test_client, task_update_partial_mock, disable_validate_uuid):
+    tr_id_success = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    tr_id_error = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    result = test_client.update_tasking_requests(tr_id_success, tr_id_error, name="partial update")
+    assert result[tr_id_success] == get_mock_responses("/task/abc")
+    assert result[tr_id_error]["success"] is False
+    assert result[tr_id_error]["error"]["code"] == "UNABLE_TO_UPDATE_TASKING_REQUEST"

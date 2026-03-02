@@ -196,6 +196,49 @@ def authed_tasking_request_mock(auth_httpx_mock):
     yield auth_httpx_mock
 
 
+TR_UPDATE_ERR = {
+    "message": "Cannot update tasking request in current state",
+    "code": "UNABLE_TO_UPDATE_TASKING_REQUEST",
+}
+
+
+@pytest.fixture
+def task_update_mock(authed_tasking_request_mock):
+    authed_tasking_request_mock.add_response(
+        url=re.compile(rf"{CONSOLE_API_URL}/task/[0-9a-f\-]{{36}}$"),
+        method="PATCH",
+        json=get_mock_responses("/task/abc"),
+    )
+    yield authed_tasking_request_mock
+
+
+@pytest.fixture
+def task_update_error_mock(authed_tasking_request_mock):
+    authed_tasking_request_mock.add_response(
+        url=re.compile(rf"{CONSOLE_API_URL}/task/[0-9a-f\-]{{36}}$"),
+        method="PATCH",
+        status_code=400,
+        json={"error": TR_UPDATE_ERR},
+    )
+    yield authed_tasking_request_mock
+
+
+@pytest.fixture
+def task_update_partial_mock(authed_tasking_request_mock):
+    authed_tasking_request_mock.add_response(
+        url=re.compile(rf"{CONSOLE_API_URL}/task/[a\-]{{36}}$"),
+        method="PATCH",
+        json=get_mock_responses("/task/abc"),
+    )
+    authed_tasking_request_mock.add_response(
+        url=re.compile(rf"{CONSOLE_API_URL}/task/[b\-]{{36}}$"),
+        method="PATCH",
+        status_code=400,
+        json={"error": TR_UPDATE_ERR},
+    )
+    yield authed_tasking_request_mock
+
+
 @pytest.fixture
 def authed_repeat_request_mock(auth_httpx_mock):
     auth_httpx_mock.add_response(

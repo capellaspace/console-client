@@ -667,6 +667,40 @@ NOTE: `geometry` and `name` are the only required properties to create a tasking
         max_squint_angle=30,
     )
 
+update
+******
+
+The following fields can be updated on an existing tasking request: ``name``, ``description``, ``custom_attribute_1``, ``custom_attribute_2``, ``product_types``.
+
+Pass one or more tasking request IDs — all receive the same update. Results are returned as a dict keyed by tasking request ID.
+
+.. code:: python3
+
+    # update a single tasking request
+    result = client.update_tasking_requests(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        name="updated name",
+        description="updated description",
+    )
+    updated_tr = result["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+
+    # update multiple tasking requests in parallel — all get the same fields applied
+    result = client.update_tasking_requests(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        custom_attribute_1="campaign-2026",
+    )
+
+    # on success each value is the updated tasking request dict
+    # on failure each value is {"success": False, "error": {...}}
+    for tr_id, tr_result in result.items():
+        if tr_result.get("success") is False:
+            print(f"{tr_id} failed: {tr_result['error']['code']}")
+        else:
+            print(f"{tr_id} updated: {tr_result['properties']['taskingrequestName']}")
+
+
 cancel
 ******
 

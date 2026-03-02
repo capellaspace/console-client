@@ -94,3 +94,18 @@ def show_cancel_result_tabulated(cancel_result: dict[str, Any]):
         table_data.append([tr_id, status_icon])
 
     typer.echo(tabulate(table_data, headers=["tasking request id", "cancel status"], tablefmt="fancy_grid"))
+
+
+def show_update_result_tabulated(update_result: dict[str, Any]):
+    table_data = []
+
+    for tr_id, result in update_result.items():
+        if result.get("success") is False:
+            status_icon = "❌"
+            detail = result.get("error", {}).get("code", "unknown error")
+        else:
+            status_icon = "✅"
+            detail = result.get("properties", {}).get("taskingrequestName", "")
+        table_data.append([tr_id, status_icon, detail])
+
+    typer.echo(tabulate(table_data, headers=["tasking request id", "status", "name"], tablefmt="fancy_grid"))
