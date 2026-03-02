@@ -9,6 +9,9 @@ from capella_console_client.validate import _snake_to_camel, _datetime_to_iso860
 from capella_console_client.config import (
     REPEAT_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
     REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS,
+    RR_CANCEL_MAX_CONCURRENCY,
+    RR_UPDATABLE_PROPERTIES,
+    RR_UPDATE_MAX_CONCURRENCY,
 )
 from capella_console_client.enumerations import (
     ObservationDirection,
@@ -23,7 +26,12 @@ from capella_console_client.enumerations import (
     SquintMode,
     RepeatCycle,
 )
-from capella_console_client.tasking_request import _cancel_multi_parallel, _cancel_worker
+from capella_console_client.tasking_request import (
+    _cancel_multi_parallel,
+    _cancel_worker,
+    _update_multi_parallel,
+    _update_worker,
+)
 
 
 def create_repeat_request(
@@ -120,8 +128,31 @@ def cancel_repeat_requests(
     *repeat_request_ids: str,
     session: CapellaConsoleSession,
 ) -> dict[str, Any]:
-    return _cancel_multi_parallel(*repeat_request_ids, session=session, cancel_fct=_cancel_repeat_request)
+    return _cancel_multi_parallel(
+        *repeat_request_ids,
+        session=session,
+        cancel_fct=_cancel_repeat_request,
+        max_concurrency=RR_CANCEL_MAX_CONCURRENCY,
+    )
 
 
 def _cancel_repeat_request(session: CapellaConsoleSession, cancel_id: str):
     return _cancel_worker(session=session, endpoint=f"repeat-requests/{cancel_id}/status")
+
+
+def update_repeat_requests(
+    *repeat_request_ids: str,
+    session: CapellaConsoleSession,
+    **kwargs,
+) -> dict[str, Any]:
+    return _update_multi_parallel(
+        *repeat_request_ids,
+        session=session,
+        update_fct=_update_repeat_request_worker,
+        max_concurrency=RR_UPDATE_MAX_CONCURRENCY,
+        **kwargs,
+    )
+
+
+def _update_repeat_request_worker(session: CapellaConsoleSession, update_id: str, **kwargs) -> dict[str, Any]:
+    return _update_worker(session, f"/repeat-requests/{update_id}", RR_UPDATABLE_PROPERTIES, **kwargs)

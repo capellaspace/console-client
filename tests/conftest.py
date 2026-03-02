@@ -250,6 +250,49 @@ def authed_repeat_request_mock(auth_httpx_mock):
     yield auth_httpx_mock
 
 
+RR_UPDATE_ERR = {
+    "message": "Cannot update repeat request in current state",
+    "code": "UNABLE_TO_UPDATE_REPEAT_REQUEST",
+}
+
+
+@pytest.fixture
+def rr_update_mock(authed_repeat_request_mock):
+    authed_repeat_request_mock.add_response(
+        url=re.compile(rf"{CONSOLE_API_URL}/repeat-requests/[0-9a-f\-]{{36}}$"),
+        method="PATCH",
+        json=post_mock_responses("/repeat-requests"),
+    )
+    yield authed_repeat_request_mock
+
+
+@pytest.fixture
+def rr_update_error_mock(authed_repeat_request_mock):
+    authed_repeat_request_mock.add_response(
+        url=re.compile(rf"{CONSOLE_API_URL}/repeat-requests/[0-9a-f\-]{{36}}$"),
+        method="PATCH",
+        status_code=400,
+        json={"error": RR_UPDATE_ERR},
+    )
+    yield authed_repeat_request_mock
+
+
+@pytest.fixture
+def rr_update_partial_mock(authed_repeat_request_mock):
+    authed_repeat_request_mock.add_response(
+        url=re.compile(rf"{CONSOLE_API_URL}/repeat-requests/[a\-]{{36}}$"),
+        method="PATCH",
+        json=post_mock_responses("/repeat-requests"),
+    )
+    authed_repeat_request_mock.add_response(
+        url=re.compile(rf"{CONSOLE_API_URL}/repeat-requests/[b\-]{{36}}$"),
+        method="PATCH",
+        status_code=400,
+        json={"error": RR_UPDATE_ERR},
+    )
+    yield authed_repeat_request_mock
+
+
 @pytest.fixture
 def download_client(test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})

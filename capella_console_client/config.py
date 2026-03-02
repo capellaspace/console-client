@@ -12,6 +12,8 @@ TR_SEARCH_DEFAULT_PAGE_SIZE = 250
 TR_MAX_CONCURRENCY = 8  # protection from getting 429ed
 TR_CANCEL_MAX_CONCURRENCY = 10
 TR_UPDATE_MAX_CONCURRENCY = 10
+RR_CANCEL_MAX_CONCURRENCY = 10
+RR_UPDATE_MAX_CONCURRENCY = 10
 
 
 STAC_SUPPORTED_ROOT_FIELDS = {
@@ -230,6 +232,13 @@ RR_SUPPORTED_GROUPBY_FIELDS = {
 TR_UPDATABLE_PROPERTIES = {
     "name": "taskingrequestName",
     "description": "taskingrequestDescription",
+    "custom_attribute_1": "customAttribute1",
+    "custom_attribute_2": "customAttribute2",
+}
+
+RR_UPDATABLE_PROPERTIES = {
+    "name": "repeatrequestName",
+    "description": "repeatrequestDescription",
     "custom_attribute_1": "customAttribute1",
     "custom_attribute_2": "customAttribute2",
 }
