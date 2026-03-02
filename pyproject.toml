@@ -58,7 +58,6 @@ s3 = ["cloudpathlib", "botocore"]
 pytest = "^7.4.0"
 pytest-cov = "^4.1.0"
 pytest-httpx = "^0.30.0"
-pytest-html = "^3.1.1"
 coveralls = "^3.3.1"
 black = "^24.3.0"
 mypy = "^1.9.0"
@@ -66,6 +65,8 @@ rope = "^1.3.0"
 types-python-dateutil = "^2.8.19"
 types-tabulate = "^0.9.0"
 pyupgrade = "^3.21.2"
+bandit = {extras = ["toml"], version = "^1.9.4"}
+pip-audit = "^2.10.0"
 
 [tool.black]
 line-length = 120
@@ -90,6 +91,11 @@ build-backend = "poetry.core.masonry.api"
 warn_unused_configs = true
 ignore_missing_imports = true
 no_implicit_optional = false
+
+[tool.bandit]
+targets = ["capella_console_client"]
+severity = "medium"
+confidence = "medium"
 
 [tool.coverage.run]
 omit = [

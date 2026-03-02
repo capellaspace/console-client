@@ -1,4 +1,4 @@
-.PHONY: clean install formatter lint test types docs livedocs
+.PHONY: clean install formatter lint test types docs livedocs security
 
 JOBS ?= 1
 
@@ -20,6 +20,8 @@ help:
 	@echo "        Build the documentation."
 	@echo "    livedocs"
 	@echo "        Build the documentation with a live preview for quick iteration."
+	@echo "    security"
+	@echo "        Run security scans (bandit + pip-audit)."
 
 clean:
 	find . -name '*.pyc' -exec rm -f {} +
@@ -50,3 +52,7 @@ docs:
 
 livedocs:
 	poetry run sphinx-autobuild docs docs/build/html
+
+security:
+	poetry run bandit -r capella_console_client -f json --exit-zero 2>/dev/null | python3 scripts/bandit_report.py
+	poetry run pip-audit

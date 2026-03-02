@@ -91,6 +91,37 @@ jobs:
       run: poetry run coveralls
       continue-on-error: true
 
+  security:
+    name: Security scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout git repository 🕝
+      uses: actions/checkout@v4
+
+    - name: Set up python3.12 🐍
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+
+    - name: Install poetry 🦄
+      uses: Gr1N/setup-poetry@v9
+      with:
+        poetry-version: 2.3.2
+
+    - name: Load poetry cached libs ⬇
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: ${{ runner.os }}-poetry
+
+    - name: Install dependencies 🖥
+      run: poetry install --no-interaction
+
+    - name: Security scan 🔒
+      run: make security
+
   docs:
     name: Test Docs
     runs-on: ubuntu-latest
