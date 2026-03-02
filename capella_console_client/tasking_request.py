@@ -121,37 +121,46 @@ def _set_window_open_close(window_open: datetime | str | None, window_close: dat
     return (_datetime_to_iso8601_str(window_open_dt), _datetime_to_iso8601_str(window_close_dt))
 
 
-def update_tasking_requests(
-    *tasking_request_ids: str,
-    session: CapellaConsoleSession,
-    **kwargs,
-) -> dict[str, Any]:
-    max_workers = min(TR_UPDATE_MAX_CONCURRENCY, len(tasking_request_ids))
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            _id: executor.submit(_update_tasking_request_worker, session=session, tasking_request_id=_id, **kwargs)
-            for _id in tasking_request_ids
-        }
-    return {_id: fut.result() for _id, fut in futures.items()}
-
-
-def _update_tasking_request_worker(
-    session: CapellaConsoleSession,
-    tasking_request_id: str,
-    **kwargs,
-) -> dict[str, Any]:
+def _update_worker(session: CapellaConsoleSession, endpoint: str, prop_map: dict, **kwargs) -> dict[str, Any]:
     properties: dict[str, Any] = {
-        camel: kwargs[snake] for snake, camel in TR_UPDATABLE_PROPERTIES.items() if kwargs.get(snake) is not None
+        camel: kwargs[snake] for snake, camel in prop_map.items() if kwargs.get(snake) is not None
     }
     if kwargs.get("product_types") is not None:
         properties["processingConfig"] = {"productTypes": kwargs["product_types"]}
 
     try:
-        return session.patch(f"/task/{tasking_request_id}", json={"properties": properties}).json()
+        return session.patch(endpoint, json={"properties": properties}).json()
     except CapellaConsoleClientError as exc:
         if exc.response is not None:
             return {"success": False, **exc.response.json()}
         return {"success": False}
+
+
+def _update_multi_parallel(
+    *update_ids: str, session: CapellaConsoleSession, update_fct, max_concurrency: int, **kwargs
+) -> dict[str, Any]:
+    max_workers = min(max_concurrency, len(update_ids))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {_id: executor.submit(update_fct, session=session, update_id=_id, **kwargs) for _id in update_ids}
+    return {_id: fut.result() for _id, fut in futures.items()}
+
+
+def update_tasking_requests(
+    *tasking_request_ids: str,
+    session: CapellaConsoleSession,
+    **kwargs,
+) -> dict[str, Any]:
+    return _update_multi_parallel(
+        *tasking_request_ids,
+        session=session,
+        update_fct=_update_tasking_request_worker,
+        max_concurrency=TR_UPDATE_MAX_CONCURRENCY,
+        **kwargs,
+    )
+
+
+def _update_tasking_request_worker(session: CapellaConsoleSession, update_id: str, **kwargs) -> dict[str, Any]:
+    return _update_worker(session, f"/task/{update_id}", TR_UPDATABLE_PROPERTIES, **kwargs)
 
 
 def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession) -> dict[str, Any]:
@@ -167,11 +176,16 @@ def cancel_tasking_requests(
     *tasking_request_ids: str,
     session: CapellaConsoleSession,
 ) -> dict[str, Any]:
-    return _cancel_multi_parallel(*tasking_request_ids, session=session, cancel_fct=_cancel_tasking_request)
+    return _cancel_multi_parallel(
+        *tasking_request_ids,
+        session=session,
+        cancel_fct=_cancel_tasking_request,
+        max_concurrency=TR_CANCEL_MAX_CONCURRENCY,
+    )
 
 
-def _cancel_multi_parallel(*cancel_ids: str, session, cancel_fct):
-    max_workers = min(TR_CANCEL_MAX_CONCURRENCY, len(cancel_ids))
+def _cancel_multi_parallel(*cancel_ids: str, session, cancel_fct, max_concurrency: int):
+    max_workers = min(max_concurrency, len(cancel_ids))
 
     results_by_cancel_id = {}
     with ThreadPoolExecutor(max_workers=max_workers) as executor:

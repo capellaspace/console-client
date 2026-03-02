@@ -11,6 +11,8 @@ import capella_console_client.cli.settings
 import capella_console_client.cli.user_searches.my_searches
 import capella_console_client.cli.orders
 import capella_console_client.cli.workflows
+import capella_console_client.cli.tasks
+import capella_console_client.cli.rrs
 
 
 def auto_auth_callback(ctx: typer.Context):
@@ -49,6 +51,8 @@ app.add_typer(
 )
 app.add_typer(capella_console_client.cli.orders.app, name="orders")
 app.add_typer(capella_console_client.cli.workflows.app, name="workflows")
+app.add_typer(capella_console_client.cli.tasks.app, name="tasks")
+app.add_typer(capella_console_client.cli.rrs.app, name="repeats")
 
 
 @app.command()

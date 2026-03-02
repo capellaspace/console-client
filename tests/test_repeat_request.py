@@ -3,6 +3,7 @@ import pytest
 import random
 
 from .test_data import post_mock_responses
+from .conftest import RR_UPDATE_ERR
 from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.exceptions import RepeatRequestPayloadValidationError, ContractNotFoundError
 
@@ -84,3 +85,48 @@ def test_cancel_success_partial_fail(test_client, task_cancel_partial_success_mo
     assert result[rr_id_success]["success"]
     assert not result[rr_id_error]["success"]
     assert result[rr_id_error]["error"]["code"] == "UNABLE_TO_UPDATE_FINALIZED_TRANSACTION"
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        pytest.param({"name": "updated name"}, id="name"),
+        pytest.param({"description": "new description"}, id="description"),
+        pytest.param({"custom_attribute_1": "foo", "custom_attribute_2": "bar"}, id="custom_attributes"),
+        pytest.param({"product_types": ["VC"]}, id="product_types"),
+        pytest.param({}, id="no_fields"),
+    ],
+)
+def test_update_repeat_request_fields(test_client, rr_update_mock, disable_validate_uuid, kwargs):
+    rr_id = str(uuid.uuid4())
+    result = test_client.update_repeat_requests(rr_id, **kwargs)
+    assert result[rr_id] == post_mock_responses("/repeat-requests")
+
+
+def test_update_repeat_requests_success_multiple(test_client, rr_update_mock, disable_validate_uuid):
+    rr_ids = [str(uuid.uuid4()) for _ in range(random.randint(2, 5))]
+    result = test_client.update_repeat_requests(*rr_ids, name="bulk name")
+
+    assert len(result.keys()) == len(rr_ids)
+    for rr_id in rr_ids:
+        assert result[rr_id] == post_mock_responses("/repeat-requests")
+
+
+def test_update_repeat_requests_all_error(test_client, rr_update_error_mock, disable_validate_uuid):
+    rr_id = str(uuid.uuid4())
+    result = test_client.update_repeat_requests(rr_id)
+
+    assert not result[rr_id].get("success")
+    assert result[rr_id]["error"]["code"] == RR_UPDATE_ERR["code"]
+
+
+def test_update_repeat_requests_partial_failure(test_client, rr_update_partial_mock, disable_validate_uuid):
+    rr_id_success = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    rr_id_error = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+
+    result = test_client.update_repeat_requests(rr_id_success, rr_id_error, name="new name")
+
+    assert len(result.keys()) == 2
+    assert result[rr_id_success] == post_mock_responses("/repeat-requests")
+    assert not result[rr_id_error].get("success")
+    assert result[rr_id_error]["error"]["code"] == RR_UPDATE_ERR["code"]

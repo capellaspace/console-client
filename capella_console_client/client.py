@@ -41,7 +41,7 @@ from capella_console_client.tasking_request import (
     cancel_tasking_requests,
     update_tasking_requests,
 )
-from capella_console_client.repeat_request import create_repeat_request, cancel_repeat_requests
+from capella_console_client.repeat_request import create_repeat_request, cancel_repeat_requests, update_repeat_requests
 from capella_console_client.validate import (
     _validate_uuid,
     _validate_uuids,
@@ -403,6 +403,25 @@ class CapellaConsoleClient:
             print_cancelation_result(results_by_tr_id, task_type="repeat")
 
         return results_by_tr_id
+
+    def update_repeat_requests(self, *repeat_request_ids: str, **kwargs) -> dict[str, Any]:
+        """
+        Update multiple repeat requests with the same field values (parallel)
+
+        Args:
+            repeat_request_ids: UUIDs of the repeat requests to update
+            name: updated name
+            description: updated description
+            custom_attribute_1: updated custom attribute 1
+            custom_attribute_2: updated custom attribute 2
+            product_types: updated list of product types
+
+        Returns:
+            Dict[str, Any]: update results keyed by repeat request ID
+        """
+        filtered_ids = _compact_unique(repeat_request_ids)
+        _validate_uuids(filtered_ids)
+        return update_repeat_requests(*filtered_ids, session=self._sesh, **kwargs)
 
     # ORDER
     def list_orders(self, *order_ids: str | None, is_active: bool | None = False) -> list[dict[str, Any]]:

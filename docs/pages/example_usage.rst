@@ -901,6 +901,40 @@ repeat requests repeat cadence can be configured in multiple ways
     )
 
 
+update
+******
+
+The following fields can be updated on an existing repeat request: ``name``, ``description``, ``custom_attribute_1``, ``custom_attribute_2``, ``product_types``.
+
+Pass one or more repeat request IDs — all receive the same update. Results are returned as a dict keyed by repeat request ID.
+
+.. code:: python3
+
+    # update a single repeat request
+    result = client.update_repeat_requests(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        name="updated name",
+        description="updated description",
+    )
+    updated_rr = result["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+
+    # update multiple repeat requests in parallel — all get the same fields applied
+    result = client.update_repeat_requests(
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        custom_attribute_1="campaign-2026",
+    )
+
+    # on success each value is the updated repeat request dict
+    # on failure each value is {"success": False, "error": {...}}
+    for rr_id, rr_result in result.items():
+        if rr_result.get("success") is False:
+            print(f"{rr_id} failed: {rr_result['error']['code']}")
+        else:
+            print(f"{rr_id} updated: {rr_result['properties']['repeatrequestName']}")
+
+
 cancel
 ******
 

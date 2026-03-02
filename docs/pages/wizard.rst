@@ -214,19 +214,21 @@ Update tasking requests
 
 .. code:: console
 
-    $ capella-console-wizard workflows manage-trs
+    $ capella-console-wizard tasks update
 
 users **with elevated permissions** will be prompted to select who they'd like to update tasking requests for
 
 .. code:: console
 
     ? Update tasking requests of ? (Use arrow keys)
-    » TrScopeOptions.user
-      TrScopeOptions.org
-      TrScopeOptions.admin
+    » current user
+      by tasking request ID
+      current organization (requires elevated perms)
+      admin (requires elevated perms)
 
-* `user`: tasking requests of current user will be searched
-* `org`: tasking requests of current user's org will be searched (**requires elevated permissions**)
+* `current user`: tasking requests of current user will be searched
+* `by tasking request ID`: one or more tasking request IDs (UUIDs) will be prompted
+* `current organization`: tasking requests of current user's org will be searched (**requires elevated permissions**)
 * `admin`: user_id / org_id will be prompted in previous step and used for search (**requires elevated permissions**)
 
 After selecting scope, matching tasking requests are fetched and presented as a checkbox:
@@ -283,20 +285,22 @@ Cancel tasking requests
 
 .. code:: console
 
-    $ capella-console-wizard workflows manage-trs
+    $ capella-console-wizard tasks cancel
 
 users **with elevated permissions** will be prompted to select who they'd like to cancel tasking requests for
 
 .. code:: console
 
-    Cancel tasking requests of ? (Use arrow keys)
-    » TrScopeOptions.user
-      TrScopeOptions.org
-      TrScopeOptions.admin
+    ? Cancel tasking requests of ? (Use arrow keys)
+    » current user
+      by tasking request ID
+      current organization (requires elevated perms)
+      admin (requires elevated perms)
 
 
-* `user`: cancelable tasking requests of current user will be searched
-* `org`: cancelable tasking requests of current user's org will be searched (**requires elevated permissions**)
+* `current user`: cancelable tasking requests of current user will be searched
+* `by tasking request ID`: one or more tasking request IDs (UUIDs) will be prompted
+* `current organization`: cancelable tasking requests of current user's org will be searched (**requires elevated permissions**)
 * `admin`: user_id / org_id will be prompted in previous step and used for search (**requires elevated permissions**)
 
 .. code:: console
@@ -321,3 +325,71 @@ users **with elevated permissions** will be prompted to select who they'd like t
     ├──────────────────────────────────────┼─────────────────┤
     │ cccccccc-b2ca-4a44-9362-0304025e149f │ ✅              │
     ╘══════════════════════════════════════╧═════════════════╛
+
+
+Update repeat requests
+======================
+
+.. code:: console
+
+    $ capella-console-wizard repeats update
+
+users **with elevated permissions** will be prompted to select who they'd like to update repeat requests for
+
+.. code:: console
+
+    ? Update repeat requests of ? (Use arrow keys)
+    » current user
+      by repeat request ID
+      current organization (requires elevated perms)
+      admin (requires elevated perms)
+
+* `current user`: repeat requests of current user will be searched
+* `by repeat request ID`: one or more repeat request IDs (UUIDs) will be prompted
+* `current organization`: repeat requests of current user's org will be searched (**requires elevated permissions**)
+* `admin`: user_id / org_id will be prompted in previous step and used for search (**requires elevated permissions**)
+
+After selecting scope, matching repeat requests are fetched and presented as a checkbox:
+
+.. code:: console
+
+    ? Update repeat requests of ? current user
+    2026-02-16 14:39:42,023 - 🛰️  Capella 🐐 - INFO - searching repeat requests with payload ...
+    2026-02-16 14:39:42,813 - 🛰️  Capella 🐐 - INFO - found 3 repeat requests matching search query
+    ? Which repeat request? done (1 selection)
+
+Select which fields to update (multi-select):
+
+.. code:: console
+
+    ? Which fields to update? (Use arrow keys to move, <space> to select, <a> to toggle, <i> to invert)
+    » ● name
+      ○ description
+      ○ custom attribute 1
+      ○ custom attribute 2
+      ○ product types
+
+Each selected field is then prompted individually:
+
+.. code:: console
+
+    ? new name: updated repeat request name
+
+A confirmation prompt summarises the pending changes before any API call is made:
+
+.. code:: console
+
+    ? Apply the following updates:
+      name: 'updated repeat request name'
+
+    to 1 repeat request(s):
+     - aaaaaaaa-b2ca-4a44-9362-0304025e149f
+     Yes
+
+.. code:: console
+
+    ╒══════════════════════════════════════╤══════════╤═════════════════════════════╕
+    │ repeat request id                    │ status   │ name                        │
+    ╞══════════════════════════════════════╪══════════╪═════════════════════════════╡
+    │ aaaaaaaa-b2ca-4a44-9362-0304025e149f │ ✅       │ updated repeat request name │
+    ╘══════════════════════════════════════╧══════════╧═════════════════════════════╛
