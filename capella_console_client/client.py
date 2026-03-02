@@ -39,6 +39,7 @@ from capella_console_client.tasking_request import (
     _task_contains_status,
     create_tasking_request,
     cancel_tasking_requests,
+    update_tasking_requests,
 )
 from capella_console_client.repeat_request import create_repeat_request, cancel_repeat_requests
 from capella_console_client.validate import (
@@ -152,7 +153,27 @@ class CapellaConsoleClient:
         """
         return create_tasking_request(session=self._sesh, **kwargs)
 
-    def search_tasking_requests(self, **kwargs: dict[str, Any] | None) -> TaskingRequestSearchResult:
+    def update_tasking_requests(self, *tasking_request_ids: str, **kwargs) -> dict[str, Any]:
+        """
+        Update multiple tasking requests with the same field values (parallel)
+
+        Args:
+            tasking_request_ids: UUIDs of tasking requests to update
+            name: updated name
+            description: updated description
+            custom_attribute_1: updated custom attribute 1
+            custom_attribute_2: updated custom attribute 2
+            product_types: updated list of product types
+
+        Returns:
+            Dict[str, Any]: results keyed by tasking request id — the updated TR dict on
+            success, or ``{"success": False, ...}`` on failure
+        """
+        filtered_ids = _compact_unique(tasking_request_ids)
+        _validate_uuids(filtered_ids)
+        return update_tasking_requests(*filtered_ids, session=self._sesh, **kwargs)
+
+    def search_tasking_requests(self, **kwargs: Any) -> TaskingRequestSearchResult:
         """
         search tasking requests
 
@@ -307,7 +328,7 @@ class CapellaConsoleClient:
         """
         return create_repeat_request(session=self._sesh, **kwargs)
 
-    def search_repeat_requests(self, **kwargs: dict[str, Any] | None) -> RepeatRequestSearchResult:
+    def search_repeat_requests(self, **kwargs: Any) -> RepeatRequestSearchResult:
         """
         search repeat requests
 

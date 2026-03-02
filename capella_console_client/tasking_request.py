@@ -12,8 +12,10 @@ from capella_console_client.validate import (
     _set_squint_default,
 )
 from capella_console_client.config import (
+    TR_UPDATABLE_PROPERTIES,
     TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
     TR_CANCEL_MAX_CONCURRENCY,
+    TR_UPDATE_MAX_CONCURRENCY,
 )
 from capella_console_client.enumerations import (
     ObservationDirection,
@@ -117,6 +119,39 @@ def _set_window_open_close(window_open: datetime | str | None, window_close: dat
 
     # Convert to ISO8601 strings
     return (_datetime_to_iso8601_str(window_open_dt), _datetime_to_iso8601_str(window_close_dt))
+
+
+def update_tasking_requests(
+    *tasking_request_ids: str,
+    session: CapellaConsoleSession,
+    **kwargs,
+) -> dict[str, Any]:
+    max_workers = min(TR_UPDATE_MAX_CONCURRENCY, len(tasking_request_ids))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            _id: executor.submit(_update_tasking_request_worker, session=session, tasking_request_id=_id, **kwargs)
+            for _id in tasking_request_ids
+        }
+    return {_id: fut.result() for _id, fut in futures.items()}
+
+
+def _update_tasking_request_worker(
+    session: CapellaConsoleSession,
+    tasking_request_id: str,
+    **kwargs,
+) -> dict[str, Any]:
+    properties: dict[str, Any] = {
+        camel: kwargs[snake] for snake, camel in TR_UPDATABLE_PROPERTIES.items() if kwargs.get(snake) is not None
+    }
+    if kwargs.get("product_types") is not None:
+        properties["processingConfig"] = {"productTypes": kwargs["product_types"]}
+
+    try:
+        return session.patch(f"/task/{tasking_request_id}", json={"properties": properties}).json()
+    except CapellaConsoleClientError as exc:
+        if exc.response is not None:
+            return {"success": False, **exc.response.json()}
+        return {"success": False}
 
 
 def get_tasking_request(tasking_request_id: str, session: CapellaConsoleSession) -> dict[str, Any]:

@@ -11,6 +11,7 @@ CATALOG_STAC_MAX_ITEM_RETURN = 10000
 TR_SEARCH_DEFAULT_PAGE_SIZE = 250
 TR_MAX_CONCURRENCY = 8  # protection from getting 429ed
 TR_CANCEL_MAX_CONCURRENCY = 10
+TR_UPDATE_MAX_CONCURRENCY = 10
 
 
 STAC_SUPPORTED_ROOT_FIELDS = {
@@ -223,4 +224,12 @@ RR_SUPPORTED_GROUPBY_FIELDS = {
     "userId",
     "userName",
     "windowDuration",
+}
+
+
+TR_UPDATABLE_PROPERTIES = {
+    "name": "taskingrequestName",
+    "description": "taskingrequestDescription",
+    "custom_attribute_1": "customAttribute1",
+    "custom_attribute_2": "customAttribute2",
 }
