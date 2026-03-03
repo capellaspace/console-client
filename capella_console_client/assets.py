@@ -96,7 +96,10 @@ def _gather_download_requests(
         if exclude and key in exclude:
             continue
 
-        local_path = local_dir / _get_filename(asset["href"])
+        if isinstance(local_dir, Path):
+            local_path = _safe_local_path(local_dir, asset["href"])
+        else:
+            local_path = local_dir / _get_filename(asset["href"])
         download_requests.append(
             DownloadRequest(
                 stac_id=stac_id,
@@ -106,6 +109,18 @@ def _gather_download_requests(
             )
         )
     return download_requests
+
+
+def _safe_local_path(local_dir: Path, url: str) -> Path:
+    filename = _get_filename(url)
+    candidate = local_dir / filename
+    if not candidate.resolve().is_relative_to(local_dir.resolve()):
+        raise ValueError(f"Unsafe filename rejected: {filename!r}")
+    return candidate
+
+
+def _get_filename(pre_signed_url: str) -> str:
+    return Path(urlparse(pre_signed_url).path).name
 
 
 def _get_main_asset_href(assets_presigned: dict[str, Any]) -> str:
@@ -225,8 +240,10 @@ def _download_asset(
     """
     # If a directory is provided, create a file path in it
     if hasattr(dl_request.local_path, "is_dir") and dl_request.local_path.is_dir():
-        local_file = _get_filename(dl_request.url)
-        dl_request.local_path = dl_request.local_path / local_file
+        if isinstance(dl_request.local_path, Path):
+            dl_request.local_path = _safe_local_path(dl_request.local_path, dl_request.url)
+        else:
+            dl_request.local_path = dl_request.local_path / _get_filename(dl_request.url)
 
     # S3Path compatibility check
     if isinstance(dl_request.local_path, S3Path) and enable_resume:  # type: ignore[misc]
@@ -271,6 +288,14 @@ def _download_asset(
         logger.info(f"{action} to {dl_request.local_path} {size_suffix}")
 
     _fetch(dl_request, asset_size, show_progress, progress, resume_from=resume_from)
+
+    if asset_size > 0:
+        actual_size = dl_request.local_path.stat().st_size
+        if actual_size != asset_size:
+            raise ValueError(
+                f"Download size mismatch for {dl_request.local_path.name}: "
+                f"expected {asset_size} bytes, got {actual_size}"
+            )
 
     if not show_progress:
         logger.info(f"successfully downloaded to {dl_request.local_path}")
@@ -333,7 +358,8 @@ def _fetch(
                 # Fallback (unreachable if raise_for_status raises)
                 return dl_request.local_path
     except httpx.ConnectError as e:
-        raise ConnectError(f"Could not connect to {dl_request.url}: {e}") from None
+        safe_url = httpx.URL(dl_request.url).copy_with(query=None)
+        raise ConnectError(f"Could not connect to {safe_url}: {e}") from None
 
 
 def _prepare_resume_context(resume_from: int | None) -> tuple[dict[str, str], str, int]:
@@ -478,10 +504,6 @@ def _register_progress_task(
         file_name_str = dl_request.local_path.name
     download_task_id = progress.add_task("Download", total=asset_size, filename=file_name_str)
     return download_task_id
-
-
-def _get_filename(pre_signed_url: str) -> str:
-    return Path(urlparse(pre_signed_url).path).name
 
 
 def _get_asset_bytesize(pre_signed_url: str) -> int:

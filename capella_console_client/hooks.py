@@ -36,7 +36,8 @@ def log_on_4xx_5xx(response: httpx.Response) -> bool | None:
         if not response.is_stream_consumed:
             response.read()
 
-        msg = f"Request: {request.method} {request.url} - Status: {response.status_code}"
+        safe_url = request.url.copy_with(query=None)
+        msg = f"Request: {request.method} {safe_url} - Status: {response.status_code}"
         resp_json = response.json()
         if resp_json:
             msg += f" - Response: {resp_json}"
