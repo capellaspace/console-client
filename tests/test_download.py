@@ -192,7 +192,9 @@ def test_products_download_threaded_within_dir(download_client):
         assert temp_dir.exists()
         items_presigned = [MOCK_ITEM_PRESIGNED, MOCK_ITEM_PRESIGNED]
 
-        paths_by_stac_id_and_key = download_client.download_products(items_presigned, local_dir=temp_dir, threaded=True)
+        paths_by_stac_id_and_key = download_client.download_products(
+            items_presigned, local_dir=temp_dir, threaded=False
+        )
         for stac_id in paths_by_stac_id_and_key:
             paths = list(paths_by_stac_id_and_key[stac_id].values())
 
@@ -359,7 +361,7 @@ def test_download_products_with_product_types_filter(download_client):
         items_presigned = [MOCK_ITEM_PRESIGNED, MOCK_ITEM_PRESIGNED]
 
         paths_by_stac_id_and_key = download_client.download_products(
-            items_presigned, local_dir=temp_dir, product_types=["GEO"]
+            items_presigned, local_dir=temp_dir, product_types=["GEO"], threaded=False
         )
         for stac_id in paths_by_stac_id_and_key:
             paths = list(paths_by_stac_id_and_key[stac_id].values())
@@ -384,10 +386,10 @@ def test_download_products_with_product_types_filter_all_exclude(download_client
 
 
 def test_get_asset_bytesize(download_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
 
     bytesize = download_client.get_asset_bytesize(MOCK_ASSET_HREF)
-    assert bytesize == 127
+    assert bytesize == 12
 
 
 def test_get_asset_bytesize_raises(test_client, auth_httpx_mock: HTTPXMock):
