@@ -384,10 +384,10 @@ def test_download_products_with_product_types_filter_all_exclude(download_client
 
 
 def test_get_asset_bytesize(download_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
 
     bytesize = download_client.get_asset_bytesize(MOCK_ASSET_HREF)
-    assert bytesize == 127
+    assert bytesize == 12
 
 
 def test_get_asset_bytesize_raises(test_client, auth_httpx_mock: HTTPXMock):
