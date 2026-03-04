@@ -2,6 +2,25 @@
 History
 =======
 
+0.18.0 (2026-03-03)
+-------------------
+
+* client.update_repeat_requests (`#143 <https://github.com/capellaspace/console-client/pull/143>`_)
+* client.update_tasking_requests (`#142 <https://github.com/capellaspace/console-client/pull/142>`_)
+* CI security scanning (`#141 <https://github.com/capellaspace/console-client/pull/141>`_)
+* docs build fix (`#140 <https://github.com/capellaspace/console-client/pull/140>`_)
+* squash all test warnings (`#139 <https://github.com/capellaspace/console-client/pull/139>`_)
+* resume-able asset downloads (`#138 <https://github.com/capellaspace/console-client/pull/138>`_)
+* tr/rr search show_progress (`#137 <https://github.com/capellaspace/console-client/pull/137>`_)
+* settings profile system (`#136 <https://github.com/capellaspace/console-client/pull/136>`_)
+* general cleanup (`#135 <https://github.com/capellaspace/console-client/pull/135>`_)
+* drop setuptools as runtime dependency (`#134 <https://github.com/capellaspace/console-client/pull/134>`_)
+* replace retrying with tenacity for asset fetch retry logic (`#132 <https://github.com/capellaspace/console-client/pull/132>`_)
+* modernize type hints to Python 3.10+ syntax (`#131 <https://github.com/capellaspace/console-client/pull/131>`_)
+* adding s3:// support to client.download_asset (`#130 <https://github.com/capellaspace/console-client/pull/130>`_)
+* type hint modernization (`#129 <https://github.com/capellaspace/console-client/pull/129>`_)
+
+
 0.17.0 (2026-02-24)
 -------------------
 * search repeat request (`#127 <https://github.com/capellaspace/console-client/pull/127>`_)

@@ -131,3 +131,6 @@ dmypy.json
 driver*.py
 .vscode
 *.DS_Store
+
+# Local research/notes
+.claude-resources/
