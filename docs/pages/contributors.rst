@@ -13,28 +13,35 @@ counts, so please do not hesitate!
 2. Fork `the repository <https://github.com/capellaspace/console-client>`_ on GitHub to
    start making your changes.
 
-3. Write tests that show the bug is fixed or that the feature works as
+3. Install `uv <https://docs.astral.sh/uv/getting-started/installation/>`_ and set up the
+   development environment:
+
+  .. code-block:: console
+
+    $ uv sync --all-extras
+
+4. Write tests that show the bug is fixed or that the feature works as
    expected.
 
-4. Ensure your code passes the style checks by running
+5. Ensure your code passes the style checks by running
 
   .. code-block:: console
 
     $ make formatter && make lint
 
-5. Check all of the unit tests pass by running
+6. Check all of the unit tests pass by running
 
   .. code-block:: console
 
     $ make test
 
-6. Check the type checks pass by running
+7. Check the type checks pass by running
 
   .. code-block:: console
 
     $ make types
 
-7. Send a pull request and bug the maintainer until it gets merged and
+8. Send a pull request and bug the maintainer until it gets merged and
    published 🙂
 
 

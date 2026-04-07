@@ -35,16 +35,16 @@ Or, via tarball:
     $ curl -OL https://github.com/capellaspace/console-client/zipball/main
 
 
-``capella-console-client`` uses `Poetry <https://python-poetry.org/>`_ for packaging and
+``capella-console-client`` uses `uv <https://docs.astral.sh/uv/>`_ for packaging and
 dependency management. If you want to build ``capella-console-client`` from source, you
-need to install Poetry first:
+need to install uv first:
 
 .. code-block:: console
 
-  $ curl -sSL https://install.python-poetry.org | python3 -
+  $ curl -LsSf https://astral.sh/uv/install.sh | sh
 
-There are several other ways to install Poetry, as seen in
-`the official guide <https://python-poetry.org/docs/#installation>`_.
+There are several other ways to install uv, as seen in
+`the official guide <https://docs.astral.sh/uv/getting-started/installation/>`_.
 
 To install ``capella-console-client`` and its dependencies in editable mode, execute
 
