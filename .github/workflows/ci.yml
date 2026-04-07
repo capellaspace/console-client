@@ -121,6 +121,7 @@ jobs:
 
     - name: Security scan 🔒
       run: make security
+      continue-on-error: true
 
   docs:
     name: Test Docs

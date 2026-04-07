@@ -295,19 +295,19 @@ def rr_update_partial_mock(authed_repeat_request_mock):
 
 @pytest.fixture
 def download_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
     yield test_client
 
 
 @pytest.fixture
 def big_download_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12700"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
     yield test_client
 
 
 @pytest.fixture
 def verbose_download_client(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
     yield verbose_test_client
 
 
@@ -329,7 +329,7 @@ def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
         url=f"{CONSOLE_API_URL}/orders/1/download",
         json=get_mock_responses("/orders/1/download"),
     )
-    auth_httpx_mock.add_response(url=MOCK_ASSET_HREF, text="MOCK_CONTENT", headers={"Content-Length": "127"})
+    auth_httpx_mock.add_response(url=MOCK_ASSET_HREF, text="MOCK_CONTENT", headers={"Content-Length": "12"})
     yield verbose_test_client
 
 

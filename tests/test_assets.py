@@ -9,6 +9,8 @@ from capella_console_client.assets import (
     _derive_stac_id,
     _fetch,
     _download_asset,
+    _get_filename,
+    _safe_local_path,
     DownloadRequest,
     progress_bar,
 )
@@ -363,3 +365,166 @@ def test_fetch_resume_with_progress(httpx_mock: HTTPXMock, resume_test_setup):
     # Verify progress was updated with initial offset
     assert mock_progress.add_task.called
     assert mock_progress.update.called
+
+
+PRESIGNED_BASE = "https://s3.amazonaws.com/bucket"
+
+
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        (f"{PRESIGNED_BASE}/image.tif?X-Amz-Signature=abc123", "image.tif"),
+        (
+            f"{PRESIGNED_BASE}/CAPELLA_C05_SM_GEO_HH_20210727091736_20210727091740.tif",
+            "CAPELLA_C05_SM_GEO_HH_20210727091736_20210727091740.tif",
+        ),
+        (f"{PRESIGNED_BASE}/path/to/deep/file.json", "file.json"),
+    ],
+)
+def test_get_filename_extracts_name(url, expected):
+    assert _get_filename(url) == expected
+
+
+def test_safe_local_path_normal(tmp_path):
+    url = f"{PRESIGNED_BASE}/image.tif?X-Amz-Signature=abc123"
+    result = _safe_local_path(tmp_path, url)
+    assert result == tmp_path / "image.tif"
+
+
+@pytest.mark.parametrize(
+    "crafted_url",
+    [
+        f"{PRESIGNED_BASE}/%2F..%2F..%2Fetc%2Fpasswd",
+        "https://evil.com/../../../../etc/passwd",
+    ],
+)
+def test_safe_local_path_rejects_traversal(tmp_path, crafted_url):
+    result = _safe_local_path(tmp_path, crafted_url)
+    assert result.is_relative_to(tmp_path)
+
+
+def test_safe_local_path_absolute_filename_rejected(tmp_path, monkeypatch):
+    # Simulate a hypothetical case where _get_filename returns an absolute-
+    # looking name by monkeypatching it; _safe_local_path must reject it.
+    monkeypatch.setattr(
+        "capella_console_client.assets._get_filename",
+        lambda url: "../../../etc/passwd",
+    )
+    with pytest.raises(ValueError, match="Unsafe filename rejected"):
+        _safe_local_path(tmp_path, "https://example.com/anything")
+
+
+def test_download_asset_raises_on_size_mismatch(httpx_mock: HTTPXMock, tmp_path: Path):
+    """Truncated download (bytes written < Content-Length) must raise ValueError."""
+    test_url = "https://example.com/test-asset.tif"
+    local_path = tmp_path / "test-asset.tif"
+
+    # Server advertises 1000 bytes but only delivers 800
+    httpx_mock.add_response(method="GET", headers={"Content-Length": "1000"})
+    httpx_mock.add_response(status_code=200, content=b"X" * 800)
+
+    dl_request = DownloadRequest(
+        url=test_url,
+        local_path=local_path,
+        asset_key="HH",
+        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
+    )
+
+    with pytest.raises(ValueError, match="Download size mismatch"):
+        _download_asset(dl_request, override=False, show_progress=False, progress=MagicMock(), enable_resume=False)
+
+
+def test_fetch_connect_error_strips_query_string(tmp_path: Path, monkeypatch):
+    """ConnectError message must not expose presigned URL query params (AWS tokens)."""
+    presigned_url = "https://s3.amazonaws.com/bucket/image.tif?X-Amz-Signature=secret123&X-Amz-Credential=key"
+    local_path = tmp_path / "image.tif"
+
+    dl_request = DownloadRequest(
+        url=presigned_url,
+        local_path=local_path,
+        asset_key="HH",
+        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
+    )
+
+    import httpx as _httpx
+
+    monkeypatch.setattr(_httpx, "stream", MagicMock(side_effect=_httpx.ConnectError("connection refused")))
+
+    from capella_console_client.exceptions import ConnectError as CapellaConnectError
+
+    with pytest.raises(CapellaConnectError) as exc_info:
+        _fetch(dl_request, asset_size=1000, show_progress=False, progress=MagicMock())
+
+    error_message = str(exc_info.value)
+    assert "secret123" not in error_message
+    assert "X-Amz-Signature" not in error_message
+    assert "image.tif" in error_message  # path retained for debuggability
+
+
+def test_download_asset_no_size_check_when_content_length_unknown(httpx_mock: HTTPXMock, tmp_path: Path):
+    """When Content-Length is unavailable (asset_size=-1) no size check is performed."""
+    test_url = "https://example.com/test-asset.tif"
+    local_path = tmp_path / "test-asset.tif"
+
+    # No Content-Length header → _get_asset_bytesize raises, asset_size=-1
+    httpx_mock.add_response(method="GET", headers={})
+    httpx_mock.add_response(status_code=200, content=b"X" * 500)
+
+    dl_request = DownloadRequest(
+        url=test_url,
+        local_path=local_path,
+        asset_key="HH",
+        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
+    )
+
+    result = _download_asset(dl_request, override=False, show_progress=False, progress=MagicMock(), enable_resume=False)
+    assert result == local_path
+    assert local_path.stat().st_size == 500
+
+
+def test_download_asset_passes_when_sizes_match(httpx_mock: HTTPXMock, tmp_path: Path):
+    """A complete download where bytes written == Content-Length must succeed."""
+    test_url = "https://example.com/test-asset.tif"
+    local_path = tmp_path / "test-asset.tif"
+
+    httpx_mock.add_response(method="GET", headers={"Content-Length": "1000"})
+    httpx_mock.add_response(status_code=200, content=b"X" * 1000)
+
+    dl_request = DownloadRequest(
+        url=test_url,
+        local_path=local_path,
+        asset_key="HH",
+        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
+    )
+
+    result = _download_asset(dl_request, override=False, show_progress=False, progress=MagicMock(), enable_resume=False)
+    assert result == local_path
+    assert local_path.stat().st_size == 1000
+
+
+def test_download_asset_size_check_applies_to_s3path(httpx_mock: HTTPXMock):
+    """Size mismatch check also fires for S3Path targets (uses .stat().st_size)."""
+    test_url = "https://example.com/test-asset.tif"
+
+    # Mock an S3Path-like object: write succeeds but stat reports a shorter file
+    mock_s3_path = MagicMock()
+    mock_s3_path.exists.return_value = False
+    mock_s3_path.is_dir.return_value = False
+    mock_s3_path.stat.return_value.st_size = 800  # truncated
+    mock_s3_path.name = "test-asset.tif"
+    mock_s3_path.open.return_value.__enter__ = lambda s: s
+    mock_s3_path.open.return_value.__exit__ = MagicMock(return_value=False)
+    mock_s3_path.write = MagicMock()
+
+    httpx_mock.add_response(method="GET", headers={"Content-Length": "1000"})
+    httpx_mock.add_response(status_code=200, content=b"X" * 800)
+
+    dl_request = DownloadRequest(
+        url=test_url,
+        local_path=mock_s3_path,
+        asset_key="HH",
+        stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
+    )
+
+    with pytest.raises(ValueError, match="Download size mismatch"):
+        _download_asset(dl_request, override=False, show_progress=False, progress=MagicMock(), enable_resume=False)
