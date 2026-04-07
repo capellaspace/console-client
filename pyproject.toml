@@ -1,6 +1,6 @@
 [project]
 name = "capella-console-client"
-version = "0.17.0"
+version = "0.18.0"
 description = "Python SDK for api.capellaspace.com (task, search, order, download)"
 authors = [
     {name = "Thomas Beyer", email = "thomas.beyer@capellaspace.com"},
