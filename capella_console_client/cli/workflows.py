@@ -1,7 +1,7 @@
 import typer
 
-from capella_console_client.cli.search import interactive_search, from_saved
 from capella_console_client.cli.checkout import interactive_search_order_and_download
+from capella_console_client.cli.search import from_saved, interactive_search
 
 app = typer.Typer(help="interactive workflows")
 

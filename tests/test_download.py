@@ -9,16 +9,17 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client import CapellaConsoleClient
+from capella_console_client.config import CONSOLE_API_URL
+from capella_console_client.exceptions import ConnectError
 from capella_console_client.s3 import S3Path
+
 from .test_data import (
-    get_mock_responses,
+    DUMMY_STAC_IDS,
     create_mock_asset_hrefs,
     create_mock_items_presigned,
-    DUMMY_STAC_IDS,
+    get_mock_responses,
 )
-from capella_console_client.exceptions import ConnectError
 
 MOCK_ASSETS_PRESIGNED = create_mock_asset_hrefs()
 MOCK_ASSET_HREF = MOCK_ASSETS_PRESIGNED["HH"]["href"]

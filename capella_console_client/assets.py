@@ -1,22 +1,21 @@
-from pathlib import Path
-from urllib.parse import urlparse
-from dataclasses import dataclass
+import re
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
-import re
-from capella_console_client.s3 import S3Path
+from urllib.parse import urlparse
 
 import httpx
 import rich.progress
-from tenacity import retry, retry_if_exception_type, wait_exponential, before_sleep_log
+from tenacity import retry, retry_if_exception_type, wait_exponential
 
-from capella_console_client.logconf import logger
+from capella_console_client.exceptions import ConnectError
 from capella_console_client.hooks import (
     log_retry_attempt,
 )
-from capella_console_client.exceptions import ConnectError
-
+from capella_console_client.logconf import logger
+from capella_console_client.s3 import S3Path
 
 STAC_ID_REGEX = re.compile("^.*(CAPELLA_\\w+_\\w+_\\w+_\\d{14}_\\d{14}).*$")
 PRODUCT_TYPE_REGEX = re.compile("^.*CAPELLA_\\w+_\\w+_(\\w+)_\\w+_\\d{14}_\\d{14}.*$")
@@ -96,6 +95,7 @@ def _gather_download_requests(
         if exclude and key in exclude:
             continue
 
+        local_path: Path | S3Path
         if isinstance(local_dir, Path):
             local_path = _safe_local_path(local_dir, asset["href"])
         else:
@@ -146,7 +146,7 @@ def _derive_stac_id(assets_presigned: dict[str, Any]) -> str:
 def _filter_items_by_product_types(
     items_presigned: list[dict[str, Any]], product_types: list[str]
 ) -> list[dict[str, Any]]:
-    logger.info(f'filtering by product_types: {", ".join(product_types)}')
+    logger.info(f"filtering by product_types: {', '.join(product_types)}")
     filtered_items = []
     for cur_item in items_presigned:
         if cur_item["properties"]["sar:product_type"] in product_types:

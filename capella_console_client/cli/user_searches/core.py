@@ -1,13 +1,13 @@
-from typing import Any
 from datetime import datetime
+from typing import Any
 
-import typer
 import questionary
+import typer
 
-from capella_console_client.enumerations import BaseEnum
-from capella_console_client.cli.validate import _no_selection_bye
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.info import no_data_info
+from capella_console_client.cli.validate import _no_selection_bye
+from capella_console_client.enumerations import BaseEnum
 
 
 class SearchEntity(str, BaseEnum):

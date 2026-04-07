@@ -3,9 +3,7 @@ from dataclasses import dataclass
 import httpx
 
 from capella_console_client.exceptions import (
-    CapellaConsoleClientError,
     handle_error_response_and_raise,
-    NON_RETRYABLE_ERROR_CODES,
 )
 from capella_console_client.logconf import logger
 

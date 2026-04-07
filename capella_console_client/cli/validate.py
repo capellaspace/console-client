@@ -4,13 +4,12 @@ CLI / interactive (questionary) specific validation
 
 import json
 from pathlib import Path
-import re
-from dateutil.parser import parse, ParserError
 
 import typer
+from dateutil.parser import ParserError, parse
 
-from capella_console_client.validate import _validate_uuid as _validate_core_uuid
 from capella_console_client.assets import STAC_ID_REGEX
+from capella_console_client.validate import _validate_uuid as _validate_core_uuid
 
 
 def _must_be_type(type):
@@ -30,7 +29,7 @@ def _validate_bbox(val):
         return err_msg
     try:
         parsed = json.loads(val)
-    except:
+    except Exception:
         return err_msg
 
     if not isinstance(parsed, list):
@@ -45,7 +44,7 @@ def _validate_uuid(val):
     err_msg = "please specify a valid uuid (e.g. aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)"
     try:
         _validate_core_uuid(val)
-    except ValueError as e:
+    except ValueError:
         return err_msg
 
     return True

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
-import dateutil.parser
 from typing import Any
+
+import dateutil.parser
 
 from capella_console_client.session import CapellaConsoleSession
 

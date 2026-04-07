@@ -1,9 +1,9 @@
-from typing import Any
 from copy import deepcopy
-from capella_console_client.config import CATALOG_DEFAULT_LIMIT
+from typing import Any
 
 import pytest
 
+from capella_console_client.config import CATALOG_DEFAULT_LIMIT
 
 DUMMY_STAC_IDS = [
     "CAPELLA_C02_SM_GEO_HH_20210119154519_20210119154523",

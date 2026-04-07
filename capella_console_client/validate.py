@@ -1,15 +1,14 @@
-import uuid
 import re
-from datetime import datetime
+import uuid
 from collections import Counter
-from dateutil.parser import parse, ParserError
-
-from typing import Any, TypeVar
 from collections.abc import Iterable
+from datetime import datetime
+from typing import Any, TypeVar
 
 import geojson
+from dateutil.parser import ParserError, parse
 
-from capella_console_client.enumerations import ProductType, AssetType, SquintMode
+from capella_console_client.enumerations import AssetType, ProductType, SquintMode
 from capella_console_client.logconf import logger
 
 STAC_ID_REGEX_STRICT = re.compile("^CAPELLA_C\\d{2}_\\w+_\\w+_\\w{2}_\\d{14}_\\d{14}$")

@@ -9,9 +9,9 @@ help:
 	@echo "    install"
 	@echo "        Install capella_console_client."
 	@echo "    formatter"
-	@echo "        Apply black formatting to code."
+	@echo "        Apply ruff formatting and auto-fix lint issues."
 	@echo "    lint"
-	@echo "        Check the code style."
+	@echo "        Check code style and lint (ruff format + check)."
 	@echo "    test"
 	@echo "        Run the unit tests."
 	@echo "    types"
@@ -37,10 +37,12 @@ install:
 	uv sync --all-extras
 
 formatter:
-	uv run black .
+	uv run ruff format .
+	uv run ruff check --fix .
 
 lint:
-	uv run black --check --diff .
+	uv run ruff format --check .
+	uv run ruff check .
 
 test:
 	uv run pytest --cov capella_console_client --cov-report=html -sv

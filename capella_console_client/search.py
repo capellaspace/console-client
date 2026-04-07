@@ -1,49 +1,49 @@
-from copy import deepcopy
-from functools import partial, wraps
-from typing import Any, ClassVar, DefaultDict
-from collections.abc import Callable
-from collections import defaultdict
-from urllib.parse import urlparse
-from dataclasses import dataclass, field
-from math import ceil
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from itertools import repeat
 from abc import ABCMeta, abstractmethod
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+from collections import defaultdict
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from copy import deepcopy
+from dataclasses import dataclass, field
+from functools import partial, wraps
+from itertools import repeat
+from math import ceil
+from typing import Any, ClassVar
+from urllib.parse import urlparse
 
-from capella_console_client.logconf import logger
-from capella_console_client.report import print_task_search_result
-from capella_console_client.session import CapellaConsoleSession
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+
 from capella_console_client.config import (
+    CATALOG_DEFAULT_LIMIT,
+    CATALOG_MAX_PAGE_SIZE,
+    CATALOG_STAC_MAX_ITEM_RETURN,
+    QUERY_OPERATORS,
+    RR_FILTERS_BY_QUERY_FIELDS,
+    RR_SUPPORTED_GROUPBY_FIELDS,
     STAC_ALL_SUPPORTED_SEARCH_FIELDS,
     STAC_ALL_SUPPORTED_SORTBY,
-    STAC_SUPPORTED_ROOT_FIELDS,
-    STAC_SUPPORTED_QUERY_FIELDS,
     STAC_PREFIXED_BY_QUERY_FIELDS,
-    QUERY_OPERATORS,
-    CATALOG_MAX_PAGE_SIZE,
-    CATALOG_DEFAULT_LIMIT,
-    CATALOG_STAC_MAX_ITEM_RETURN,
-    STAC_ALL_SUPPORTED_GROUPBY_FIELDS,
     STAC_ROOT_LEVEL_GROUPBY_FIELDS,
+    STAC_SUPPORTED_QUERY_FIELDS,
+    STAC_SUPPORTED_ROOT_FIELDS,
+    SUPPORTED_RR_SEARCH_QUERY_FIELDS,
     SUPPORTED_TASKING_REQUEST_SEARCH_QUERY_FIELDS,
     TR_FILTERS_BY_QUERY_FIELDS,
     TR_MAX_CONCURRENCY,
     TR_SEARCH_DEFAULT_PAGE_SIZE,
     TR_SUPPORTED_GROUPBY_FIELDS,
     UNKNOWN_GROUPBY_FIELD,
-    SUPPORTED_RR_SEARCH_QUERY_FIELDS,
-    RR_FILTERS_BY_QUERY_FIELDS,
-    RR_SUPPORTED_GROUPBY_FIELDS,
 )
 from capella_console_client.enumerations import (
+    BaseEnum,
     CollectionTier,
     CollectionType,
     OwnershipOption,
-    TaskingRequestStatus,
-    BaseEnum,
     RepeatCollectionTier,
+    TaskingRequestStatus,
 )
+from capella_console_client.logconf import logger
+from capella_console_client.report import print_task_search_result
+from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.validate import _compact_unique, _validate_uuids
 
 
@@ -146,7 +146,6 @@ class SearchResult(metaclass=ABCMeta):
 
 
 class StacGroupby(Groupby):
-
     ROOT_GROUPBY_FIELDS: ClassVar[set[str]] = STAC_ROOT_LEVEL_GROUPBY_FIELDS
     PROPERTIES_GROUPBY_FIELDS: ClassVar[set[str]] = STAC_SUPPORTED_QUERY_FIELDS
 
@@ -207,7 +206,6 @@ class StacSearchResult(SearchResult):
 
 
 class TaskingRequestGroupby(Groupby):
-
     ROOT_GROUPBY_FIELDS: ClassVar[set[str]] = set()
     PROPERTIES_GROUPBY_FIELDS: ClassVar[set[str]] = TR_SUPPORTED_GROUPBY_FIELDS
 
@@ -271,7 +269,6 @@ class RepeatRequestSearchResult(SearchResult):
 
 
 class AbstractSearch(metaclass=ABCMeta):
-
     @abstractmethod
     def _get_query_payload(self, kwargs) -> dict[str, Any]: ...
 
@@ -318,8 +315,8 @@ class StacSearch(AbstractSearch):
             )
             self.payload["limit"] = CATALOG_STAC_MAX_ITEM_RETURN
 
-    def _get_query_payload(self, kwargs) -> DefaultDict[str, dict[str, Any]]:
-        query_payload: DefaultDict[str, dict[str, Any]] = defaultdict(dict)
+    def _get_query_payload(self, kwargs) -> defaultdict[str, dict[str, Any]]:
+        query_payload: defaultdict[str, dict[str, Any]] = defaultdict(dict)
 
         for cur_field, value in kwargs.items():
             cur_field, op = self._split_op(cur_field)
@@ -557,7 +554,6 @@ class AbstractQuerySanitizer(metaclass=ABCMeta):
 
 
 class TaskingRequestQuerySanitizer(AbstractQuerySanitizer):
-
     SUPPORTED = {"collection_tier", "collection_type", "status", "tasking_request_id"}
 
     def _get_custom_sanitizer_rules(self):
@@ -571,7 +567,6 @@ class TaskingRequestQuerySanitizer(AbstractQuerySanitizer):
 
 
 class RepeatRequestQuerySanitizer(AbstractQuerySanitizer):
-
     SUPPORTED = {"collection_tier", "collection_type", "status", "repeat_request_id"}
 
     def _get_custom_sanitizer_rules(self):
@@ -593,7 +588,6 @@ def _fetch_page(params, session, search_endpoint, search_entity, search_payload,
 
 
 class AbstractTaskRepeatSearch(AbstractSearch):
-
     SEARCH_ENTITY: SearchEntity
     SEARCH_ENDPOINT: str
     QUERY_PAYLOAD_FIELD: str
@@ -765,7 +759,6 @@ class AbstractTaskRepeatSearch(AbstractSearch):
 
 
 class TaskingRequestSearch(AbstractTaskRepeatSearch):
-
     SEARCH_ENTITY = SearchEntity.TASKING_REQUEST
     SEARCH_ENDPOINT = "/tasks/search"
     QUERY_PAYLOAD_FIELD = "query"
@@ -778,7 +771,6 @@ class TaskingRequestSearch(AbstractTaskRepeatSearch):
 
 
 class RepeatRequestSearch(AbstractTaskRepeatSearch):
-
     SEARCH_ENTITY = SearchEntity.REPEAT_REQUEST
     SEARCH_ENDPOINT = "/repeat-requests/search"
     QUERY_PAYLOAD_FIELD = "filter"

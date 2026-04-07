@@ -1,17 +1,16 @@
-from typing import Any
 from collections import defaultdict
+from typing import Any
 
 import typer
 from tabulate import tabulate
 
+from capella_console_client.cli.config import (
+    CURRENT_SETTINGS,
+)
 from capella_console_client.config import (
     STAC_PREFIXED_BY_QUERY_FIELDS,
 )
 from capella_console_client.search import StacSearchResult
-
-from capella_console_client.cli.config import (
-    CURRENT_SETTINGS,
-)
 
 
 def show_tabulated(

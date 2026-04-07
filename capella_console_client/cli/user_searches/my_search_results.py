@@ -1,16 +1,15 @@
+import questionary
 import typer
 from tabulate import tabulate
-import questionary
 
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.info import no_data_info
 from capella_console_client.cli.user_searches.core import (
-    rename_search_entity,
     SearchEntity,
     _load_and_prompt,
+    rename_search_entity,
 )
 from capella_console_client.logconf import logger
-
 
 app = typer.Typer(help="manage saved search results")
 
@@ -79,4 +78,4 @@ def prune():
             CLICache.MY_SEARCH_RESULTS.unlink()
         except FileNotFoundError:
             pass
-        logger.info(f"Deleted ALL saved search results")
+        logger.info("Deleted ALL saved search results")

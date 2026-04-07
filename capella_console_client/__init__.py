@@ -1,1 +1,1 @@
-from .client import CapellaConsoleClient
+from .client import CapellaConsoleClient as CapellaConsoleClient
