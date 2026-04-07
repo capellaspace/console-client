@@ -1,20 +1,21 @@
 from typing import Any
 from uuid import UUID
-import typer
-import questionary
 
+import questionary
+import typer
+
+from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.cli.config import (
     CURRENT_SETTINGS,
 )
-from capella_console_client.cli.client_singleton import CLIENT
-from capella_console_client.enumerations import BaseEnum
-from capella_console_client.cli.visualize import (
-    show_orders_tabulated,
-    show_order_review_tabulated,
-)
-from capella_console_client.cli.validate import _no_selection_bye
-from capella_console_client.cli.user_searches.core import _load_and_prompt, SearchEntity
 from capella_console_client.cli.info import download_hint
+from capella_console_client.cli.user_searches.core import SearchEntity, _load_and_prompt
+from capella_console_client.cli.validate import _no_selection_bye
+from capella_console_client.cli.visualize import (
+    show_order_review_tabulated,
+    show_orders_tabulated,
+)
+from capella_console_client.enumerations import BaseEnum
 
 app = typer.Typer(help="explore order history")
 

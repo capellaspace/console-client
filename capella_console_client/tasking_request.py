@@ -1,6 +1,6 @@
-from typing import Any
-from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import geojson
 from dateutil.parser import parse
@@ -13,24 +13,30 @@ from capella_console_client.validate import (
     _set_squint_default,
 )
 from capella_console_client.config import (
-    TR_UPDATABLE_PROPERTIES,
     TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
     TR_CANCEL_MAX_CONCURRENCY,
+    TR_UPDATABLE_PROPERTIES,
     TR_UPDATE_MAX_CONCURRENCY,
 )
 from capella_console_client.enumerations import (
-    ObservationDirection,
-    OrbitState,
-    ProductType,
-    OrbitalPlane,
-    CollectionTier,
-    Polarization,
     ArchiveHoldback,
-    LocalTimeOption,
-    SquintMode,
+    CollectionTier,
     CollectionType,
+    LocalTimeOption,
+    ObservationDirection,
+    OrbitalPlane,
+    OrbitState,
+    Polarization,
+    ProductType,
+    SquintMode,
 )
 from capella_console_client.exceptions import CapellaConsoleClientError
+from capella_console_client.session import CapellaConsoleSession
+from capella_console_client.validate import (
+    _datetime_to_iso8601_str,
+    _set_squint_default,
+    _snake_to_camel,
+)
 
 
 def create_tasking_request(

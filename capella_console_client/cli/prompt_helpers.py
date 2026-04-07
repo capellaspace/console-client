@@ -1,12 +1,13 @@
+from typing import Any
+
 import questionary
 import typer
-from typing import Any
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
 from capella_console_client.cli.client_singleton import CLIENT
-from capella_console_client.enumerations import BaseEnum, ProductType
-from capella_console_client.cli.visualize import show_cancel_result_tabulated, show_update_result_tabulated
 from capella_console_client.cli.validate import _validate_uuid
+from capella_console_client.cli.visualize import show_cancel_result_tabulated, show_update_result_tabulated
+from capella_console_client.enumerations import BaseEnum, ProductType
 
 
 def get_first_checked(choices: list[questionary.Choice], prev_search=None) -> questionary.Choice:
@@ -48,7 +49,7 @@ def _fetch_users() -> list[dict[str, Any]]:
         page = resp.json()
         total_pages = page["totalPages"]
 
-        task = progress.add_task(f"[cyan]Fetching users...", total=total_pages)
+        task = progress.add_task("[cyan]Fetching users...", total=total_pages)
 
         users.extend(page["results"])
         progress.update(task, advance=1)
@@ -86,7 +87,7 @@ def _fetch_orgs() -> list[dict[str, Any]]:
         page = resp.json()
         total_pages = page["totalPages"]
 
-        task = progress.add_task(f"[cyan]Fetching organizations...", total=total_pages)
+        task = progress.add_task("[cyan]Fetching organizations...", total=total_pages)
 
         orgs.extend(page["results"])
         progress.update(task, advance=1)

@@ -1,8 +1,7 @@
 import json
-from uuid import UUID
-from pathlib import Path
-from typing import Any
 from collections.abc import Iterable
+from typing import Any
+from uuid import UUID
 
 
 class SafeEncoder(json.JSONEncoder):

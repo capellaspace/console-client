@@ -1,11 +1,13 @@
-import uuid
-import pytest
 import random
+import uuid
 
-from .test_data import post_mock_responses
-from .conftest import RR_UPDATE_ERR
+import pytest
+
 from capella_console_client.config import CONSOLE_API_URL
-from capella_console_client.exceptions import RepeatRequestPayloadValidationError, ContractNotFoundError
+from capella_console_client.exceptions import ContractNotFoundError, RepeatRequestPayloadValidationError
+
+from .conftest import RR_UPDATE_ERR
+from .test_data import post_mock_responses
 
 mock_geojson = {"coordinates": [-105.120360, 39.965330], "type": "Point"}
 

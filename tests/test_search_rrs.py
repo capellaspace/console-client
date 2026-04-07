@@ -1,9 +1,8 @@
+import json
 from unittest.mock import ANY
+
 from capella_console_client.config import CONSOLE_API_URL
 from tests.test_data import get_mock_responses
-
-
-import json
 
 
 def test_search_all_rrs_for_user(test_client, authed_tasking_request_mock):

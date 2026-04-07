@@ -1,36 +1,36 @@
-import os
-import sys
-from typing import Any
 import json
-from collections import defaultdict
+import os
 import subprocess  # nosec B404
+import sys
+from collections import defaultdict
+from typing import Any
 
-import typer
 import questionary
+import typer
 
-from capella_console_client.enumerations import BaseEnum
-from capella_console_client.search import StacSearchResult
-from capella_console_client.cli.client_singleton import CLIENT
-from capella_console_client.cli.validate import (
-    get_validator,
-    get_caster,
-    _validate_out_path,
-    _no_selection_bye,
-    _at_least_one_selected,
-)
 from capella_console_client.cli.cache import CLICache
+from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.cli.config import (
     CLI_SUPPORTED_SEARCH_FILTERS,
     CURRENT_SETTINGS,
-    PROMPT_OPERATORS,
     ENUM_CHOICES_BY_FIELD_NAME,
+    PROMPT_OPERATORS,
 )
-from capella_console_client.cli.user_searches.my_search_results import _load_and_prompt
-from capella_console_client.cli.user_searches.core import SearchEntity
-from capella_console_client.cli.visualize import show_tabulated
-from capella_console_client.cli.settings import _prompt_search_result_headers
 from capella_console_client.cli.info import my_search_entity_info
 from capella_console_client.cli.prompt_helpers import get_first_checked
+from capella_console_client.cli.settings import _prompt_search_result_headers
+from capella_console_client.cli.user_searches.core import SearchEntity
+from capella_console_client.cli.user_searches.my_search_results import _load_and_prompt
+from capella_console_client.cli.validate import (
+    _at_least_one_selected,
+    _no_selection_bye,
+    _validate_out_path,
+    get_caster,
+    get_validator,
+)
+from capella_console_client.cli.visualize import show_tabulated
+from capella_console_client.enumerations import BaseEnum
+from capella_console_client.search import StacSearchResult
 
 
 # TODO: autocomplete option
@@ -120,9 +120,7 @@ def _prompt_enum_choices(field: str, init: Any = None) -> dict[str, Any] | None:
         questionary.Choice(e.value, checked=e.value in init) for e in ENUM_CHOICES_BY_FIELD_NAME[field]
     ]
 
-    choices = questionary.checkbox(
-        f"{field}:", choices=choices, initial_choice=get_first_checked(choices, init)
-    ).ask()  # type: ignore
+    choices = questionary.checkbox(f"{field}:", choices=choices, initial_choice=get_first_checked(choices, init)).ask()  # type: ignore
     _no_selection_bye(choices)
     return {field: choices}
 

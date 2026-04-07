@@ -1,4 +1,5 @@
 import typer
+
 from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.cli.prompt_helpers import _cancel_items, _update_items
 

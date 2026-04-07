@@ -1,5 +1,5 @@
-from typing import Any
 from datetime import datetime, timezone
+from typing import Any
 
 import geojson
 
@@ -15,25 +15,28 @@ from capella_console_client.config import (
     RR_UPDATE_MAX_CONCURRENCY,
 )
 from capella_console_client.enumerations import (
-    ObservationDirection,
-    OrbitState,
-    ProductType,
-    OrbitalPlane,
-    RepeatCollectionTier,
-    Polarization,
     ArchiveHoldback,
-    LocalTimeOption,
     CollectionType,
-    SquintMode,
+    LocalTimeOption,
+    ObservationDirection,
+    OrbitalPlane,
+    OrbitState,
+    Polarization,
+    ProductType,
+    RepeatCollectionTier,
     RepeatCycle,
     InsarOrbit,
+    SquintMode,
 )
+from capella_console_client.exceptions import RepeatRequestPayloadValidationError
+from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.tasking_request import (
     _cancel_multi_parallel,
     _cancel_worker,
     _update_multi_parallel,
     _update_worker,
 )
+from capella_console_client.validate import _datetime_to_iso8601_str, _set_squint_default, _snake_to_camel
 
 
 def create_repeat_request(

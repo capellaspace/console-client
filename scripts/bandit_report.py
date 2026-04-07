@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Format bandit JSON output as a compact table. Exits non-zero if medium+ issues found."""
+
 import json
 import sys
 

@@ -1,13 +1,14 @@
-from capella_console_client.exceptions import (
-    handle_error_response_and_raise,
-    CollectionAccessDeniedError,
-    OrderExpiredError,
-    CapellaConsoleClientError,
-    ValidationError,
-)
+from unittest.mock import MagicMock
 
 import pytest
-from unittest.mock import MagicMock
+
+from capella_console_client.exceptions import (
+    CapellaConsoleClientError,
+    CollectionAccessDeniedError,
+    OrderExpiredError,
+    ValidationError,
+    handle_error_response_and_raise,
+)
 
 
 def create_mock_response(resp):

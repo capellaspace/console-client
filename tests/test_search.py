@@ -2,14 +2,15 @@
 
 import pytest
 
+from capella_console_client.search import StacSearch
+from capella_console_client.validate import _validate_uuid
+
 from .test_data import (
-    get_search_test_cases,
-    get_canned_search_results_single_page,
     get_canned_search_results_multi_page_page1,
     get_canned_search_results_multi_page_page2,
+    get_canned_search_results_single_page,
+    get_search_test_cases,
 )
-from capella_console_client.validate import _validate_uuid
-from capella_console_client.search import StacSearch
 
 
 @pytest.mark.parametrize("search_args,expected", get_search_test_cases())

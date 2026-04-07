@@ -3,16 +3,17 @@ capella-console-wizard CLI
 """
 
 import sys
+
 import typer
 
+import capella_console_client.cli.orders
+import capella_console_client.cli.rrs
+import capella_console_client.cli.settings
+import capella_console_client.cli.tasks
+import capella_console_client.cli.user_searches.my_searches
+import capella_console_client.cli.workflows
 from capella_console_client.cli.client_singleton import CLIENT
 from capella_console_client.cli.config import CURRENT_SETTINGS
-import capella_console_client.cli.settings
-import capella_console_client.cli.user_searches.my_searches
-import capella_console_client.cli.orders
-import capella_console_client.cli.workflows
-import capella_console_client.cli.tasks
-import capella_console_client.cli.rrs
 
 
 def auto_auth_callback(ctx: typer.Context):

@@ -1,17 +1,17 @@
-import os
 from unittest.mock import MagicMock
 
 import pytest
 from pytest_httpx import HTTPXMock
 
-from capella_console_client.config import CONSOLE_API_URL, CAPELLA_API_KEY_ENV
-from capella_console_client import CapellaConsoleClient
-from capella_console_client.exceptions import AuthenticationError
-from capella_console_client.enumerations import AuthHeaderPrefix
 import capella_console_client.session
+from capella_console_client import CapellaConsoleClient
+from capella_console_client.config import CAPELLA_API_KEY_ENV, CONSOLE_API_URL
+from capella_console_client.enumerations import AuthHeaderPrefix
+from capella_console_client.exceptions import AuthenticationError
+
 from .test_data import (
-    post_mock_responses,
     get_mock_responses,
+    post_mock_responses,
 )
 
 
@@ -128,4 +128,4 @@ def test_whoami(auth_httpx_mock):
 
 def test_chatty_client(auth_httpx_mock):
     client = CapellaConsoleClient(api_key="MOCK_API_KEY", verbose=True)
-    assert client.verbose == True
+    assert client.verbose

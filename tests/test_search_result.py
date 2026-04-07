@@ -1,24 +1,24 @@
 import pytest
 
-from capella_console_client.search import (
-    StacSearchResult,
-    TaskingRequestSearchResult,
-    RepeatRequestSearchResult,
-)
 from capella_console_client.config import (
+    RR_SUPPORTED_GROUPBY_FIELDS,
     STAC_ROOT_LEVEL_GROUPBY_FIELDS,
     TR_SUPPORTED_GROUPBY_FIELDS,
-    RR_SUPPORTED_GROUPBY_FIELDS,
+)
+from capella_console_client.search import (
+    RepeatRequestSearchResult,
+    StacSearchResult,
+    TaskingRequestSearchResult,
 )
 
 from .test_data import (
-    get_canned_search_results_single_page,
-    get_canned_search_results_with_collect_id,
     MOCK_GROUPBY_STAC_ITEM,
-    TASK_1,
-    TASK_2,
     REPEAT_REQUEST_1,
     REPEAT_REQUEST_2,
+    TASK_1,
+    TASK_2,
+    get_canned_search_results_single_page,
+    get_canned_search_results_with_collect_id,
 )
 
 
