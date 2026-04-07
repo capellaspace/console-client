@@ -8,9 +8,6 @@ on:
     - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
 
-env:
-  POETRY_VIRTUALENVS_CREATE: false
-
 jobs:
   quality:
     name: Code quality
@@ -25,20 +22,13 @@ jobs:
       with:
         python-version: 3.12
 
-    - name: Install poetry 🦄
-      uses: Gr1N/setup-poetry@v9
+    - name: Install uv 🚀
+      uses: astral-sh/setup-uv@v5
       with:
-        poetry-version: 2.3.2
-
-    - name: Load poetry cached libs ⬇
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: ${{ runner.os }}-poetry
+        enable-cache: true
 
     - name: Install dependencies 🖥
-      run: poetry install --no-interaction
+      run: uv sync
 
     - name: Lint 🎎
       run: make lint
@@ -64,21 +54,13 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install poetry 🦄
-      uses: Gr1N/setup-poetry@v9
+    - name: Install uv 🚀
+      uses: astral-sh/setup-uv@v5
       with:
-        poetry-version: 2.3.2
-
-    - name: Load poetry cached libs ⬇
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: ${{ runner.os }}-poetry
+        enable-cache: true
 
     - name: Install dependencies 🖥
-      run: |
-        poetry install --no-interaction --extras s3
+      run: uv sync --extra s3
 
     - name: Test code 🔍
       run: make test
@@ -88,7 +70,7 @@ jobs:
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_SERVICE_NAME: github
-      run: poetry run coveralls
+      run: uv run coveralls
       continue-on-error: true
 
   security:
@@ -104,20 +86,13 @@ jobs:
       with:
         python-version: 3.12
 
-    - name: Install poetry 🦄
-      uses: Gr1N/setup-poetry@v9
+    - name: Install uv 🚀
+      uses: astral-sh/setup-uv@v5
       with:
-        poetry-version: 2.3.2
-
-    - name: Load poetry cached libs ⬇
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: ${{ runner.os }}-poetry
+        enable-cache: true
 
     - name: Install dependencies 🖥
-      run: poetry install --no-interaction
+      run: uv sync
 
     - name: Security scan 🔒
       run: make security
@@ -135,13 +110,13 @@ jobs:
       with:
         python-version: 3.14
 
-    - name: Install poetry 🦄
-      uses: Gr1N/setup-poetry@v9
+    - name: Install uv 🚀
+      uses: astral-sh/setup-uv@v5
       with:
-        poetry-version: 2.3.2
+        enable-cache: true
 
     - name: Install dependencies 🖥
-      run: poetry install --no-interaction --extras "docs"
+      run: uv sync --extra docs
 
     - name: Build docs ⚒️
       run: make docs
@@ -158,17 +133,17 @@ jobs:
   #   - name: Checkout git repository 🕝
   #     uses: actions/checkout@v4
 
-  #   - name: Set up python3.8 🐍
+  #   - name: Set up python3.12 🐍
   #     uses: actions/setup-python@v5
   #     with:
-  #       python-version: 3.8
+  #       python-version: 3.12
 
-  #   - name: Install poetry 🦄
-  #     uses: Gr1N/setup-poetry@v7
+  #   - name: Install uv 🚀
+  #     uses: astral-sh/setup-uv@v5
   #     with:
-  #       poetry-version: 1.6.1
+  #       enable-cache: true
 
   #   - name: Build ⚒️ distributions
   #     run: |
-  #       poetry build
-  #       poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+  #       uv build
+  #       uv publish -t ${{ secrets.PYPI_TOKEN }}

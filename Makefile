@@ -34,25 +34,25 @@ clean:
 	rm -rf dist/
 
 install:
-	poetry install
+	uv sync --all-extras
 
 formatter:
-	poetry run black .
+	uv run black .
 
 lint:
-	poetry run black --check --diff .
+	uv run black --check --diff .
 
 test:
-	poetry run pytest --cov capella_console_client --cov-report=html -sv
+	uv run pytest --cov capella_console_client --cov-report=html -sv
 
 types:
-	poetry run mypy --install-types --non-interactive capella_console_client --tb
+	uv run mypy --install-types --non-interactive capella_console_client --tb
 docs:
-	poetry run make -C docs html O=-v
+	uv run make -C docs html O=-v
 
 livedocs:
-	poetry run sphinx-autobuild docs docs/build/html
+	uv run sphinx-autobuild docs docs/build/html
 
 security:
-	poetry run bandit -r capella_console_client -f json --exit-zero 2>/dev/null | python3 scripts/bandit_report.py
-	poetry run pip-audit
+	uv run bandit -r capella_console_client -f json --exit-zero 2>/dev/null | python3 scripts/bandit_report.py
+	uv run pip-audit
