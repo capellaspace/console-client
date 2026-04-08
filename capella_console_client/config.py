@@ -144,6 +144,9 @@ REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS = frozenset(
         "repeat_end",
         "repetition_interval",
         "repetition_count",
+        "maintain_scene_framing",
+        "look_angle_tolerance",
+        "azimuth_angle_tolerance",
     ]
 )
 

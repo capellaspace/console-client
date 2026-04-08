@@ -96,6 +96,7 @@ def _gather_download_requests(
         if exclude and key in exclude:
             continue
 
+        local_path: Path | S3Path
         if isinstance(local_dir, Path):
             local_path = _safe_local_path(local_dir, asset["href"])
         else:

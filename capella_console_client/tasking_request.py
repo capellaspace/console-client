@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import geojson
 from dateutil.parser import parse
 
+from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.validate import (
     _snake_to_camel,
@@ -97,6 +98,7 @@ def create_tasking_request(
     if contract_id:
         payload["contractId"] = contract_id
 
+    logger.info(f"creating tasking request with payload {payload}")
     return session.post("/task", json=payload).json()
 
 
