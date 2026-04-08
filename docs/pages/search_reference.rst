@@ -18,6 +18,10 @@ catalog search
       - description
       - type
       - example
+    * - ``absolute_orbit``
+      - The absolute orbit number at the start of acquisition.
+      - ``int``
+      - ``638``
     * - ``azimuth_angle``
       - azimuth angle (°), between 0 and 360
       - ``Union[int, float]``
@@ -158,6 +162,10 @@ catalog search
         | ``VC``, ``"VS"``, ``"ACD"``
       - ``str``
       - ``"SLC"``
+    * - ``relative_orbit``
+      - The relative orbit number at the start of acquisition.
+      - ``int``
+      - ``14``
     * - ``resolution_azimuth``
       - resolution azimuth (m)
       - ``float``
@@ -170,6 +178,10 @@ catalog search
       - resolution range (m)
       - ``float``
       - ``0.5``
+    * - ``rgt_id``
+      - Repeat Ground Track (RGT) id
+      - ``str``
+      - ``611_97.9_104_7_20260224T172941_-1``
     * - ``squint_angle``
       - squint angle
       - ``float``
