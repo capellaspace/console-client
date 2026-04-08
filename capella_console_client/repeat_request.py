@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 import geojson
 
+from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.exceptions import RepeatRequestPayloadValidationError, ContractNotFoundError
 from capella_console_client.validate import _snake_to_camel, _datetime_to_iso8601_str, _set_squint_default
@@ -62,6 +63,10 @@ def create_repeat_request(
     squint: SquintMode | str | None = None,
     max_squint_angle: int | None = None,
     contract_id: str | None = None,
+    maintain_scene_framing: bool | None = None,
+    look_angle_tolerance: float | None = None,
+    azimuth_angle_tolerance: float | None = None,
+    window_duration: float | None = None,
 ) -> dict[str, Any]:
     repeat_start, repeat_end = _set_repetition_start_end(repeat_start, repeat_end, repetition_count)
 
@@ -100,6 +105,10 @@ def create_repeat_request(
     if contract_id:
         payload["contractId"] = contract_id
 
+    if window_duration:
+        payload["windowDuration"] = window_duration
+
+    logger.info(f"creating repeat request with payload {payload}")
     return session.post("/repeat-requests", json=payload).json()
 
 
