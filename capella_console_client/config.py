@@ -60,6 +60,9 @@ STAC_SUPPORTED_QUERY_FIELDS = {
     "image_formation_algorithm",
     "azimuth_angle",
     "collection_type",
+    "relative_orbit",
+    "absolute_orbit",
+    "rgt_id",
 }
 
 STAC_ALL_SUPPORTED_SEARCH_FIELDS = STAC_SUPPORTED_ROOT_FIELDS | STAC_SUPPORTED_QUERY_FIELDS
@@ -110,6 +113,9 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "image_formation_algorithm": "capella:image_formation_algorithm",
     "azimuth_angle": "view:azimuth",
     "collection_type": "capella:collection_type",
+    "relative_orbit": "sat:relative_orbit",
+    "absolute_orbit": "sat:absolute_orbit",
+    "rgt_id": "capella:rgt_id",
 }
 
 STAC_ROOT_LEVEL_GROUPBY_FIELDS = {"id", "collection"}
