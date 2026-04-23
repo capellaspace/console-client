@@ -5,13 +5,6 @@ from typing import Any
 import geojson
 from dateutil.parser import parse
 
-from capella_console_client.logconf import logger
-from capella_console_client.session import CapellaConsoleSession
-from capella_console_client.validate import (
-    _snake_to_camel,
-    _datetime_to_iso8601_str,
-    _set_squint_default,
-)
 from capella_console_client.config import (
     TASKING_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
     TR_CANCEL_MAX_CONCURRENCY,
@@ -31,6 +24,7 @@ from capella_console_client.enumerations import (
     SquintMode,
 )
 from capella_console_client.exceptions import CapellaConsoleClientError
+from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.validate import (
     _datetime_to_iso8601_str,
