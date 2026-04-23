@@ -519,13 +519,15 @@ class AbstractQuerySanitizer(metaclass=ABCMeta):
 
     @single_or_list
     def _sanitize_enum(self, field, value, enum_cls):
-        valid_status = [s.lower() for s in value if s.lower() in enum_cls]
+        valid_values = [s.lower() for s in value if s.lower() in enum_cls]
 
-        if not valid_status:
-            logger.warning(f"No valid {field} provided ({value}) ... dropping from filter")
+        if not valid_values:
+            logger.warning(
+                f"No valid {field} provided ({value}). Supported: {[e.value for e in enum_cls]} ... dropping from filter"
+            )
             return None
 
-        return valid_status
+        return valid_values
 
     @single_or_list
     def _sanitize_uuids(self, field, value):
@@ -655,6 +657,9 @@ class AbstractTaskRepeatSearch(AbstractSearch):
 
             if sntzr.has_sanitizer(cur_field):
                 value = sntzr.sanitize(field=cur_field, value=value)
+
+                if value is None:
+                    continue
 
             # op == in currently not supported by api
             # TODO: replace direct assignment (no operator) once in supported
