@@ -107,6 +107,8 @@ class RepeatCollectionTier(str, BaseEnum):
     flexible = "flexible"
     routine = "routine"
     internal = "internal"
+    insar = "insar"
+    insar_internal = "insar-internal"
 
 
 class RepeatCycle(int, BaseEnum):

@@ -197,3 +197,14 @@ def test_search_trs_show_progress_threaded(test_client, two_page_trs_mock, disab
     assert "tr-page1-1" in tr_ids
     assert "tr-page1-2" in tr_ids
     assert "tr-page2-1" in tr_ids
+
+
+def test_search_trs_drops_invalid_enum_values(test_client, authed_tasking_request_mock):
+    test_client.search_tasking_requests(status="not-accepted", collection_tier="insar-is-for-rr-only")
+    request = authed_tasking_request_mock.get_request(
+        method="POST",
+        url=f"{CONSOLE_API_URL}/tasks/search?page=1&limit=250",
+    )
+    request_payload = json.loads(request.read())
+    assert "lastStatusCode" not in request_payload["query"].keys()
+    assert "collectionTier" not in request_payload["query"].keys()

@@ -110,3 +110,14 @@ def test_search_rrs_with_id_single_status_nonexistent_omitted(
     assert len(rr_results) == 2
     assert rr_results[0]["properties"]["repeatrequestId"] == "PANDA"
     assert rr_results[1]["properties"]["repeatrequestId"] == "BOAR"
+
+
+def test_search_rrs_drops_invalid_enum_values(test_client, authed_tasking_request_mock):
+    test_client.search_repeat_requests(status="doesnotexist-status", collection_tier="brawl")
+    request = authed_tasking_request_mock.get_request(
+        method="POST",
+        url=f"{CONSOLE_API_URL}/repeat-requests/search?page=1&limit=250",
+    )
+    request_payload = json.loads(request.read())
+    assert "lastStatusCode" not in request_payload["filter"].keys()
+    assert "collectionTier" not in request_payload["filter"].keys()
