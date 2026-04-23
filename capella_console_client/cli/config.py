@@ -4,12 +4,12 @@ from typing import Any
 
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.enumerations import (
+    BaseEnum,
     InstrumentMode,
     ObservationDirection,
-    OrbitState,
     OrbitalPlane,
+    OrbitState,
     ProductType,
-    BaseEnum,
 )
 
 

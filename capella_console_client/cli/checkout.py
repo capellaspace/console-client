@@ -1,22 +1,20 @@
-import typer
 import questionary
+import typer
 from questionary import prompt
 
-from capella_console_client.enumerations import ProductType
-from capella_console_client.cli.user_searches.core import _load_and_prompt, SearchEntity
-from capella_console_client.cli.config import CURRENT_SETTINGS
 from capella_console_client.cli.client_singleton import CLIENT
-from capella_console_client.cli.validate import _validate_uuid, _validate_dir_exists
-from capella_console_client.enumerations import BaseEnum
+from capella_console_client.cli.config import CURRENT_SETTINGS
+from capella_console_client.cli.orders import (
+    PostOrderListActions,
+    _list_orders_and_tabulate,
+)
 from capella_console_client.cli.search import (
     _prompt_search_filters,
     search_and_post_actions,
 )
-from capella_console_client.cli.orders import (
-    _list_orders_and_tabulate,
-    PostOrderListActions,
-)
-
+from capella_console_client.cli.user_searches.core import SearchEntity, _load_and_prompt
+from capella_console_client.cli.validate import _validate_dir_exists, _validate_uuid
+from capella_console_client.enumerations import BaseEnum, ProductType
 
 app = typer.Typer(help="order and download products")
 

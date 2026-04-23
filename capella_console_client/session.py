@@ -1,19 +1,18 @@
 import os
-from enum import Enum
 import warnings
+from enum import Enum
 from getpass import getpass
 
-
-from capella_console_client.enumerations import AuthHeaderPrefix
 import httpx
 
-from capella_console_client.config import DEFAULT_TIMEOUT, CONSOLE_API_URL, CAPELLA_API_KEY_ENV
+from capella_console_client.config import CAPELLA_API_KEY_ENV, CONSOLE_API_URL, DEFAULT_TIMEOUT
+from capella_console_client.enumerations import AuthHeaderPrefix
+from capella_console_client.exceptions import (
+    AuthenticationError,
+    CapellaConsoleClientError,
+)
 from capella_console_client.hooks import log_on_4xx_5xx, translate_error_to_exception
 from capella_console_client.logconf import logger
-from capella_console_client.exceptions import (
-    CapellaConsoleClientError,
-    AuthenticationError,
-)
 from capella_console_client.version import __version__
 
 

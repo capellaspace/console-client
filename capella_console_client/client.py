@@ -1,59 +1,57 @@
 import logging
 import sys
-
-from typing import Any, cast
+import tempfile
 from collections import defaultdict
 from pathlib import Path
-import tempfile
-from capella_console_client.s3 import S3Path
-
-from capella_console_client.config import CONSOLE_API_URL
-from capella_console_client.session import CapellaConsoleSession
-from capella_console_client.logconf import logger
-from capella_console_client.exceptions import (
-    InsufficientFundsError,
-    OrderRejectedError,
-    NoValidStacIdsError,
-    TaskNotCompleteError,
-)
-from capella_console_client.enumerations import ProductType, AssetType
+from typing import Any, cast
 
 from capella_console_client.assets import (
-    _perform_download,
     DownloadRequest,
-    _gather_download_requests,
-    _get_asset_bytesize,
     _derive_stac_id,
     _filter_items_by_product_types,
+    _gather_download_requests,
+    _get_asset_bytesize,
+    _perform_download,
 )
+from capella_console_client.config import CONSOLE_API_URL
+from capella_console_client.enumerations import AssetType, ProductType
+from capella_console_client.exceptions import (
+    InsufficientFundsError,
+    NoValidStacIdsError,
+    OrderRejectedError,
+    TaskNotCompleteError,
+)
+from capella_console_client.logconf import logger
+from capella_console_client.order import get_non_expired_orders, get_order
+from capella_console_client.repeat_request import cancel_repeat_requests, create_repeat_request, update_repeat_requests
+from capella_console_client.report import print_cancelation_result
+from capella_console_client.s3 import S3Path
 from capella_console_client.search import (
+    RepeatRequestSearch,
+    RepeatRequestSearchResult,
     StacSearch,
     StacSearchResult,
     TaskingRequestSearch,
     TaskingRequestSearchResult,
-    RepeatRequestSearch,
-    RepeatRequestSearchResult,
 )
+from capella_console_client.session import CapellaConsoleSession
+from capella_console_client.sort import _sort_stac_items
 from capella_console_client.tasking_request import (
-    get_tasking_request,
     _task_contains_status,
-    create_tasking_request,
     cancel_tasking_requests,
+    create_tasking_request,
+    get_tasking_request,
     update_tasking_requests,
 )
-from capella_console_client.repeat_request import create_repeat_request, cancel_repeat_requests, update_repeat_requests
 from capella_console_client.validate import (
+    _compact_unique,
+    _validate_and_filter_asset_types,
+    _validate_and_filter_product_types,
+    _validate_and_filter_stac_ids,
+    _validate_stac_id_or_stac_items,
     _validate_uuid,
     _validate_uuids,
-    _validate_stac_id_or_stac_items,
-    _validate_and_filter_product_types,
-    _validate_and_filter_asset_types,
-    _validate_and_filter_stac_ids,
-    _compact_unique,
 )
-from capella_console_client.sort import _sort_stac_items
-from capella_console_client.order import get_order, get_non_expired_orders
-from capella_console_client.report import print_cancelation_result
 
 
 class CapellaConsoleClient:

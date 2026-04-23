@@ -1,31 +1,27 @@
-from unittest.mock import MagicMock
+import re
+import tempfile
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-import tempfile
-import re
+from unittest.mock import MagicMock
 
 import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
+from capella_console_client import CapellaConsoleClient, client
 from capella_console_client import client as capella_client_module
-from capella_console_client.config import CONSOLE_API_URL
-from capella_console_client import CapellaConsoleClient
-from capella_console_client import client
-from capella_console_client import tasking_request as tasking_modules
 from capella_console_client import search as search_modules
-from capella_console_client.s3 import S3Path
+from capella_console_client.config import CONSOLE_API_URL
 
 from .test_data import (
-    post_mock_responses,
-    get_mock_responses,
-    get_canned_search_results_single_page,
+    create_mock_asset_hrefs,
     get_canned_search_results_multi_page_page1,
     get_canned_search_results_multi_page_page2,
-    create_mock_asset_hrefs,
+    get_canned_search_results_single_page,
+    get_mock_responses,
+    post_mock_responses,
 )
-
 
 MOCK_ASSET_HREF = create_mock_asset_hrefs()["HH"]["href"]
 

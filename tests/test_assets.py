@@ -1,18 +1,18 @@
-import pytest
-import httpx
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-from pytest_httpx import HTTPXMock
 import time
+from pathlib import Path
+from unittest.mock import MagicMock
+
+import httpx
+import pytest
+from pytest_httpx import HTTPXMock
 
 from capella_console_client.assets import (
+    DownloadRequest,
     _derive_stac_id,
-    _fetch,
     _download_asset,
+    _fetch,
     _get_filename,
     _safe_local_path,
-    DownloadRequest,
-    progress_bar,
 )
 
 

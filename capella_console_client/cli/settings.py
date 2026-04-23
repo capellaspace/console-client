@@ -1,17 +1,8 @@
-import typer
-import questionary
 import keyring
-
+import questionary
+import typer
 from tabulate import tabulate
 
-from capella_console_client.config import CONSOLE_API_URL
-from capella_console_client.cli.validate import (
-    _must_be_type,
-    _validate_dir_exists,
-    _validate_api_key,
-    _no_selection_bye,
-    _at_least_one_selected,
-)
 from capella_console_client.cli.cache import CLICache
 from capella_console_client.cli.config import (
     CLI_SUPPORTED_RESULT_HEADERS,
@@ -19,8 +10,15 @@ from capella_console_client.cli.config import (
     SearchFilterOrderOption,
 )
 from capella_console_client.cli.prompt_helpers import get_first_checked
+from capella_console_client.cli.validate import (
+    _at_least_one_selected,
+    _must_be_type,
+    _no_selection_bye,
+    _validate_api_key,
+    _validate_dir_exists,
+)
+from capella_console_client.config import CONSOLE_API_URL
 from capella_console_client.logconf import logger
-
 
 app = typer.Typer(help="fine tune settings")
 profile_app = typer.Typer(help="manage settings profiles")

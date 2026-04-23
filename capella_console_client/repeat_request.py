@@ -1,39 +1,39 @@
-from typing import Any
 from datetime import datetime, timezone
+from typing import Any
 
 import geojson
 
-from capella_console_client.logconf import logger
-from capella_console_client.session import CapellaConsoleSession
-from capella_console_client.exceptions import RepeatRequestPayloadValidationError, ContractNotFoundError
-from capella_console_client.validate import _snake_to_camel, _datetime_to_iso8601_str, _set_squint_default
 from capella_console_client.config import (
     REPEAT_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
-    RR_REPETITION_PROPERTIES_FIELDS,
     RR_CANCEL_MAX_CONCURRENCY,
+    RR_REPETITION_PROPERTIES_FIELDS,
     RR_UPDATABLE_PROPERTIES,
     RR_UPDATE_MAX_CONCURRENCY,
 )
 from capella_console_client.enumerations import (
-    ObservationDirection,
-    OrbitState,
-    ProductType,
-    OrbitalPlane,
-    RepeatCollectionTier,
-    Polarization,
     ArchiveHoldback,
-    LocalTimeOption,
     CollectionType,
-    SquintMode,
-    RepeatCycle,
     InsarOrbit,
+    LocalTimeOption,
+    ObservationDirection,
+    OrbitalPlane,
+    OrbitState,
+    Polarization,
+    ProductType,
+    RepeatCollectionTier,
+    RepeatCycle,
+    SquintMode,
 )
+from capella_console_client.exceptions import RepeatRequestPayloadValidationError
+from capella_console_client.logconf import logger
+from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.tasking_request import (
     _cancel_multi_parallel,
     _cancel_worker,
     _update_multi_parallel,
     _update_worker,
 )
+from capella_console_client.validate import _datetime_to_iso8601_str, _set_squint_default, _snake_to_camel
 
 
 def create_repeat_request(

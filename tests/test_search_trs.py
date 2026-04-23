@@ -1,8 +1,10 @@
+import json
 from unittest.mock import ANY
+
+import pytest
+
 from capella_console_client.config import CONSOLE_API_URL
 from tests.test_data import get_mock_responses
-import pytest
-import json
 
 
 @pytest.fixture
