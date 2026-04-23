@@ -164,6 +164,11 @@ class SquintMode(str, BaseEnum):
     BACKWARD = "backward"
 
 
+class InsarOrbit(str, BaseEnum):
+    MIO_53_2P95 = "MIO_53_2P95"
+    SSO_97_7P00 = "SSO_97_7P00"
+
+
 class AuthHeaderPrefix(Enum):
     BASIC = "Basic"
     TOKEN = "Bearer"  # nosec B105 - HTTP auth scheme name, not a password

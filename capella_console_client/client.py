@@ -308,6 +308,7 @@ class CapellaConsoleClient:
             description: Can be used along with name to help characterize and describe the tasking request. Default: ""
             geometry: A GeoJSON representation of the area/point of interest. Must be either a polygon or point
             image_width: Image width. Units: [m], Default: None
+            insar_orbit: Insar Orbit identifier - required for insar collection_tier, MIO_53_2P95
             local_time: Times, in the timezone of the area where the image will be collected, during which the collect can be taken. Represented by a list of time ranges as seconds in the day. For example, [[21600, 64800]] would allow collects between 6 AM and 6 PM; [[0, 21600], [64800, 86400]] would allow collects between 6 PM and 12 AM as well as from 12 AM to 6 AM. Alternatively, you can pass string values of "day", "night", or "anytime" which are parsed to [[21600, 64800]], [[0, 21600], [64800, 86400]], and [[0, 86400]] respectively. Default: None
             look_angle_tolerance: Tolerance to look-angle deviations across all acquisitions. Units: [degrees]
             look_direction: Constraint on view angle. One of "right", "left", "either". Default: "either"

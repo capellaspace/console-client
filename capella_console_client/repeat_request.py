@@ -9,7 +9,7 @@ from capella_console_client.exceptions import RepeatRequestPayloadValidationErro
 from capella_console_client.validate import _snake_to_camel, _datetime_to_iso8601_str, _set_squint_default
 from capella_console_client.config import (
     REPEAT_REQUEST_COLLECT_CONSTRAINTS_FIELDS,
-    REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS,
+    RR_REPETITION_PROPERTIES_FIELDS,
     RR_CANCEL_MAX_CONCURRENCY,
     RR_UPDATABLE_PROPERTIES,
     RR_UPDATE_MAX_CONCURRENCY,
@@ -26,6 +26,7 @@ from capella_console_client.enumerations import (
     CollectionType,
     SquintMode,
     RepeatCycle,
+    InsarOrbit,
 )
 from capella_console_client.tasking_request import (
     _cancel_multi_parallel,
@@ -67,6 +68,7 @@ def create_repeat_request(
     look_angle_tolerance: float | None = None,
     azimuth_angle_tolerance: float | None = None,
     window_duration: float | None = None,
+    insar_orbit: InsarOrbit | str | None = None,
 ) -> dict[str, Any]:
     repeat_start, repeat_end = _set_repetition_start_end(repeat_start, repeat_end, repetition_count)
 
@@ -78,9 +80,7 @@ def create_repeat_request(
         _snake_to_camel(k): loc[k] for k in REPEAT_REQUEST_COLLECT_CONSTRAINTS_FIELDS if k in loc and loc[k] is not None
     }
     repetition_properties = {
-        _snake_to_camel(k): loc[k]
-        for k in REPEAT_REQUESTS_REPETITION_PROPERTIES_FIELDS
-        if k in loc and loc[k] is not None
+        _snake_to_camel(k): loc[k] for k in RR_REPETITION_PROPERTIES_FIELDS if k in loc and loc[k] is not None
     }
 
     payload = {
@@ -106,7 +106,10 @@ def create_repeat_request(
         payload["contractId"] = contract_id
 
     if window_duration:
-        payload["windowDuration"] = window_duration
+        payload["properties"]["windowDuration"] = window_duration
+
+    if insar_orbit:
+        payload["properties"]["insar"] = {"orbit": insar_orbit}
 
     logger.info(f"creating repeat request with payload {payload}")
     return session.post("/repeat-requests", json=payload).json()
