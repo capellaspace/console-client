@@ -1,2 +1,0 @@
-# Docs dependencies are managed via the 'docs' extra in pyproject.toml.
-# To install: uv sync --extra docs
