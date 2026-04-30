@@ -2,9 +2,18 @@
 History
 =======
 
+0.19.0 (2026-04-30)
+-------------------
+* search insar repeat requests and drop non valid enum values from search payload (`#159 <https://github.com/capellaspace/console-client/pull/159>`_)
+* black to ruff (`#158 <https://github.com/capellaspace/console-client/pull/158>`_)
+* insar create_repeat_request(insar_orbit=...) (`#157 <https://github.com/capellaspace/console-client/pull/157>`_)
+* query support for sat:absolute_orbit, sat:relative_orbit, capella:rgt_id (`#155 <https://github.com/capellaspace/console-client/pull/155>`_)
+* migrate from Poetry to uv (PEP 621 + hatchling) (`#151 <https://github.com/capellaspace/console-client/pull/151>`_)
+* OWASP 10 med findings (filesize validation, no logging of presigned urls, traversal sanitization, ...) (`#144 <https://github.com/capellaspace/console-client/pull/144>`_)
+
+
 0.18.0 (2026-03-03)
 -------------------
-
 * client.update_repeat_requests (`#143 <https://github.com/capellaspace/console-client/pull/143>`_)
 * client.update_tasking_requests (`#142 <https://github.com/capellaspace/console-client/pull/142>`_)
 * CI security scanning (`#141 <https://github.com/capellaspace/console-client/pull/141>`_)

@@ -818,6 +818,8 @@ advanced tasking request search
     ⠋ Fetching tasking requests... ━━━━━━━━━━━━━━━━━━ 3/4 75%
 
 
+.. _repeat requests:
+
 repeat requests
 ###############
 
@@ -1019,6 +1021,47 @@ Output with progress bar
 .. code:: sh
 
     ⠋ Fetching repeat requests... ━━━━━━━━━━━━━━━━━━ 2/3 67%
+
+insar
+#####
+
+create
+******
+
+.. code:: python
+
+    import geojson
+    from capella_console_client.enumerations import InsarOrbit
+
+    # create insar repeat request with start/ end date, MIO orbit (2.95 days revisit)
+
+    client.create_repeat_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="stripmap_100 insar repeat request",
+        collection_tier="insar",
+        collection_type="stripmap_100",
+        product_types=["SLC", "GEO"],
+        squint="disabled",
+        repeat_start="2026-05-01",
+        repeat_end="2026-12-01",
+        insar_orbit=InsarOrbit.MIO_53_2P95,
+    )
+
+    # create spotlight insar repeat request with repetition count, SSO orbit (7 days revisit)
+
+    client.create_repeat_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="spotlight insar repeat request",
+        collection_tier="insar",
+        collection_type="spotlight",
+        product_types=["SLC", "GEO"],
+        squint="disabled",
+        repetition_count=10,
+        insar_orbit=InsarOrbit.SSO_97_7P00,
+    )
+
+
+Update, search and cancel operations are identical to non-insar repeat requests. See the `repeat requests`_ section above for examples.
 
 
 .. _example-consume:
