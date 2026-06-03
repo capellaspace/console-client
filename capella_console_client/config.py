@@ -63,6 +63,9 @@ STAC_SUPPORTED_QUERY_FIELDS = {
     "relative_orbit",
     "absolute_orbit",
     "rgt_id",
+    "created",
+    "updated",
+    "archive_holdback",
 }
 
 STAC_ALL_SUPPORTED_SEARCH_FIELDS = STAC_SUPPORTED_ROOT_FIELDS | STAC_SUPPORTED_QUERY_FIELDS
@@ -116,6 +119,7 @@ STAC_PREFIXED_BY_QUERY_FIELDS = {
     "relative_orbit": "sat:relative_orbit",
     "absolute_orbit": "sat:absolute_orbit",
     "rgt_id": "capella:rgt_id",
+    "archive_holdback": "capella:archive_holdback_date",
 }
 
 STAC_ROOT_LEVEL_GROUPBY_FIELDS = {"id", "collection"}
