@@ -2,6 +2,12 @@
 History
 =======
 
+
+0.19.1 (2026-06-03)
+-------------------
+* created, updated, archive_holdback search filters (`#166 <https://github.com/capellaspace/console-client/pull/166>`_)
+* security bumps (`#163 <https://github.com/capellaspace/console-client/pull/163>`_, `#164 <https://github.com/capellaspace/console-client/pull/164>`_, `#165 <https://github.com/capellaspace/console-client/pull/165>`_)
+
 0.19.0 (2026-04-30)
 -------------------
 * search insar repeat requests and drop non valid enum values from search payload (`#159 <https://github.com/capellaspace/console-client/pull/159>`_)
