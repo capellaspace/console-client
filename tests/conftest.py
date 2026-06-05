@@ -339,6 +339,18 @@ def single_page_search_client(verbose_test_client, auth_httpx_mock):
 
 
 @pytest.fixture
+def search_client_no_match(verbose_test_client, auth_httpx_mock):
+    auth_httpx_mock.add_response(
+        url=f"{CONSOLE_API_URL}/catalog/search",
+        json={
+            "features": [],
+            "numberMatched": 0,
+        },
+    )
+    yield verbose_test_client
+
+
+@pytest.fixture
 def multi_page_search_client(verbose_test_client, auth_httpx_mock):
     auth_httpx_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",

@@ -371,7 +371,7 @@ class StacSearch(AbstractSearch):
         else:
             return self._fetch_all_threaded()
 
-    def _fetch_all_sync(self):
+    def _fetch_all_sync(self) -> StacSearchResult:
         search_result = StacSearchResult(request_body=self.payload)
         cur_payload = deepcopy(self.payload)
 
@@ -421,9 +421,12 @@ class StacSearch(AbstractSearch):
         search_result._report()
         return search_result
 
-    def _fetch_all_threaded(self):
+    def _fetch_all_threaded(self) -> StacSearchResult:
         search_result = StacSearchResult(request_body=self.payload)
         page_payloads = self._get_page_payloads()
+
+        if not page_payloads:
+            return search_result
 
         # TODO: configurable max threads
         with ThreadPoolExecutor(max_workers=len(page_payloads)) as executor:
@@ -446,6 +449,9 @@ class StacSearch(AbstractSearch):
         logger.info(
             f"Matched a total of {number_matched} stac items - fetching in {num_pages} parallel requests (page size {CATALOG_MAX_PAGE_SIZE}) - returning up to {self.payload['limit']}"
         )
+
+        if num_pages == 0:
+            return []
 
         payloads = [
             {**self.payload, "limit": min(CATALOG_MAX_PAGE_SIZE, self.payload["limit"]), "page": i}
