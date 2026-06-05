@@ -2,6 +2,9 @@
 History
 =======
 
+0.19.2 (2026-06-03)
+-------------------
+* catalog threaded search fix, improve verbose logging (`#169 <https://github.com/capellaspace/console-client/pull/169>`_)
 
 0.19.1 (2026-06-03)
 -------------------
