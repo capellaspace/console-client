@@ -1,3 +1,4 @@
+import json
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
@@ -87,6 +88,7 @@ class Groupby(metaclass=ABCMeta):
 
 @dataclass
 class SearchResult(metaclass=ABCMeta):
+    entity: ClassVar[SearchEntity]
     request_body: dict[str, Any] = field(default_factory=dict)
     _pages: list[dict[str, Any]] = field(default_factory=list)
     _features: list[dict[str, Any]] = field(default_factory=list)
@@ -99,7 +101,10 @@ class SearchResult(metaclass=ABCMeta):
         if requested_limit and len_features > requested_limit:
             self._features = self._features[:requested_limit]
 
-    def _report(self):
+    def log_summary(self, with_request_body: bool = False):
+        if with_request_body:
+            logger.info(f"request: {json.dumps(self.request_body)}")
+
         len_results = len(self)
         if not len_results:
             message = f"found no {self.entity.value}s matching your query"
@@ -167,7 +172,7 @@ class StacGroupby(Groupby):
 
 
 class StacSearchResult(SearchResult):
-    entity: SearchEntity = SearchEntity.STAC_ITEM
+    entity: ClassVar[SearchEntity] = SearchEntity.STAC_ITEM
     grouper: ClassVar[Groupby] = StacGroupby()
 
     def __repr__(self):
@@ -231,7 +236,7 @@ class RepeatRequestGroupby(TaskingRequestGroupby):
 
 
 class TaskingRequestSearchResult(SearchResult):
-    entity: SearchEntity = SearchEntity.TASKING_REQUEST
+    entity: ClassVar[SearchEntity] = SearchEntity.TASKING_REQUEST
     grouper: ClassVar[Groupby] = TaskingRequestGroupby()
 
     def __repr__(self):
@@ -252,7 +257,7 @@ class TaskingRequestSearchResult(SearchResult):
 
 
 class RepeatRequestSearchResult(SearchResult):
-    entity: SearchEntity = SearchEntity.REPEAT_REQUEST
+    entity: ClassVar[SearchEntity] = SearchEntity.REPEAT_REQUEST
     grouper: ClassVar[Groupby] = RepeatRequestGroupby()
 
     def __repr__(self):
@@ -365,13 +370,13 @@ class StacSearch(AbstractSearch):
         return sorts
 
     def fetch_all(self) -> StacSearchResult:
-        logger.info(f"searching catalog with payload {self.payload}")
+        logger.info(f"searching catalog with payload {json.dumps(self.payload)}")
         if not self.threaded:
             return self._fetch_all_sync()
         else:
             return self._fetch_all_threaded()
 
-    def _fetch_all_sync(self):
+    def _fetch_all_sync(self) -> StacSearchResult:
         search_result = StacSearchResult(request_body=self.payload)
         cur_payload = deepcopy(self.payload)
 
@@ -412,18 +417,26 @@ class StacSearch(AbstractSearch):
                 break
 
             if page_cnt == 1:
-                logger.info(f"Matched a total of {number_matched} stac items - returning up to {self.payload['limit']}")
+                number_matched_multiple_suffix = "s" if number_matched > 1 else ""
+                return_size = min(self.payload["limit"], number_matched)
+                return_size_multiple_suffix = "s" if return_size > 1 else ""
+                logger.info(
+                    f"Matched a total of {number_matched} stac item{number_matched_multiple_suffix} - returning up to {return_size} item{return_size_multiple_suffix}"
+                )
 
             page_cnt += 1
             cur_payload["page"] = page_cnt
 
         search_result._truncate()
-        search_result._report()
+        search_result.log_summary()
         return search_result
 
-    def _fetch_all_threaded(self):
+    def _fetch_all_threaded(self) -> StacSearchResult:
         search_result = StacSearchResult(request_body=self.payload)
         page_payloads = self._get_page_payloads()
+
+        if not page_payloads:
+            return search_result
 
         # TODO: configurable max threads
         with ThreadPoolExecutor(max_workers=len(page_payloads)) as executor:
@@ -433,7 +446,7 @@ class StacSearch(AbstractSearch):
             search_result.add(page)
 
         search_result._truncate()
-        search_result._report()
+        search_result.log_summary()
         return search_result
 
     def _get_page_payloads(self) -> list[dict[str, Any]]:
@@ -443,8 +456,15 @@ class StacSearch(AbstractSearch):
         number_matched = single_match_page["numberMatched"]
 
         num_pages = ceil(min(number_matched, self.payload["limit"]) / CATALOG_MAX_PAGE_SIZE)
+        if num_pages == 0:
+            return []
+
+        return_size = min(self.payload["limit"], number_matched)
+        number_matched_multiple_suffix = "s" if number_matched > 0 else ""
+        return_size_multiple_suffix = "s" if return_size > 0 else ""
+        num_pages_multiple_suffix = "s" if num_pages > 0 else ""
         logger.info(
-            f"Matched a total of {number_matched} stac items - fetching in {num_pages} parallel requests (page size {CATALOG_MAX_PAGE_SIZE}) - returning up to {self.payload['limit']}"
+            f"Matched a total of {number_matched} stac item{number_matched_multiple_suffix} - fetching in {num_pages} parallel request{num_pages_multiple_suffix} (page size {CATALOG_MAX_PAGE_SIZE}) - returning up to {return_size} item{return_size_multiple_suffix}"
         )
 
         payloads = [
@@ -690,7 +710,7 @@ class AbstractTaskRepeatSearch(AbstractSearch):
 
     def fetch_all(self) -> TaskingRequestSearchResult | RepeatRequestSearchResult:
         search_result = self._init_search_result()
-        logger.info(f"searching {self.SEARCH_ENTITY.value}s with payload {self.payload}")
+        logger.info(f"searching {self.SEARCH_ENTITY.value}s with payload {json.dumps(self.payload)}")
         first_page = _fetch_page(
             params={"page": 1, "limit": self.page_size},
             session=self.session,

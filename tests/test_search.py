@@ -70,3 +70,9 @@ def test_threaded_paginated_search_multi_page(single_page_search_client):
     results = search.fetch_all()
     assert len(results) == 1
     assert results[0] == get_canned_search_results_single_page()["features"][0]
+
+
+def test_threaded_search_no_match(search_client_no_match):
+    search = StacSearch(search_client_no_match._sesh, limit=1, threaded=True)
+    results = search.fetch_all()
+    assert len(results) == 0
