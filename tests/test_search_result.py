@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pytest
 
 from capella_console_client.config import (
@@ -113,6 +115,29 @@ def test_search_result_groupby_missing_field(field):
     ret = result.groupby(field=field)
     assert list(ret.keys()) == ["unknown"]
     assert list(ret.values()) == [[MOCK_GROUPBY_STAC_ITEM]]
+
+
+def test_search_result_drops():
+    page = get_canned_search_results_single_page()
+    page_stac_ids = [feat["id"] for feat in page["features"]]
+    result = StacSearchResult()
+    result.add(deepcopy(page))
+    assert len(result) == len(page["features"])
+    assert result.stac_ids == page_stac_ids
+    assert result._pages[0]["numberMatched"] == len(page_stac_ids)
+    assert result._pages[0]["numberReturned"] == len(page_stac_ids)
+    assert result._pages[0]["context"]["matched"] == len(page_stac_ids)
+    assert result._pages[0]["context"]["returned"] == len(page_stac_ids)
+
+    stac_ids_to_drop = [page["features"][1]["id"], page["features"][3]["id"]]
+    result.drop(stac_ids=stac_ids_to_drop)
+
+    assert len(result) == len(page["features"]) - len(stac_ids_to_drop)
+    assert set(result.stac_ids) == set(page_stac_ids) - set(stac_ids_to_drop)
+    assert result._pages[0]["numberMatched"] == len(set(page_stac_ids) - set(stac_ids_to_drop))
+    assert result._pages[0]["numberReturned"] == len(set(page_stac_ids) - set(stac_ids_to_drop))
+    assert result._pages[0]["context"]["matched"] == len(set(page_stac_ids) - set(stac_ids_to_drop))
+    assert result._pages[0]["context"]["returned"] == len(set(page_stac_ids) - set(stac_ids_to_drop))
 
 
 # TaskingRequestSearchResult groupby tests
