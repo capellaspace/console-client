@@ -462,6 +462,8 @@ def get_canned_search_results_single_page() -> dict[str, Any]:
             },
         ],
         "numberMatched": 4,
+        "numberReturned": 4,
+        "context": {"matched": 4, "returned": 4},
     }
 
 

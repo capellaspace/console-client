@@ -209,6 +209,41 @@ class StacSearchResult(SearchResult):
 
         return page
 
+    def drop(self, stac_ids: list[str]):
+        stac_ids_set = set(stac_ids)
+        if not stac_ids_set:
+            return
+
+        orig_cnt = len(self._features)
+        self._features = [feat for feat in self._features if feat.get("id") not in stac_ids_set]
+        total_dropped_cnt = orig_cnt - len(self._features)
+
+        if not total_dropped_cnt:
+            return
+
+        for page in self._pages:
+            self._drop_from_page(page, stac_ids_set, total_dropped_cnt)
+
+    def _drop_from_page(self, page, stac_ids: set[str], total_dropped_cnt: int):
+        if "numberMatched" in page:
+            page["numberMatched"] -= total_dropped_cnt
+
+        if "context" in page and "matched" in page["context"]:
+            page["context"]["matched"] -= total_dropped_cnt
+
+        orig_page_cnt = len(page["features"])
+        page["features"] = [feat for feat in page["features"] if feat.get("id") not in stac_ids]
+        dropped_page_count = orig_page_cnt - len(page["features"])
+
+        if not dropped_page_count:
+            return
+
+        if "numberReturned" in page:
+            page["numberReturned"] -= dropped_page_count
+
+        if "context" in page and "returned" in page["context"]:
+            page["context"]["returned"] -= dropped_page_count
+
 
 class TaskingRequestGroupby(Groupby):
     ROOT_GROUPBY_FIELDS: ClassVar[set[str]] = set()
