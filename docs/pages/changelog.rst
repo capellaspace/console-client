@@ -2,6 +2,10 @@
 History
 =======
 
+0.19.3 (2026-06-17)
+-------------------
+* StacSearchResult.drop(stac_ids=...)  (`#171 <https://github.com/capellaspace/console-client/pull/171>`_)
+
 0.19.2 (2026-06-03)
 -------------------
 * catalog threaded search fix, improve verbose logging (`#169 <https://github.com/capellaspace/console-client/pull/169>`_)
