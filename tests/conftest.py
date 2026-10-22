@@ -1,7 +1,7 @@
 import re
 import tempfile
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -165,9 +165,7 @@ def order_client_unsuccessful(test_client, auth_httpx2_mock):
 def non_expired_order_mock(test_client, auth_httpx2_mock):
     orders = get_mock_responses("/orders")
     non_expired_order = deepcopy(orders[0])
-    non_expired_order["expirationDate"] = (datetime.now(timezone.utc) + timedelta(minutes=10)).strftime(
-        "%Y-%m-%dT%H:%M:%S.%fZ"
-    )
+    non_expired_order["expirationDate"] = (datetime.now(UTC) + timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     orders.append(non_expired_order)
     auth_httpx2_mock.add_response(url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID", json=orders)
 
