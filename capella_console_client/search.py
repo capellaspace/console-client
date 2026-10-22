@@ -48,10 +48,16 @@ from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.validate import _compact_unique, _validate_uuids
 
 
-class SearchEntity(str, BaseEnum):
-    STAC_ITEM = "STAC item"
-    TASKING_REQUEST = "tasking request"
-    REPEAT_REQUEST = "repeat request"
+class GroupbyResult(dict):
+    def __init__(self, *args, **kwargs):
+        self._field_name = kwargs.pop("_groupby_field_name")
+        super().__init__(*args, **kwargs)
+
+    def value_counts(self) -> dict[str, int]:
+        return {k: len(v) for (k, v) in self.items()}
+
+    def __repr__(self):
+        return f"{self.__class__} by {self._field_name} ({len(self)} keys)"
 
 
 class Groupby(metaclass=ABCMeta):
@@ -62,7 +68,7 @@ class Groupby(metaclass=ABCMeta):
     def supported_fields(self):
         return self.ROOT_GROUPBY_FIELDS | self.PROPERTIES_GROUPBY_FIELDS
 
-    def groupby(self, features, field: str) -> dict[str, Any]:
+    def groupby(self, search_result: "SearchResult", field: str) -> GroupbyResult:
         """
         group matched features by provided field name
 
@@ -75,15 +81,21 @@ class Groupby(metaclass=ABCMeta):
                 f"groupby(field='{field}') not supported - using '{UNKNOWN_GROUPBY_FIELD}' as value - supported: {', '.join(self.supported_fields)}"
             )
 
-        features_by_field = defaultdict(list)
-        for feature in features:
+        search_result_by_field: defaultdict[str, SearchResult] = defaultdict(type(search_result))
+        for feature in search_result:
             value = self._get_safe_field_value(field=field, item=feature)
-            features_by_field[value].append(feature)
+            search_result_by_field[value].add_feature(feature)
 
-        return dict(features_by_field)
+        return GroupbyResult(search_result_by_field, _groupby_field_name=field)
 
     @abstractmethod
     def _get_safe_field_value(self, field: str, item: dict[str, Any]): ...
+
+
+class SearchEntity(str, BaseEnum):
+    STAC_ITEM = "STAC item"
+    TASKING_REQUEST = "tasking request"
+    REPEAT_REQUEST = "repeat request"
 
 
 @dataclass
@@ -133,6 +145,9 @@ class SearchResult(metaclass=ABCMeta):
     @abstractmethod
     def add(self, page: dict[str, Any], keep_duplicates: bool = False) -> int: ...
 
+    def add_feature(self, feature: dict[str, Any]) -> None:
+        self._features.append(feature)
+
     def merge(self, other: "SearchResult", keep_duplicates: bool = False) -> "SearchResult":
         copy = deepcopy(self)
         for page in other._pages:
@@ -140,14 +155,14 @@ class SearchResult(metaclass=ABCMeta):
 
         return copy
 
-    def groupby(self, field: str) -> dict[str, Any]:
+    def groupby(self, field: str) -> GroupbyResult:
         """
         group matched features by provided field name
 
         * items not containing the respective field will returned as part of 'unknown' key
         * non-hashable fields (lists, sets) are '-'.joined
         """
-        return self.grouper.groupby(field=field, features=self._features)
+        return self.grouper.groupby(field=field, search_result=self)
 
 
 class StacGroupby(Groupby):
