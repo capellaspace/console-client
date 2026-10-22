@@ -106,7 +106,7 @@ def test_search_result_groupby_known_field(field):
     ret = result.groupby(field=field)
     assert len(ret) == 1
     assert isinstance(ret, dict)
-    assert list(ret.values()) == [[MOCK_GROUPBY_STAC_ITEM]]
+    assert list(ret.values()) == [StacSearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])]
 
 
 @pytest.mark.parametrize("field", ["epsg", "billable_area"])
@@ -114,7 +114,35 @@ def test_search_result_groupby_missing_field(field):
     result = StacSearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])
     ret = result.groupby(field=field)
     assert list(ret.keys()) == ["unknown"]
-    assert list(ret.values()) == [[MOCK_GROUPBY_STAC_ITEM]]
+    assert list(ret.values()) == [StacSearchResult(_features=[MOCK_GROUPBY_STAC_ITEM])]
+
+
+def test_search_result_groupby_chained():
+    slc = deepcopy(MOCK_GROUPBY_STAC_ITEM)
+    geo = deepcopy(MOCK_GROUPBY_STAC_ITEM)
+    geo["id"] = geo["id"].replace("SLC", "GEO")
+    geo["properties"]["sar:product_type"] = "GEO"
+    result = StacSearchResult(_features=[slc, geo])
+    ret = result.groupby(field="constellation")
+    assert list(ret.values()) == [StacSearchResult(_features=[slc, geo])]
+
+    chained_groupby_ret = ret["capella"].groupby(field="product_type")
+    assert chained_groupby_ret["SLC"] == StacSearchResult(_features=[slc])
+    assert chained_groupby_ret["GEO"] == StacSearchResult(_features=[geo])
+
+    single_call = result.groupby(field="constellation")["capella"].groupby("product_type")
+    assert single_call["SLC"] == StacSearchResult(_features=[slc])
+    assert single_call["GEO"] == StacSearchResult(_features=[geo])
+
+
+def test_search_result_groupby_value_counts():
+    RESULT_CNT = 5
+    result = StacSearchResult(_features=[MOCK_GROUPBY_STAC_ITEM] * RESULT_CNT)
+    ret = result.groupby(field="product_type").value_counts()
+
+    product_type = MOCK_GROUPBY_STAC_ITEM["properties"]["sar:product_type"]
+    assert list(ret.keys()) == [product_type]
+    assert ret[product_type] == RESULT_CNT
 
 
 def test_search_result_drops():
@@ -153,7 +181,7 @@ def test_tasking_request_search_result_groupby_invalid_field(field):
     result = TaskingRequestSearchResult(_features=[TASK_1, TASK_2])
     ret = result.groupby(field=field)
     assert list(ret.keys()) == ["unknown"]
-    assert ret["unknown"] == [TASK_1, TASK_2]
+    assert ret["unknown"] == TaskingRequestSearchResult(_features=[TASK_1, TASK_2])
 
 
 @pytest.mark.parametrize("field", TR_SUPPORTED_GROUPBY_FIELDS)
@@ -173,15 +201,22 @@ def test_tasking_request_search_result_groupby_missing_field():
     result = TaskingRequestSearchResult(_features=[TASK_1, TASK_2])
     ret = result.groupby(field="customAttribute1")
     assert list(ret.keys()) == ["unknown"]
-    assert ret["unknown"] == [TASK_1, TASK_2]
+    assert ret["unknown"] == TaskingRequestSearchResult(_features=[TASK_1, TASK_2])
 
 
 @pytest.mark.parametrize(
     "field,expected_groups,expected_values",
     [
-        ("taskingrequestId", 2, {"abc": [TASK_1], "def": [TASK_2]}),
-        ("collectionTier", 1, {"7_day": [TASK_1, TASK_2]}),
-        ("userId", 1, {"MOCK_ID": [TASK_1, TASK_2]}),
+        (
+            "taskingrequestId",
+            2,
+            {
+                "abc": TaskingRequestSearchResult(_features=[TASK_1]),
+                "def": TaskingRequestSearchResult(_features=[TASK_2]),
+            },
+        ),
+        ("collectionTier", 1, {"7_day": TaskingRequestSearchResult(_features=[TASK_1, TASK_2])}),
+        ("userId", 1, {"MOCK_ID": TaskingRequestSearchResult(_features=[TASK_1, TASK_2])}),
     ],
 )
 def test_tasking_request_search_result_groupby_scenarios(field, expected_groups, expected_values):
@@ -205,7 +240,7 @@ def test_repeat_request_search_result_groupby_invalid_field(field):
     result = RepeatRequestSearchResult(_features=[REPEAT_REQUEST_1, REPEAT_REQUEST_2])
     ret = result.groupby(field=field)
     assert list(ret.keys()) == ["unknown"]
-    assert ret["unknown"] == [REPEAT_REQUEST_1, REPEAT_REQUEST_2]
+    assert ret["unknown"] == RepeatRequestSearchResult(_features=[REPEAT_REQUEST_1, REPEAT_REQUEST_2])
 
 
 @pytest.mark.parametrize("field", RR_SUPPORTED_GROUPBY_FIELDS)
@@ -225,15 +260,22 @@ def test_repeat_request_search_result_groupby_missing_field():
     result = RepeatRequestSearchResult(_features=[REPEAT_REQUEST_1, REPEAT_REQUEST_2])
     ret = result.groupby(field="contractId")
     assert list(ret.keys()) == ["unknown"]
-    assert ret["unknown"] == [REPEAT_REQUEST_1, REPEAT_REQUEST_2]
+    assert ret["unknown"] == RepeatRequestSearchResult(_features=[REPEAT_REQUEST_1, REPEAT_REQUEST_2])
 
 
 @pytest.mark.parametrize(
     "field,expected_groups,expected_values",
     [
-        ("repeatrequestId", 2, {"PANDA": [REPEAT_REQUEST_1], "BOAR": [REPEAT_REQUEST_2]}),
-        ("collectionTier", 1, {"routine": [REPEAT_REQUEST_1, REPEAT_REQUEST_2]}),
-        ("orgId", 1, {"PANDA_ORG": [REPEAT_REQUEST_1, REPEAT_REQUEST_2]}),
+        (
+            "repeatrequestId",
+            2,
+            {
+                "PANDA": RepeatRequestSearchResult(_features=[REPEAT_REQUEST_1]),
+                "BOAR": RepeatRequestSearchResult(_features=[REPEAT_REQUEST_2]),
+            },
+        ),
+        ("collectionTier", 1, {"routine": RepeatRequestSearchResult(_features=[REPEAT_REQUEST_1, REPEAT_REQUEST_2])}),
+        ("orgId", 1, {"PANDA_ORG": RepeatRequestSearchResult(_features=[REPEAT_REQUEST_1, REPEAT_REQUEST_2])}),
     ],
 )
 def test_repeat_request_search_result_groupby_scenarios(field, expected_groups, expected_values):
