@@ -10,7 +10,7 @@ from tests.test_data import get_mock_responses
 @pytest.fixture
 def two_page_trs_mock(authed_tasking_request_mock):
     """Fixture providing a mock with 2 pages of tasking request data"""
-    authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
+    authed_tasking_request_mock.reset()
 
     page1_response = {
         "results": [
@@ -80,7 +80,7 @@ def test_search_all_trs_for_org(test_client, authed_tasking_request_mock):
 
 
 def test_search_trs_with_id_single(test_client, authed_tasking_request_mock, disable_validate_uuid):
-    authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
+    authed_tasking_request_mock.reset()
     mock_id = "/tasks/search?page=1&limit=250#SINGLETASK"
     mock_response = get_mock_responses(mock_id)
 
@@ -109,7 +109,7 @@ def test_search_trs_with_id_multiple(test_client, authed_tasking_request_mock, d
 
 
 def test_serch_trs_with_id_single_with_filters(test_client, authed_tasking_request_mock, disable_validate_uuid):
-    authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
+    authed_tasking_request_mock.reset()
     mock_id = "/tasks/search?page=1&limit=250#SINGLETASK"
     mock_response = get_mock_responses(mock_id)
 

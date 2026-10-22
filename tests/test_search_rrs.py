@@ -35,7 +35,7 @@ def test_search_all_rrs_for_org(test_client, authed_tasking_request_mock):
 
 
 def test_search_rrs_with_id_single(test_client, authed_tasking_request_mock, disable_validate_uuid):
-    authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
+    authed_tasking_request_mock.reset()
     mock_id = "/repeat-requests/search?page=1&limit=250#SINGLEREPEAT"
     mock_response = get_mock_responses(mock_id)
 
@@ -62,7 +62,7 @@ def test_search_rrs_with_id_multiple(test_client, authed_tasking_request_mock, d
 
 
 def test_search_rrs_with_id_single_status(test_client, authed_tasking_request_mock, disable_validate_uuid):
-    authed_tasking_request_mock.reset(assert_all_responses_were_requested=False)
+    authed_tasking_request_mock.reset()
     mock_id = "/repeat-requests/search?page=1&limit=250#SINGLEREPEAT"
     mock_response = get_mock_responses(mock_id)
 

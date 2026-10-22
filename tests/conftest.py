@@ -5,9 +5,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import httpx
+import httpx2
 import pytest
-from pytest_httpx import HTTPXMock
+from pytest_httpx2 import HTTPXMock
 
 from capella_console_client import CapellaConsoleClient, client
 from capella_console_client import client as capella_client_module
@@ -26,9 +26,10 @@ from .test_data import (
 MOCK_ASSET_HREF = create_mock_asset_hrefs()["HH"]["href"]
 
 
-@pytest.fixture
-def assert_all_responses_were_requested() -> bool:
-    return False
+def pytest_collection_modifyitems(session, config, items):
+    """Preserve the suite-wide optional-response behavior for HTTP mocks."""
+    for item in items:
+        item.add_marker(pytest.mark.httpx2_mock(assert_all_responses_were_requested=False))
 
 
 @pytest.fixture
@@ -39,11 +40,13 @@ def disable_validate_uuid(monkeypatch):
 
 
 @pytest.fixture
-def auth_httpx_mock(httpx_mock: HTTPXMock):
-    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/token", json=post_mock_responses("/token"))
-
-    httpx_mock.add_response(url=f"{CONSOLE_API_URL}/user", json=get_mock_responses("/user"))
-    yield httpx_mock
+def auth_httpx2_mock(httpx2_mock: HTTPXMock):
+    httpx2_mock.add_response(
+        url=f"{CONSOLE_API_URL}/user",
+        json=get_mock_responses("/user"),
+        is_reusable=True,
+    )
+    yield httpx2_mock
 
 
 @pytest.fixture
@@ -91,13 +94,13 @@ def temp_download_file():
 
 
 @pytest.fixture
-def test_client(auth_httpx_mock):
+def test_client(auth_httpx2_mock):
     client = CapellaConsoleClient(api_key="MOCK_API_KEY")
     yield client
 
 
 @pytest.fixture
-def verbose_test_client(auth_httpx_mock):
+def verbose_test_client(auth_httpx2_mock):
     client = CapellaConsoleClient(api_key="MOCK_API_KEY", verbose=True)
     yield client
 
@@ -109,12 +112,12 @@ def search_client(test_client, monkeypatch):
 
 
 @pytest.fixture
-def review_client_insufficient_funds(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def review_client_insufficient_funds(test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
         json=get_mock_responses("/orders"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/review",
         json=get_mock_responses("/orders/review_insufficient_funds"),
     )
@@ -122,17 +125,17 @@ def review_client_insufficient_funds(test_client, auth_httpx_mock):
 
 
 @pytest.fixture
-def order_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def order_client(test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
         json=get_mock_responses("/orders"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders",
         method="POST",
         json=post_mock_responses("/submitOrder"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/review",
         json=get_mock_responses("/orders/review_success"),
     )
@@ -141,16 +144,16 @@ def order_client(test_client, auth_httpx_mock):
 
 
 @pytest.fixture
-def order_client_unsuccessful(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def order_client_unsuccessful(test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
         json=get_mock_responses("/orders"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/review",
         json=get_mock_responses("/orders/review_success"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders",
         method="POST",
         json=post_mock_responses("/orders_rejected"),
@@ -159,20 +162,20 @@ def order_client_unsuccessful(test_client, auth_httpx_mock):
 
 
 @pytest.fixture
-def non_expired_order_mock(test_client, auth_httpx_mock):
+def non_expired_order_mock(test_client, auth_httpx2_mock):
     orders = get_mock_responses("/orders")
     non_expired_order = deepcopy(orders[0])
     non_expired_order["expirationDate"] = (datetime.now(timezone.utc) + timedelta(minutes=10)).strftime(
         "%Y-%m-%dT%H:%M:%S.%fZ"
     )
     orders.append(non_expired_order)
-    auth_httpx_mock.add_response(url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID", json=orders)
+    auth_httpx2_mock.add_response(url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID", json=orders)
 
     yield test_client, non_expired_order
 
 
 @pytest.fixture
-def authed_tasking_request_mock(auth_httpx_mock):
+def authed_tasking_request_mock(auth_httpx2_mock):
     MOCK_IDENTIFIER_LIST = (
         "/task/abc",
         "/task/def",
@@ -183,13 +186,13 @@ def authed_tasking_request_mock(auth_httpx_mock):
     )
     for mock_id in MOCK_IDENTIFIER_LIST:
         endpoint_qs = mock_id.split("#")[0]
-        auth_httpx_mock.add_response(
+        auth_httpx2_mock.add_response(
             url=f"{CONSOLE_API_URL}{endpoint_qs}",
             json=get_mock_responses(mock_id),
         )
 
-    auth_httpx_mock.add_response(url=f"{CONSOLE_API_URL}/task", method="POST", json=post_mock_responses("/task"))
-    yield auth_httpx_mock
+    auth_httpx2_mock.add_response(url=f"{CONSOLE_API_URL}/task", method="POST", json=post_mock_responses("/task"))
+    yield auth_httpx2_mock
 
 
 TR_UPDATE_ERR = {
@@ -204,6 +207,7 @@ def task_update_mock(authed_tasking_request_mock):
         url=re.compile(rf"{CONSOLE_API_URL}/task/[0-9a-f\-]{{36}}$"),
         method="PATCH",
         json=get_mock_responses("/task/abc"),
+        is_reusable=True,
     )
     yield authed_tasking_request_mock
 
@@ -215,6 +219,7 @@ def task_update_error_mock(authed_tasking_request_mock):
         method="PATCH",
         status_code=400,
         json={"error": TR_UPDATE_ERR},
+        is_reusable=True,
     )
     yield authed_tasking_request_mock
 
@@ -236,14 +241,14 @@ def task_update_partial_mock(authed_tasking_request_mock):
 
 
 @pytest.fixture
-def authed_repeat_request_mock(auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def authed_repeat_request_mock(auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/repeat-requests",
         method="POST",
         json=post_mock_responses("/repeat-requests"),
     )
 
-    yield auth_httpx_mock
+    yield auth_httpx2_mock
 
 
 RR_UPDATE_ERR = {
@@ -258,6 +263,7 @@ def rr_update_mock(authed_repeat_request_mock):
         url=re.compile(rf"{CONSOLE_API_URL}/repeat-requests/[0-9a-f\-]{{36}}$"),
         method="PATCH",
         json=post_mock_responses("/repeat-requests"),
+        is_reusable=True,
     )
     yield authed_repeat_request_mock
 
@@ -290,57 +296,76 @@ def rr_update_partial_mock(authed_repeat_request_mock):
 
 
 @pytest.fixture
-def download_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
+def download_client(test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
+        text="MOCK_CONTENT",
+        headers={"Content-Length": "12"},
+        is_reusable=True,
+    )
     yield test_client
 
 
 @pytest.fixture
-def big_download_client(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
+def big_download_client(test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
+        text="MOCK_CONTENT",
+        headers={"Content-Length": "12"},
+        is_reusable=True,
+    )
     yield test_client
 
 
 @pytest.fixture
-def verbose_download_client(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
+def verbose_download_client(verbose_test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
+        text="MOCK_CONTENT",
+        headers={"Content-Length": "12"},
+        is_reusable=True,
+    )
     yield verbose_test_client
 
 
 @pytest.fixture
-def verbose_download_multiple_client(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def verbose_download_multiple_client(verbose_test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json=get_canned_search_results_single_page(),
+        is_reusable=True,
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/review",
         json=get_mock_responses("/orders/review_success"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders",
         json=post_mock_responses("/submitOrder"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/1/download",
         json=get_mock_responses("/orders/1/download"),
     )
-    auth_httpx_mock.add_response(url=MOCK_ASSET_HREF, text="MOCK_CONTENT", headers={"Content-Length": "12"})
-    yield verbose_test_client
-
-
-@pytest.fixture
-def single_page_search_client(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
-        url=f"{CONSOLE_API_URL}/catalog/search",
-        json=get_canned_search_results_single_page(),
+    auth_httpx2_mock.add_response(
+        url=MOCK_ASSET_HREF,
+        text="MOCK_CONTENT",
+        headers={"Content-Length": "12"},
+        is_reusable=True,
     )
     yield verbose_test_client
 
 
 @pytest.fixture
-def search_client_no_match(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def single_page_search_client(verbose_test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
+        url=f"{CONSOLE_API_URL}/catalog/search",
+        json=get_canned_search_results_single_page(),
+        is_reusable=True,
+    )
+    yield verbose_test_client
+
+
+@pytest.fixture
+def search_client_no_match(verbose_test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={
             "features": [],
@@ -351,12 +376,12 @@ def search_client_no_match(verbose_test_client, auth_httpx_mock):
 
 
 @pytest.fixture
-def multi_page_search_client(verbose_test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def multi_page_search_client(verbose_test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json=get_canned_search_results_multi_page_page1(),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search?page=2",
         json=get_canned_search_results_multi_page_page2(),
     )
@@ -426,7 +451,7 @@ def s3path_mock(monkeypatch):
     yield mock_instance
 
 
-def patch_task_status_matcher(request: httpx.Request) -> bool:
+def patch_task_status_matcher(request: httpx2.Request) -> bool:
     return request.method.upper() == "PATCH" and re.match(r"/task/[0-9a-f-]{36}/status$", str(request.url.path))
 
 
@@ -434,7 +459,10 @@ def patch_task_status_matcher(request: httpx.Request) -> bool:
 def task_cancel_success_mock(authed_tasking_request_mock):
     for prefix in ("task", "repeat-requests"):
         authed_tasking_request_mock.add_response(
-            url=re.compile(rf".*/{prefix}/[0-9a-f-]{{36}}/status$"), method="PATCH", json={"status": "canceled"}
+            url=re.compile(rf".*/{prefix}/[0-9a-f-]{{36}}/status$"),
+            method="PATCH",
+            json={"status": "canceled"},
+            is_reusable=True,
         )
     yield authed_tasking_request_mock
 

@@ -39,8 +39,8 @@ def test_create_repeat_request_with_valid_contract_id(test_client, authed_repeat
     assert repeat_request == post_mock_responses("/repeat-requests")
 
 
-def test_create_repeat_request_with_invalid_contract_id(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def test_create_repeat_request_with_invalid_contract_id(test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/repeat-requests",
         method="POST",
         status_code=400,

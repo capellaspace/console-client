@@ -526,10 +526,6 @@ def post_mock_responses(endpoint: str) -> dict[str, Any]:
             "accessToken": "MOCK_TOKEN",
             "refreshToken": "MOCK_REFRESH_TOKEN",
         },
-        "/token/refresh": {
-            "accessToken": "REFRESHED_MOCK_TOKEN",
-            "refreshToken": "REFRESHED_MOCK_REFRESH_TOKEN",
-        },
         "/submitOrder": {
             "userId": "MOCK_ID",
             "organizationId": "MOCK_ORG_ID",

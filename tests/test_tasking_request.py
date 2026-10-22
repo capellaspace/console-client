@@ -37,8 +37,8 @@ def test_get_collects_for_task(test_client, authed_tasking_request_mock, disable
     assert collects == get_mock_responses("/collects/list/abc")
 
 
-def test_get_collects_for_task_not_completed(test_client, auth_httpx_mock, disable_validate_uuid):
-    auth_httpx_mock.add_response(
+def test_get_collects_for_task_not_completed(test_client, auth_httpx2_mock, disable_validate_uuid):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/task/def",
         json=get_mock_responses("/task/def"),
     )
@@ -68,8 +68,8 @@ def test_create_task_with_valid_contract_id(test_client, authed_tasking_request_
     assert tasking_request == post_mock_responses("/task")
 
 
-def test_create_task_with_invalid_contract_id(test_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(
+def test_create_task_with_invalid_contract_id(test_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/task",
         method="POST",
         status_code=400,

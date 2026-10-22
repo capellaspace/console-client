@@ -2,9 +2,9 @@ import time
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import httpx
+import httpx2
 import pytest
-from pytest_httpx import HTTPXMock
+from pytest_httpx2 import HTTPXMock
 
 from capella_console_client.assets import (
     DownloadRequest,
@@ -72,7 +72,7 @@ def test_derive_stac_id_invalid():
         _derive_stac_id({"HH": {"href": "THIS_AINT_A_STAC_ID"}})
 
 
-def test_fetch_retry_on_http_status_error(httpx_mock: HTTPXMock, tmp_path: Path, mock_sleep):
+def test_fetch_retry_on_http_status_error(httpx2_mock: HTTPXMock, tmp_path: Path, mock_sleep):
     """Test that _fetch retries on HTTPStatusError and eventually succeeds"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -84,19 +84,19 @@ def test_fetch_retry_on_http_status_error(httpx_mock: HTTPXMock, tmp_path: Path,
         stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
     )
 
-    httpx_mock.add_response(status_code=500, text="Server Error")
-    httpx_mock.add_response(status_code=500, text="Server Error")
-    httpx_mock.add_response(status_code=200, text="SUCCESS_CONTENT")
+    httpx2_mock.add_response(status_code=500, text="Server Error")
+    httpx2_mock.add_response(status_code=500, text="Server Error")
+    httpx2_mock.add_response(status_code=200, text="SUCCESS_CONTENT")
 
     result = _fetch(dl_request, asset_size=100, show_progress=False, progress=MagicMock())
 
     assert result == local_path
     assert local_path.exists()
     assert local_path.read_text() == "SUCCESS_CONTENT"
-    assert len(httpx_mock.get_requests()) == 3
+    assert len(httpx2_mock.get_requests()) == 3
 
 
-def test_fetch_retry_timing(httpx_mock: HTTPXMock, tmp_path: Path, mock_sleep):
+def test_fetch_retry_timing(httpx2_mock: HTTPXMock, tmp_path: Path, mock_sleep):
     """Test that _fetch uses exponential backoff (2s, 4s, 8s, up to 16s max)"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -108,9 +108,9 @@ def test_fetch_retry_timing(httpx_mock: HTTPXMock, tmp_path: Path, mock_sleep):
         stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
     )
 
-    httpx_mock.add_response(status_code=503, text="Service Unavailable")
-    httpx_mock.add_response(status_code=503, text="Service Unavailable")
-    httpx_mock.add_response(status_code=200, text="SUCCESS_CONTENT")
+    httpx2_mock.add_response(status_code=503, text="Service Unavailable")
+    httpx2_mock.add_response(status_code=503, text="Service Unavailable")
+    httpx2_mock.add_response(status_code=200, text="SUCCESS_CONTENT")
 
     result = _fetch(dl_request, asset_size=100, show_progress=False, progress=MagicMock())
 
@@ -122,7 +122,7 @@ def test_fetch_retry_timing(httpx_mock: HTTPXMock, tmp_path: Path, mock_sleep):
     assert local_path.exists()
 
 
-def test_fetch_retries_multiple_times(httpx_mock: HTTPXMock, tmp_path: Path, mock_sleep):
+def test_fetch_retries_multiple_times(httpx2_mock: HTTPXMock, tmp_path: Path, mock_sleep):
     """Test that _fetch retries multiple times before succeeding"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -135,8 +135,8 @@ def test_fetch_retries_multiple_times(httpx_mock: HTTPXMock, tmp_path: Path, moc
     )
 
     for _ in range(4):
-        httpx_mock.add_response(status_code=503, text="Service Unavailable")
-    httpx_mock.add_response(status_code=200, text="SUCCESS_CONTENT")
+        httpx2_mock.add_response(status_code=503, text="Service Unavailable")
+    httpx2_mock.add_response(status_code=200, text="SUCCESS_CONTENT")
 
     result = _fetch(dl_request, asset_size=100, show_progress=False, progress=MagicMock())
 
@@ -144,11 +144,11 @@ def test_fetch_retries_multiple_times(httpx_mock: HTTPXMock, tmp_path: Path, moc
     assert local_path.exists()
     assert local_path.read_text() == "SUCCESS_CONTENT"
 
-    assert len(httpx_mock.get_requests()) == 5
+    assert len(httpx2_mock.get_requests()) == 5
     assert len(mock_sleep) == 4
 
 
-def test_fetch_no_retry_on_success(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_fetch_no_retry_on_success(httpx2_mock: HTTPXMock, tmp_path: Path):
     """Test that _fetch doesn't retry when request succeeds immediately"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -160,7 +160,7 @@ def test_fetch_no_retry_on_success(httpx_mock: HTTPXMock, tmp_path: Path):
         stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
     )
 
-    httpx_mock.add_response(status_code=200, text="SUCCESS_CONTENT")
+    httpx2_mock.add_response(status_code=200, text="SUCCESS_CONTENT")
 
     result = _fetch(dl_request, asset_size=100, show_progress=False, progress=MagicMock())
 
@@ -168,15 +168,15 @@ def test_fetch_no_retry_on_success(httpx_mock: HTTPXMock, tmp_path: Path):
     assert local_path.exists()
     assert local_path.read_text() == "SUCCESS_CONTENT"
 
-    assert len(httpx_mock.get_requests()) == 1
+    assert len(httpx2_mock.get_requests()) == 1
 
 
-def test_fetch_resume_partial_download(httpx_mock: HTTPXMock, resume_test_setup):
+def test_fetch_resume_partial_download(httpx2_mock: HTTPXMock, resume_test_setup):
     """Test that _fetch successfully resumes a partial download using 206 Partial Content"""
     test_url, local_path, dl_request, mock_progress = resume_test_setup(partial_bytes=b"A" * 1000)
 
     # Mock 206 response with remaining bytes
-    httpx_mock.add_response(status_code=206, content=b"B" * 500, headers={"Content-Range": "bytes 1000-1499/1500"})
+    httpx2_mock.add_response(status_code=206, content=b"B" * 500, headers={"Content-Range": "bytes 1000-1499/1500"})
 
     result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=mock_progress, resume_from=1000)
 
@@ -185,17 +185,17 @@ def test_fetch_resume_partial_download(httpx_mock: HTTPXMock, resume_test_setup)
     assert local_path.read_bytes() == b"A" * 1000 + b"B" * 500
 
     # Verify Range header was sent
-    requests = httpx_mock.get_requests()
+    requests = httpx2_mock.get_requests()
     assert len(requests) == 1
     assert requests[0].headers["Range"] == "bytes=1000-"
 
 
-def test_fetch_resume_fallback_no_range_support(httpx_mock: HTTPXMock, resume_test_setup):
+def test_fetch_resume_fallback_no_range_support(httpx2_mock: HTTPXMock, resume_test_setup):
     """Test that _fetch falls back to full download when server doesn't support Range"""
     test_url, local_path, dl_request, mock_progress = resume_test_setup(partial_bytes=b"A" * 1000)
 
     # Server returns 200 (ignores Range header)
-    httpx_mock.add_response(status_code=200, content=b"X" * 1500)
+    httpx2_mock.add_response(status_code=200, content=b"X" * 1500)
 
     result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=mock_progress, resume_from=1000)
 
@@ -204,11 +204,11 @@ def test_fetch_resume_fallback_no_range_support(httpx_mock: HTTPXMock, resume_te
     assert local_path.read_bytes() == b"X" * 1500
 
 
-def test_fetch_resume_416_range_not_satisfiable(httpx_mock: HTTPXMock, resume_test_setup):
+def test_fetch_resume_416_range_not_satisfiable(httpx2_mock: HTTPXMock, resume_test_setup):
     """Test that _fetch handles 416 Range Not Satisfiable (file already complete)"""
     test_url, local_path, dl_request, mock_progress = resume_test_setup(partial_bytes=b"A" * 1500)
 
-    httpx_mock.add_response(status_code=416)
+    httpx2_mock.add_response(status_code=416)
 
     result = _fetch(dl_request, asset_size=1500, show_progress=False, progress=mock_progress, resume_from=1500)
 
@@ -217,7 +217,7 @@ def test_fetch_resume_416_range_not_satisfiable(httpx_mock: HTTPXMock, resume_te
     assert local_path.read_bytes() == b"A" * 1500
 
 
-def test_download_asset_detects_partial_file(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_download_asset_detects_partial_file(httpx2_mock: HTTPXMock, tmp_path: Path):
     """Test that _download_asset detects and resumes partial files"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -226,10 +226,10 @@ def test_download_asset_detects_partial_file(httpx_mock: HTTPXMock, tmp_path: Pa
     local_path.write_bytes(b"A" * 500)
 
     # Mock HEAD request for file size check
-    httpx_mock.add_response(method="GET", headers={"Content-Length": "1000"})
+    httpx2_mock.add_response(method="GET", headers={"Content-Length": "1000"})
 
     # Mock resume request
-    httpx_mock.add_response(status_code=206, content=b"B" * 500, headers={"Content-Range": "bytes 500-999/1000"})
+    httpx2_mock.add_response(status_code=206, content=b"B" * 500, headers={"Content-Range": "bytes 500-999/1000"})
 
     dl_request = DownloadRequest(
         url=test_url,
@@ -245,7 +245,7 @@ def test_download_asset_detects_partial_file(httpx_mock: HTTPXMock, tmp_path: Pa
     assert local_path.read_bytes() == b"A" * 500 + b"B" * 500
 
 
-def test_download_asset_skips_complete_file(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_download_asset_skips_complete_file(httpx2_mock: HTTPXMock, tmp_path: Path):
     """Test that _download_asset skips download when file is already complete"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -255,7 +255,7 @@ def test_download_asset_skips_complete_file(httpx_mock: HTTPXMock, tmp_path: Pat
     complete_size = local_path.stat().st_size
 
     # Mock HEAD request for file size check
-    httpx_mock.add_response(method="GET", headers={"Content-Length": str(complete_size)})
+    httpx2_mock.add_response(method="GET", headers={"Content-Length": str(complete_size)})
 
     dl_request = DownloadRequest(
         url=test_url,
@@ -270,10 +270,10 @@ def test_download_asset_skips_complete_file(httpx_mock: HTTPXMock, tmp_path: Pat
     # File should be unchanged
     assert local_path.read_bytes() == b"COMPLETE" * 100
     # Should only make HEAD request, no download
-    assert len(httpx_mock.get_requests()) == 1
+    assert len(httpx2_mock.get_requests()) == 1
 
 
-def test_download_asset_corrupted_file_redownload(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_download_asset_corrupted_file_redownload(httpx2_mock: HTTPXMock, tmp_path: Path):
     """Test that _download_asset re-downloads when existing file is larger than expected"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -282,10 +282,10 @@ def test_download_asset_corrupted_file_redownload(httpx_mock: HTTPXMock, tmp_pat
     local_path.write_bytes(b"X" * 2000)
 
     # Mock HEAD request for file size check (expected size is 1000)
-    httpx_mock.add_response(method="GET", headers={"Content-Length": "1000"})
+    httpx2_mock.add_response(method="GET", headers={"Content-Length": "1000"})
 
     # Mock fresh download
-    httpx_mock.add_response(status_code=200, content=b"GOOD" * 250)
+    httpx2_mock.add_response(status_code=200, content=b"GOOD" * 250)
 
     dl_request = DownloadRequest(
         url=test_url,
@@ -301,7 +301,7 @@ def test_download_asset_corrupted_file_redownload(httpx_mock: HTTPXMock, tmp_pat
     assert local_path.read_bytes() == b"GOOD" * 250
 
 
-def test_download_asset_resume_disabled(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_download_asset_resume_disabled(httpx2_mock: HTTPXMock, tmp_path: Path):
     """Test that _download_asset skips existing files when resume is disabled"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -322,10 +322,10 @@ def test_download_asset_resume_disabled(httpx_mock: HTTPXMock, tmp_path: Path):
     assert result == local_path
     assert local_path.read_bytes() == b"A" * 500
     # No HTTP requests should be made
-    assert len(httpx_mock.get_requests()) == 0
+    assert len(httpx2_mock.get_requests()) == 0
 
 
-def test_download_asset_unknown_size_skips_resume(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_download_asset_unknown_size_skips_resume(httpx2_mock: HTTPXMock, tmp_path: Path):
     """Test that _download_asset skips existing files when asset size is unknown"""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
@@ -334,7 +334,7 @@ def test_download_asset_unknown_size_skips_resume(httpx_mock: HTTPXMock, tmp_pat
     local_path.write_bytes(b"A" * 500)
 
     # Mock HEAD request fails (unknown size)
-    httpx_mock.add_exception(httpx.ConnectError("Connection failed"))
+    httpx2_mock.add_exception(httpx2.ConnectError("Connection failed"))
 
     dl_request = DownloadRequest(
         url=test_url,
@@ -350,12 +350,12 @@ def test_download_asset_unknown_size_skips_resume(httpx_mock: HTTPXMock, tmp_pat
     assert local_path.read_bytes() == b"A" * 500
 
 
-def test_fetch_resume_with_progress(httpx_mock: HTTPXMock, resume_test_setup):
+def test_fetch_resume_with_progress(httpx2_mock: HTTPXMock, resume_test_setup):
     """Test that progress tracking works correctly with resume"""
     test_url, local_path, dl_request, mock_progress = resume_test_setup(partial_bytes=b"A" * 1000)
 
     # Mock 206 response with remaining bytes
-    httpx_mock.add_response(status_code=206, content=b"B" * 500, headers={"Content-Range": "bytes 1000-1499/1500"})
+    httpx2_mock.add_response(status_code=206, content=b"B" * 500, headers={"Content-Range": "bytes 1000-1499/1500"})
 
     result = _fetch(dl_request, asset_size=1500, show_progress=True, progress=mock_progress, resume_from=1000)
 
@@ -414,14 +414,14 @@ def test_safe_local_path_absolute_filename_rejected(tmp_path, monkeypatch):
         _safe_local_path(tmp_path, "https://example.com/anything")
 
 
-def test_download_asset_raises_on_size_mismatch(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_download_asset_raises_on_size_mismatch(httpx2_mock: HTTPXMock, tmp_path: Path):
     """Truncated download (bytes written < Content-Length) must raise ValueError."""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
 
     # Server advertises 1000 bytes but only delivers 800
-    httpx_mock.add_response(method="GET", headers={"Content-Length": "1000"})
-    httpx_mock.add_response(status_code=200, content=b"X" * 800)
+    httpx2_mock.add_response(method="GET", headers={"Content-Length": "1000"})
+    httpx2_mock.add_response(status_code=200, content=b"X" * 800)
 
     dl_request = DownloadRequest(
         url=test_url,
@@ -446,7 +446,7 @@ def test_fetch_connect_error_strips_query_string(tmp_path: Path, monkeypatch):
         stac_id="CAPELLA_TEST_SM_GEO_HH_20210727091736_20210727091740",
     )
 
-    import httpx as _httpx
+    import httpx2 as _httpx
 
     monkeypatch.setattr(_httpx, "stream", MagicMock(side_effect=_httpx.ConnectError("connection refused")))
 
@@ -461,14 +461,14 @@ def test_fetch_connect_error_strips_query_string(tmp_path: Path, monkeypatch):
     assert "image.tif" in error_message  # path retained for debuggability
 
 
-def test_download_asset_no_size_check_when_content_length_unknown(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_download_asset_no_size_check_when_content_length_unknown(httpx2_mock: HTTPXMock, tmp_path: Path):
     """When Content-Length is unavailable (asset_size=-1) no size check is performed."""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
 
     # No Content-Length header → _get_asset_bytesize raises, asset_size=-1
-    httpx_mock.add_response(method="GET", headers={})
-    httpx_mock.add_response(status_code=200, content=b"X" * 500)
+    httpx2_mock.add_response(method="GET", headers={})
+    httpx2_mock.add_response(status_code=200, content=b"X" * 500)
 
     dl_request = DownloadRequest(
         url=test_url,
@@ -482,13 +482,13 @@ def test_download_asset_no_size_check_when_content_length_unknown(httpx_mock: HT
     assert local_path.stat().st_size == 500
 
 
-def test_download_asset_passes_when_sizes_match(httpx_mock: HTTPXMock, tmp_path: Path):
+def test_download_asset_passes_when_sizes_match(httpx2_mock: HTTPXMock, tmp_path: Path):
     """A complete download where bytes written == Content-Length must succeed."""
     test_url = "https://example.com/test-asset.tif"
     local_path = tmp_path / "test-asset.tif"
 
-    httpx_mock.add_response(method="GET", headers={"Content-Length": "1000"})
-    httpx_mock.add_response(status_code=200, content=b"X" * 1000)
+    httpx2_mock.add_response(method="GET", headers={"Content-Length": "1000"})
+    httpx2_mock.add_response(status_code=200, content=b"X" * 1000)
 
     dl_request = DownloadRequest(
         url=test_url,
@@ -502,7 +502,7 @@ def test_download_asset_passes_when_sizes_match(httpx_mock: HTTPXMock, tmp_path:
     assert local_path.stat().st_size == 1000
 
 
-def test_download_asset_size_check_applies_to_s3path(httpx_mock: HTTPXMock):
+def test_download_asset_size_check_applies_to_s3path(httpx2_mock: HTTPXMock):
     """Size mismatch check also fires for S3Path targets (uses .stat().st_size)."""
     test_url = "https://example.com/test-asset.tif"
 
@@ -516,8 +516,8 @@ def test_download_asset_size_check_applies_to_s3path(httpx_mock: HTTPXMock):
     mock_s3_path.open.return_value.__exit__ = MagicMock(return_value=False)
     mock_s3_path.write = MagicMock()
 
-    httpx_mock.add_response(method="GET", headers={"Content-Length": "1000"})
-    httpx_mock.add_response(status_code=200, content=b"X" * 800)
+    httpx2_mock.add_response(method="GET", headers={"Content-Length": "1000"})
+    httpx2_mock.add_response(status_code=200, content=b"X" * 800)
 
     dl_request = DownloadRequest(
         url=test_url,
