@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-import httpx
+import httpx2
 import rich.progress
 from tenacity import retry, retry_if_exception_type, wait_exponential
 
@@ -317,7 +317,7 @@ def _get_resume_from(existing_size: int, asset_size: int) -> int | None:
 
 
 @retry(
-    retry=retry_if_exception_type(httpx.HTTPStatusError),
+    retry=retry_if_exception_type(httpx2.HTTPStatusError),
     wait=wait_exponential(multiplier=2, max=16),
     before_sleep=log_retry_attempt,
 )
@@ -344,7 +344,7 @@ def _fetch(
     headers, file_mode, initial_bytes = _prepare_resume_context(resume_from)
 
     try:
-        with httpx.stream("GET", dl_request.url, headers=headers) as response:
+        with httpx2.stream("GET", dl_request.url, headers=headers) as response:
             if response.status_code == 206:
                 return _handle_partial_content(
                     dl_request, response, file_mode, asset_size, show_progress, progress, initial_bytes
@@ -357,8 +357,8 @@ def _fetch(
                 response.raise_for_status()
                 # Fallback (unreachable if raise_for_status raises)
                 return dl_request.local_path
-    except httpx.ConnectError as e:
-        safe_url = httpx.URL(dl_request.url).copy_with(query=None)
+    except httpx2.ConnectError as e:
+        safe_url = httpx2.URL(dl_request.url).copy_with(query=None)
         raise ConnectError(f"Could not connect to {safe_url}: {e}") from None
 
 
@@ -387,7 +387,7 @@ def _prepare_resume_context(resume_from: int | None) -> tuple[dict[str, str], st
 
 def _handle_partial_content(
     dl_request: DownloadRequest,
-    response: httpx.Response,
+    response: httpx2.Response,
     file_mode: str,
     asset_size: int,
     show_progress: bool,
@@ -419,7 +419,7 @@ def _handle_partial_content(
 
 def _handle_full_content(
     dl_request: DownloadRequest,
-    response: httpx.Response,
+    response: httpx2.Response,
     asset_size: int,
     show_progress: bool,
     progress: rich.progress.Progress,
@@ -463,7 +463,7 @@ def _handle_range_not_satisfiable(dl_request: DownloadRequest) -> Path | S3Path:
 
 
 def _download_with_progress(
-    response: httpx.Response,
+    response: httpx2.Response,
     file_handle,
     dl_request: DownloadRequest,
     asset_size: int,
@@ -509,9 +509,9 @@ def _register_progress_task(
 def _get_asset_bytesize(pre_signed_url: str) -> int:
     """get size in bytes of `pre_signed_url`"""
     try:
-        with httpx.stream("GET", pre_signed_url) as resp:
+        with httpx2.stream("GET", pre_signed_url) as resp:
             total_size = int(resp.headers["Content-Length"])
-    except httpx.ConnectError as e:
+    except httpx2.ConnectError as e:
         raise ConnectError(f"Could not connect to {pre_signed_url}: {e}") from None
     return total_size
 

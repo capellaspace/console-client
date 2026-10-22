@@ -16,9 +16,9 @@ from .test_data import (
 )
 
 
-def test_list_specific_order(test_client, auth_httpx_mock):
+def test_list_specific_order(test_client, auth_httpx2_mock):
     order_id = "179d4c75-8830-4947-ba33-67d8994eabe5"
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/{order_id}",
         json=get_mock_responses("/orders")[0],
     )
@@ -53,8 +53,8 @@ def test_list_active_orders(non_expired_order_mock):
     assert active_orders == [non_expired_order]
 
 
-def test_review_order(order_client, httpx_mock):
-    httpx_mock.add_response(
+def test_review_order(order_client, httpx2_mock):
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={
             "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
@@ -64,8 +64,8 @@ def test_review_order(order_client, httpx_mock):
     order_client.review_order(stac_ids=["MOCK_STAC_ID"])
 
 
-def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx_mock):
-    httpx_mock.add_response(
+def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx2_mock):
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={
             "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
@@ -77,8 +77,8 @@ def test_review_order_insufficient_funds(review_client_insufficient_funds, httpx
         review_client_insufficient_funds.review_order(stac_ids=["MOCK_STAC_ID"])
 
 
-def test_review_order_no_match(order_client, httpx_mock):
-    httpx_mock.add_response(
+def test_review_order_no_match(order_client, httpx2_mock):
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={"features": [], "numberMatched": 0},
     )
@@ -86,8 +86,8 @@ def test_review_order_no_match(order_client, httpx_mock):
         order_client.review_order(stac_ids=["MOCK_STAC_ID"])
 
 
-def test_submit_order_not_previously_ordered_check_active_orders(order_client, httpx_mock):
-    httpx_mock.add_response(
+def test_submit_order_not_previously_ordered_check_active_orders(order_client, httpx2_mock):
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={
             "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
@@ -98,16 +98,14 @@ def test_submit_order_not_previously_ordered_check_active_orders(order_client, h
     order_id = order_client.submit_order(stac_ids=["MOCK_STAC_ID"], check_active_orders=True)
 
     assert order_id == post_mock_responses("/submitOrder")["orderId"]
-    order_request = httpx_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders")
+    order_request = httpx2_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders")
     assert json.loads(order_request.read()) == {
         "items": [{"collectionId": "capella-test", "granuleId": "MOCK_STAC_ID"}]
     }
 
 
-def test_submit_order_not_previously_ordered_no_check_active_orders(
-    order_client, httpx_mock, assert_all_responses_were_requested
-):
-    httpx_mock.add_response(
+def test_submit_order_not_previously_ordered_no_check_active_orders(order_client, httpx2_mock):
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={
             "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
@@ -117,13 +115,13 @@ def test_submit_order_not_previously_ordered_no_check_active_orders(
     order_id = order_client.submit_order(stac_ids=["MOCK_STAC_ID"], check_active_orders=False)
 
     assert order_id == post_mock_responses("/submitOrder")["orderId"]
-    order_request = httpx_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders")
+    order_request = httpx2_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders")
     assert json.loads(order_request.read()) == {
         "items": [{"collectionId": "capella-test", "granuleId": "MOCK_STAC_ID"}]
     }
 
 
-def test_submit_order_previously_ordered(non_expired_order_mock, httpx_mock):
+def test_submit_order_previously_ordered(non_expired_order_mock, httpx2_mock):
     client, non_expired_order = non_expired_order_mock
 
     order_id = client.submit_order(
@@ -132,11 +130,11 @@ def test_submit_order_previously_ordered(non_expired_order_mock, httpx_mock):
     )
 
     assert order_id == post_mock_responses("/submitOrder")["orderId"]
-    assert httpx_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders") is None
+    assert httpx2_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders") is None
 
 
-def test_submit_order_invalid_stac_id(test_client, httpx_mock):
-    httpx_mock.add_response(
+def test_submit_order_invalid_stac_id(test_client, httpx2_mock):
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         method="POST",
         json={"features": [], "numberMatched": 0},
@@ -146,8 +144,8 @@ def test_submit_order_invalid_stac_id(test_client, httpx_mock):
         test_client.submit_order(stac_ids=["DOES_NOT_EXISTS"])
 
 
-def test_submit_order_rejected(order_client_unsuccessful, httpx_mock):
-    httpx_mock.add_response(
+def test_submit_order_rejected(order_client_unsuccessful, httpx2_mock):
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         method="POST",
         json={
@@ -165,8 +163,8 @@ def test_submit_order_rejected(order_client_unsuccessful, httpx_mock):
         order_client_unsuccessful.submit_order(stac_ids=["DOES_NOT_EXISTS"])
 
 
-def test_submit_order_items(order_client, httpx_mock):
-    httpx_mock.add_response(
+def test_submit_order_items(order_client, httpx2_mock):
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={
             "features": [{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
@@ -180,13 +178,13 @@ def test_submit_order_items(order_client, httpx_mock):
     )
 
     assert order_id == post_mock_responses("/submitOrder")["orderId"]
-    order_request = httpx_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders")
+    order_request = httpx2_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders")
     assert json.loads(order_request.read()) == {
         "items": [{"collectionId": "capella-test", "granuleId": "MOCK_STAC_ID"}]
     }
 
 
-def test_submit_order_items_omit_search(order_client, httpx_mock):
+def test_submit_order_items_omit_search(order_client, httpx2_mock):
     order_id = order_client.submit_order(
         items=[{"id": "MOCK_STAC_ID", "collection": "capella-test"}],
         check_active_orders=False,
@@ -194,7 +192,7 @@ def test_submit_order_items_omit_search(order_client, httpx_mock):
     )
 
     assert order_id == post_mock_responses("/submitOrder")["orderId"]
-    order_request = httpx_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders")
+    order_request = httpx2_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/orders")
     assert json.loads(order_request.read()) == {
         "items": [{"collectionId": "capella-test", "granuleId": "MOCK_STAC_ID"}]
     }
@@ -205,7 +203,7 @@ def test_submit_order_missing_input(test_client):
         test_client.submit_order()
 
 
-def test_get_stac_items_of_order_ids_only(non_expired_order_mock, httpx_mock, disable_validate_uuid):
+def test_get_stac_items_of_order_ids_only(non_expired_order_mock, httpx2_mock, disable_validate_uuid):
     client, _ = non_expired_order_mock
 
     stac_ids = ["CAPELLA_C02_SM_SLC_HH_20201126192221_20201126192225"]
@@ -213,7 +211,7 @@ def test_get_stac_items_of_order_ids_only(non_expired_order_mock, httpx_mock, di
         stac_ids=stac_ids,
         check_active_orders=True,
     )
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/{order_id}",
         json=get_mock_responses("/orders")[0],
     )
@@ -222,7 +220,7 @@ def test_get_stac_items_of_order_ids_only(non_expired_order_mock, httpx_mock, di
     assert retrieved_stac_ids == stac_ids
 
 
-def test_get_stac_items_of_order(non_expired_order_mock, httpx_mock, disable_validate_uuid):
+def test_get_stac_items_of_order(non_expired_order_mock, httpx2_mock, disable_validate_uuid):
     client, _ = non_expired_order_mock
 
     stac_ids = ["CAPELLA_C02_SM_SLC_HH_20201126192221_20201126192225"]
@@ -230,12 +228,12 @@ def test_get_stac_items_of_order(non_expired_order_mock, httpx_mock, disable_val
         stac_ids=stac_ids,
         check_active_orders=True,
     )
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/{order_id}",
         json=get_mock_responses("/orders")[0],
     )
 
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/catalog/search",
         json={
             "features": [{"id": "CAPELLA_C02_SM_SLC_HH_20201126192221_20201126192225"}],

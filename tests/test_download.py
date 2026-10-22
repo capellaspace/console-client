@@ -5,9 +5,9 @@
 import tempfile
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
-from pytest_httpx import HTTPXMock
+from pytest_httpx2 import HTTPXMock
 
 from capella_console_client import CapellaConsoleClient
 from capella_console_client.config import CONSOLE_API_URL
@@ -26,8 +26,8 @@ MOCK_ASSET_HREF = MOCK_ASSETS_PRESIGNED["HH"]["href"]
 MOCK_ITEM_PRESIGNED = create_mock_items_presigned()
 
 
-def test_get_presigned_assets(auth_httpx_mock, disable_validate_uuid):
-    auth_httpx_mock.add_response(
+def test_get_presigned_assets(auth_httpx2_mock, disable_validate_uuid):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/1/download",
         json=get_mock_responses("/orders/1/download"),
     )
@@ -37,8 +37,8 @@ def test_get_presigned_assets(auth_httpx_mock, disable_validate_uuid):
     assert presigned_assets[0] == get_mock_responses("/orders/1/download")[0]["assets"]
 
 
-def test_get_presigned_assets_filtered(auth_httpx_mock, disable_validate_uuid):
-    auth_httpx_mock.add_response(
+def test_get_presigned_assets_filtered(auth_httpx2_mock, disable_validate_uuid):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/2/download",
         json=get_mock_responses("/orders/2/download"),
     )
@@ -51,8 +51,8 @@ def test_get_presigned_assets_filtered(auth_httpx_mock, disable_validate_uuid):
     assert presigned_assets[0] == order_2_assets
 
 
-def test_get_presigned_assets_filtered_no_overlap(auth_httpx_mock, disable_validate_uuid):
-    auth_httpx_mock.add_response(
+def test_get_presigned_assets_filtered_no_overlap(auth_httpx2_mock, disable_validate_uuid):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders/2/download",
         json=get_mock_responses("/orders/2/download"),
     )
@@ -110,10 +110,10 @@ def test_asset_download_s3path_string(download_client, s3path_mock, monkeypatch)
     assert path.is_file()
 
 
-def test_asset_download_does_not_override(test_client):
+def test_asset_download_does_not_override(download_client):
     local_path = Path(tempfile.NamedTemporaryFile().name)
     local_path.write_text("ORIG_CONTENT")
-    local_path = test_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path)
+    local_path = download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path)
     assert local_path.read_text() == "ORIG_CONTENT"
     local_path.unlink()
 
@@ -303,19 +303,18 @@ def _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir):
 
 def test_download_products_for_tasking_request(
     verbose_download_multiple_client,
-    auth_httpx_mock,
+    auth_httpx2_mock,
     disable_validate_uuid,
-    assert_all_responses_were_requested,
 ):
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/task/abc",
         json=get_mock_responses("/task/abc"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/collects/list/abc",
         json=get_mock_responses("/collects/list/abc"),
     )
-    auth_httpx_mock.add_response(
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
         json=get_mock_responses("/orders"),
     )
@@ -341,8 +340,8 @@ def test_download_products_for_order_id(verbose_download_multiple_client, disabl
         _shared_dl_asserts(paths_by_stac_id_and_key, temp_dir)
 
 
-def test_download_products_for_collect_id(verbose_download_multiple_client, auth_httpx_mock, disable_validate_uuid):
-    auth_httpx_mock.add_response(
+def test_download_products_for_collect_id(verbose_download_multiple_client, auth_httpx2_mock, disable_validate_uuid):
+    auth_httpx2_mock.add_response(
         url=f"{CONSOLE_API_URL}/orders?customerId=MOCK_ID",
         json=get_mock_responses("/orders"),
     )
@@ -386,35 +385,35 @@ def test_download_products_with_product_types_filter_all_exclude(download_client
         assert paths_by_stac_id_and_key == {}
 
 
-def test_get_asset_bytesize(download_client, auth_httpx_mock):
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
+def test_get_asset_bytesize(download_client, auth_httpx2_mock):
+    auth_httpx2_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
 
     bytesize = download_client.get_asset_bytesize(MOCK_ASSET_HREF)
     assert bytesize == 12
 
 
-def test_get_asset_bytesize_raises(test_client, auth_httpx_mock: HTTPXMock):
+def test_get_asset_bytesize_raises(test_client, auth_httpx2_mock: HTTPXMock):
     def raise_conntection_error(request):
-        raise httpx.ConnectError("NO CONNECTION")
+        raise httpx2.ConnectError("NO CONNECTION")
 
-    auth_httpx_mock.add_callback(raise_conntection_error)
+    auth_httpx2_mock.add_callback(raise_conntection_error)
 
     with pytest.raises(ConnectError):
         test_client.get_asset_bytesize(MOCK_ASSET_HREF)
 
 
-def test_download_asset_resume_partial_file(download_client, auth_httpx_mock: HTTPXMock, temp_download_file):
+def test_download_asset_resume_partial_file(download_client, auth_httpx2_mock: HTTPXMock, temp_download_file):
     """Test that client.download_asset() successfully resumes a partial download"""
     local_path = temp_download_file(initial_content="MOCK_C")
 
     # Mock all requests to the asset URL with a single callback
     def asset_callback(request):
         if "Range" in request.headers and request.headers["Range"] == "bytes=6-":
-            return httpx.Response(status_code=206, text="ONTENT", headers={"Content-Range": "bytes 6-11/12"})
+            return httpx2.Response(status_code=206, text="ONTENT", headers={"Content-Range": "bytes 6-11/12"})
         else:
-            return httpx.Response(status_code=200, text="MOCK_CONTENT", headers={"Content-Length": "12"})
+            return httpx2.Response(status_code=200, text="MOCK_CONTENT", headers={"Content-Length": "12"})
 
-    auth_httpx_mock.add_callback(asset_callback, url=MOCK_ASSET_HREF)
+    auth_httpx2_mock.add_callback(asset_callback, url=MOCK_ASSET_HREF)
 
     result = download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path, enable_resume=True)
 
@@ -423,7 +422,7 @@ def test_download_asset_resume_partial_file(download_client, auth_httpx_mock: HT
     assert local_path.read_text() == "MOCK_CONTENT"
 
     # Verify Range header was sent
-    asset_requests = [r for r in auth_httpx_mock.get_requests() if MOCK_ASSET_HREF in str(r.url)]
+    asset_requests = [r for r in auth_httpx2_mock.get_requests() if MOCK_ASSET_HREF in str(r.url)]
     assert len(asset_requests) == 2
     assert asset_requests[1].headers["Range"] == "bytes=6-"
 
@@ -440,7 +439,7 @@ def test_download_asset_resume_disabled_skips_existing(download_client, temp_dow
     assert local_path.read_text() == "PARTIAL"  # Unchanged
 
 
-def test_download_asset_complete_file_skipped(download_client, auth_httpx_mock: HTTPXMock, temp_download_file):
+def test_download_asset_complete_file_skipped(download_client, auth_httpx2_mock: HTTPXMock, temp_download_file):
     """Test that download_asset recognizes complete files and doesn't re-download"""
     local_path = temp_download_file(initial_content=b"MOCK_CONTENT")
 
@@ -449,9 +448,9 @@ def test_download_asset_complete_file_skipped(download_client, auth_httpx_mock: 
 
     # Mock all requests
     def asset_callback(request):
-        return httpx.Response(status_code=200, content=b"MOCK_CONTENT", headers={"Content-Length": "12"})
+        return httpx2.Response(status_code=200, content=b"MOCK_CONTENT", headers={"Content-Length": "12"})
 
-    auth_httpx_mock.add_callback(asset_callback, url=MOCK_ASSET_HREF)
+    auth_httpx2_mock.add_callback(asset_callback, url=MOCK_ASSET_HREF)
 
     result = download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path, enable_resume=True)
 
@@ -460,7 +459,7 @@ def test_download_asset_complete_file_skipped(download_client, auth_httpx_mock: 
     assert local_path.read_bytes() == b"MOCK_CONTENT"
 
 
-def test_download_products_resume_partial_files(download_client, auth_httpx_mock: HTTPXMock):
+def test_download_products_resume_partial_files(download_client, auth_httpx2_mock: HTTPXMock):
     """Test that download_products resumes partial files for multiple assets"""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = Path(temp_dir)
@@ -478,18 +477,18 @@ def test_download_products_resume_partial_files(download_client, auth_httpx_mock
             # HH asset
             if "CAPELLA_C02_SM_GEO_HH" in str(request.url) and ".tif" in str(request.url):
                 if "Range" in request.headers and request.headers["Range"] == "bytes=6-":
-                    return httpx.Response(status_code=206, text="ONTENT", headers={"Content-Range": "bytes 6-11/12"})
+                    return httpx2.Response(status_code=206, text="ONTENT", headers={"Content-Range": "bytes 6-11/12"})
                 else:
-                    return httpx.Response(status_code=200, text="MOCK_CONTENT", headers={"Content-Length": "12"})
+                    return httpx2.Response(status_code=200, text="MOCK_CONTENT", headers={"Content-Length": "12"})
             # Thumbnail asset
             elif ".png" in str(request.url):
                 if "Range" in request.headers:
                     # Shouldn't resume thumbnail (doesn't exist yet)
-                    return httpx.Response(status_code=200, text="MOCK_CONTENT", headers={"Content-Length": "12"})
+                    return httpx2.Response(status_code=200, text="MOCK_CONTENT", headers={"Content-Length": "12"})
                 else:
-                    return httpx.Response(status_code=200, text="MOCK_CONTENT", headers={"Content-Length": "12"})
+                    return httpx2.Response(status_code=200, text="MOCK_CONTENT", headers={"Content-Length": "12"})
 
-        auth_httpx_mock.add_callback(asset_callback)
+        auth_httpx2_mock.add_callback(asset_callback, is_reusable=True)
 
         paths_by_stac_id_and_key = download_client.download_products(
             [MOCK_ITEM_PRESIGNED], local_dir=temp_dir, enable_resume=True
@@ -503,16 +502,16 @@ def test_download_products_resume_partial_files(download_client, auth_httpx_mock
 
 
 def test_download_asset_fallback_when_range_unsupported(
-    download_client, auth_httpx_mock: HTTPXMock, temp_download_file
+    download_client, auth_httpx2_mock: HTTPXMock, temp_download_file
 ):
     """Test that download falls back to full download when server doesn't support Range"""
     local_path = temp_download_file(initial_content="PARTIAL")
 
     # Mock file size check
-    auth_httpx_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
+    auth_httpx2_mock.add_response(text="MOCK_CONTENT", headers={"Content-Length": "12"})
 
     # Server returns 200 instead of 206 (doesn't support Range)
-    auth_httpx_mock.add_response(status_code=200, text="MOCK_CONTENT")
+    auth_httpx2_mock.add_response(status_code=200, text="MOCK_CONTENT")
 
     result = download_client.download_asset(pre_signed_url=MOCK_ASSET_HREF, local_path=local_path, enable_resume=True)
 

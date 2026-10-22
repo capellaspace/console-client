@@ -25,10 +25,10 @@ classifiers = [
 requires-python = ">=3.10,<4.0"
 dependencies = [
     "python-dateutil>=2.8.2,<3",
-    "httpx>=0.27.0,<0.28",
     "tenacity>=9.0.0,<10",
     "rich==13.7.1",
     "geojson>=3.0.1,<4",
+    "httpx2>=2.14.0",
 ]
 
 [project.urls]
@@ -62,9 +62,9 @@ s3 = [
 
 [dependency-groups]
 dev = [
-    "pytest>=7.4.0,<8",
+    "pytest>=9.0.0,<10",
     "pytest-cov>=4.1.0,<5",
-    "pytest-httpx>=0.30.0,<0.31",
+    "httpx2-pytest>=2.0.0,<3",
     "coveralls>=3.3.1,<4",
     "ruff>=0.9.0,<1",
     "mypy>=1.9.0,<2",

@@ -1106,8 +1106,8 @@ read metadata
 
 .. code:: python3
 
-  import httpx
+  import httpx2
 
   # read extended metadata .json
   metadata_presigned_href = assets_presigned[0]["metadata"]["href"]
-  metadata = httpx.get(metadata_presigned_href).json()
+  metadata = httpx2.get(metadata_presigned_href).json()

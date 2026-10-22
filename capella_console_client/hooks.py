@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-import httpx
+import httpx2
 
 from capella_console_client.exceptions import (
     handle_error_response_and_raise,
@@ -11,22 +11,22 @@ from capella_console_client.logconf import logger
 @dataclass
 class RequestMeta:
     method: str
-    url: httpx.URL
+    url: httpx2.URL
 
 
 # do not log out the following requests
 SILENCE_REQUESTS: list[RequestMeta] = []
 
 
-def translate_error_to_exception(response: httpx.Response) -> None:
+def translate_error_to_exception(response: httpx2.Response) -> None:
     if response.status_code >= 400:
         handle_error_response_and_raise(response)
 
 
-def log_on_4xx_5xx(response: httpx.Response) -> bool | None:
+def log_on_4xx_5xx(response: httpx2.Response) -> bool | None:
     try:
         response.raise_for_status()
-    except httpx.HTTPError:
+    except httpx2.HTTPError:
         request = response.request
         cur = RequestMeta(request.method, request.url)
         if cur in SILENCE_REQUESTS:

@@ -3,7 +3,7 @@ import warnings
 from enum import Enum
 from getpass import getpass
 
-import httpx
+import httpx2
 
 from capella_console_client.config import CAPELLA_API_KEY_ENV, CONSOLE_API_URL, DEFAULT_TIMEOUT
 from capella_console_client.enumerations import AuthHeaderPrefix
@@ -28,7 +28,7 @@ class AuthMethodDeprecationWarning(DeprecationWarning):
     pass
 
 
-class CapellaConsoleSession(httpx.Client):
+class CapellaConsoleSession(httpx2.Client):
     def __init__(self, *args, **kwargs):
         verbose = kwargs.pop("verbose", False)
         search_url = kwargs.pop("search_url", None)
@@ -74,7 +74,7 @@ class CapellaConsoleSession(httpx.Client):
             if not no_token_check:
                 self._cache_user_info()
 
-        except (httpx.HTTPStatusError, CapellaConsoleClientError):
+        except (httpx2.HTTPStatusError, CapellaConsoleClientError):
             message = {
                 AuthMethod.TOKEN: "provided token invalid",
                 AuthMethod.API_KEY: "provided API key invalid",
