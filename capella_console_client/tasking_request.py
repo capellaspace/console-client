@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import geojson
@@ -105,7 +105,7 @@ def create_tasking_request(
 def _set_window_open_close(window_open: datetime | str | None, window_close: datetime | str | None) -> tuple[str, str]:
     # Normalize window_open to datetime
     if window_open is None:
-        window_open_dt = datetime.now(timezone.utc)
+        window_open_dt = datetime.now(UTC)
     elif isinstance(window_open, str):
         window_open_dt = parse(window_open)
     else:

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import dateutil.parser
@@ -33,7 +33,7 @@ def get_non_expired_orders(session: CapellaConsoleSession) -> list[dict[str, Any
     all_orders = res.json()
 
     ordered_by_exp_date = sorted(all_orders, key=lambda x: x["expirationDate"])
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     active_orders = []
     while ordered_by_exp_date:
