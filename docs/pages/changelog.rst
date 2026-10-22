@@ -2,6 +2,11 @@
 History
 =======
 
+0.20.0 (2026-10-22)
+-------------------
+* chainable search result groupby with value_counts (`#182 <https://github.com/capellaspace/console-client/pull/182>`_)
+* security bumps (`#173 <https://github.com/capellaspace/console-client/pull/173>`_, `#175 <https://github.com/capellaspace/console-client/pull/175>`_, `#177 <https://github.com/capellaspace/console-client/pull/177>`_, `#178 <https://github.com/capellaspace/console-client/pull/178>`_, `#179 <https://github.com/capellaspace/console-client/pull/179>`_, `#180 <https://github.com/capellaspace/console-client/pull/180>`_, `#181 <https://github.com/capellaspace/console-client/pull/181>`_)
+
 0.19.3 (2026-06-17)
 -------------------
 * StacSearchResult.drop(stac_ids=...)  (`#171 <https://github.com/capellaspace/console-client/pull/171>`_)
