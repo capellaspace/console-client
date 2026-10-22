@@ -127,6 +127,7 @@ name = "capella-console-client"
 version = "0.20.0"
 source = { editable = "." }
 dependencies = [
+    { name = "certifi" },
     { name = "geojson" },
     { name = "httpx" },
     { name = "python-dateutil" },
@@ -175,6 +176,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "botocore", marker = "extra == 's3'", specifier = ">=1.36.11,<2" },
+    { name = "certifi", specifier = ">=2026.10.19" },
     { name = "click", marker = "extra == 'wizard'", specifier = "==8.1.7" },
     { name = "cloudpathlib", extras = ["s3"], marker = "extra == 's3'", specifier = ">=0.23.0,<0.24" },
     { name = "geojson", specifier = ">=3.0.1,<4" },
