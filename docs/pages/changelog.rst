@@ -2,6 +2,11 @@
 History
 =======
 
+0.20.1 (2026-10-22)
+-------------------
+* certifi>=2026.10.19
+
+
 0.20.0 (2026-10-22)
 -------------------
 * chainable search result groupby with value_counts (`#182 <https://github.com/capellaspace/console-client/pull/182>`_)

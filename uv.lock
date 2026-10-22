@@ -124,7 +124,7 @@ filecache = [
 
 [[package]]
 name = "capella-console-client"
-version = "0.20.0"
+version = "0.20.1"
 source = { editable = "." }
 dependencies = [
     { name = "certifi" },
