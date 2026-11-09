@@ -2,7 +2,11 @@
 History
 =======
 
-* on behalf tasking (create_tasking_request | create_repeat_request)
+0.21.0 (2026-11-09)
+-------------------
+* on behalf tasking for create_tasking_request & create_repeat_request (`#189 <https://github.com/capellaspace/console-client/pull/189>`_)
+* drop Python 3.10 support and add Python 3.15 support (`#185 <https://github.com/capellaspace/console-client/pull/185>`_)
+* httpx to httpx2 migration (`#184 <https://github.com/capellaspace/console-client/pull/184>`_)
 
 0.20.0 (2026-10-22)
 -------------------
