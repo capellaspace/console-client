@@ -138,11 +138,13 @@ class CapellaConsoleClient:
             name: Can be used along with description to help characterize and describe the tasking request. Default: ""
             off_nadir_max: Maximum off-nadir angle permitted. Must be greater than off_nadir_min. Default: None
             off_nadir_min: Minimum off-nadir angle permitted. Must be less than off_nadir_max. Default: None
+            org_id: Organization ID to create the request on behalf of. Must be provided with user_id and requires elevated permissions. Default: None
             orbital_planes: List of orbital planes allowed to service request. If empty any spacecraft in any plane can service request. One of 45, 53, 97. Default: None
             polarization: Image polarization. One of "HH", "VV". Default: None
             pre_approval: will skip the tasking request cost review step if set to true. Default: false
             product_types: List of analytics to add to the order along with the imagery. Currently available analytics are Vessel classification (VC), Default: None
             squint: Determines if generated collects will be squinted. One of: enabled, forward, backward. Default: enabled for point requests, disabled for area requests
+            user_id: User ID to create the request on behalf of. Must be provided with org_id and requires elevated permissions. Default: None
             window_close: Latest time (in UTC) that you would like data to be collected. Default: Seven days after window_open
             window_open: Earliest time (in UTC) that you would like data to be collected. Default: Now
         Returns:
@@ -315,6 +317,7 @@ class CapellaConsoleClient:
             name: Can be used along with description to help characterize and describe the tasking request. Default: ""
             off_nadir_max: Maximum off-nadir angle permitted. Must be greater than off_nadir_min. Default: None
             off_nadir_min: Minimum off-nadir angle permitted. Must be less than off_nadir_max. Default: None
+            org_id: Organization ID to create the request on behalf of. Must be provided with user_id and requires elevated permissions. Default: None
             orbital_planes: List of orbital planes allowed to service request. If empty any spacecraft in any plane can service request. One of 45, 53, 97. Default: None
             polarization: Image polarization. One of "HH", "VV". Default: None
             product_types: List of analytics to add to the order along with the imagery. Currently available analytics are Vessel classification (VC), Default: None
@@ -323,6 +326,7 @@ class CapellaConsoleClient:
             repetition_count: Total number of acquisitions in the repeat series. This and repeat_end are mutually exclusive; only one of them can be defined per request. Default: None
             repetition_interval: Number of days between the start of each derived request. Default: 7
             squint: Determines if generated collects will be squinted. One of: enabled, forward, backward. Default: enabled for point requests, disabled for area requests
+            user_id: User ID to create the request on behalf of. Must be provided with org_id and requires elevated permissions. Default: None
             window_duration: Duration of derived repeat requests in seconds
         Returns:
             Dict[str, Any]: created repeat request metadata
