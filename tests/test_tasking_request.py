@@ -1,3 +1,4 @@
+import json
 import random
 import uuid
 
@@ -51,6 +52,32 @@ def test_get_collects_for_task_not_completed(test_client, auth_httpx2_mock, disa
 def test_create_task_returns_new_task(test_client, authed_tasking_request_mock):
     tasking_requests = test_client.create_tasking_request(geometry=mock_geojson, name="test")
     assert tasking_requests == post_mock_responses("/task")
+
+    request = authed_tasking_request_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/task")
+    request_payload = json.loads(request.read())
+    assert "userId" not in request_payload["properties"]
+    assert "orgId" not in request_payload["properties"]
+
+
+def test_create_task_on_behalf_of_user(test_client, authed_tasking_request_mock):
+    tasking_request = test_client.create_tasking_request(
+        geometry=mock_geojson,
+        name="test",
+        user_id="user-123",
+        org_id="org-456",
+    )
+    assert tasking_request == post_mock_responses("/task")
+
+    request = authed_tasking_request_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/task")
+    request_payload = json.loads(request.read())
+    assert request_payload["properties"]["userId"] == "user-123"
+    assert request_payload["properties"]["orgId"] == "org-456"
+
+
+@pytest.mark.parametrize("identity", [{"user_id": "user-123"}, {"org_id": "org-456"}])
+def test_create_task_requires_user_and_org_ids(test_client, identity):
+    with pytest.raises(ValueError, match="user_id and org_id must be provided together"):
+        test_client.create_tasking_request(geometry=mock_geojson, name="test", **identity)
 
 
 def test_create_task_invalid_window_open(test_client):

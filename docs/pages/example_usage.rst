@@ -667,6 +667,17 @@ NOTE: `geometry` and `name` are the only required properties to create a tasking
         max_squint_angle=30,
     )
 
+Users with elevated permissions can create a tasking request on behalf of another user and organization. ``user_id`` and ``org_id`` must be provided together; the API authorizes the caller and validates the target identity.
+
+.. code:: python3
+
+    client.create_tasking_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="delegated tasking request",
+        user_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        org_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    )
+
 update
 ******
 
@@ -863,6 +874,17 @@ NOTE: `geometry` and `name` are the only required properties to create a repeat 
         azimuth_angle_max=20,
         squint=SquintMode.ENABLED,
         max_squint_angle=30,
+    )
+
+Users with elevated permissions can also create a repeat request on behalf of another user and organization.
+
+.. code:: python
+
+    client.create_repeat_request(
+        geometry=geojson.Point([11.148216220469152, 49.59672249842626]),
+        name="delegated repeat request",
+        user_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        org_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     )
 
 

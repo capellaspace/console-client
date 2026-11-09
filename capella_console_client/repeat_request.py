@@ -28,6 +28,7 @@ from capella_console_client.exceptions import RepeatRequestPayloadValidationErro
 from capella_console_client.logconf import logger
 from capella_console_client.session import CapellaConsoleSession
 from capella_console_client.tasking_request import (
+    _add_delegated_identity,
     _cancel_multi_parallel,
     _cancel_worker,
     _update_multi_parallel,
@@ -69,6 +70,9 @@ def create_repeat_request(
     azimuth_angle_tolerance: float | None = None,
     window_duration: float | None = None,
     insar_orbit: InsarOrbit | str | None = None,
+    *,
+    user_id: str | None = None,
+    org_id: str | None = None,
 ) -> dict[str, Any]:
     repeat_start, repeat_end = _set_repetition_start_end(repeat_start, repeat_end, repetition_count)
 
@@ -110,6 +114,8 @@ def create_repeat_request(
 
     if insar_orbit:
         payload["properties"]["insar"] = {"orbit": insar_orbit}
+
+    _add_delegated_identity(payload, user_id, org_id)
 
     logger.info(f"creating repeat request with payload {payload}")
     return session.post("/repeat-requests", json=payload).json()

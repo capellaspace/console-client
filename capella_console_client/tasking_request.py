@@ -60,6 +60,9 @@ def create_tasking_request(
     squint: SquintMode | str | None = None,
     max_squint_angle: int | None = None,
     contract_id: str | None = None,
+    *,
+    user_id: str | None = None,
+    org_id: str | None = None,
 ) -> dict[str, Any]:
 
     window_open, window_close = _set_window_open_close(window_open, window_close)
@@ -98,8 +101,23 @@ def create_tasking_request(
     if contract_id:
         payload["contractId"] = contract_id
 
+    _add_delegated_identity(payload, user_id, org_id)
+
     logger.info(f"creating tasking request with payload {payload}")
     return session.post("/task", json=payload).json()
+
+
+def _add_delegated_identity(
+    payload: dict[str, Any],
+    user_id: str | None,
+    org_id: str | None,
+) -> None:
+    if (user_id is None) != (org_id is None):
+        raise ValueError("user_id and org_id must be provided together")
+
+    if user_id is not None:
+        payload["properties"]["userId"] = user_id
+        payload["properties"]["orgId"] = org_id
 
 
 def _set_window_open_close(window_open: datetime | str | None, window_close: datetime | str | None) -> tuple[str, str]:

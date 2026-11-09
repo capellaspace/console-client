@@ -1,3 +1,4 @@
+import json
 import random
 import uuid
 
@@ -15,6 +16,26 @@ mock_geojson = {"coordinates": [-105.120360, 39.965330], "type": "Point"}
 def test_create_repeat_request_returns_new_request(test_client, authed_repeat_request_mock):
     repeat_request = test_client.create_repeat_request(geometry=mock_geojson, name="test")
     assert repeat_request == post_mock_responses("/repeat-requests")
+
+    request = authed_repeat_request_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/repeat-requests")
+    request_payload = json.loads(request.read())
+    assert "userId" not in request_payload["properties"]
+    assert "orgId" not in request_payload["properties"]
+
+
+def test_create_repeat_request_on_behalf_of_user(test_client, authed_repeat_request_mock):
+    repeat_request = test_client.create_repeat_request(
+        geometry=mock_geojson,
+        name="test",
+        user_id="user-123",
+        org_id="org-456",
+    )
+    assert repeat_request == post_mock_responses("/repeat-requests")
+
+    request = authed_repeat_request_mock.get_request(method="POST", url=f"{CONSOLE_API_URL}/repeat-requests")
+    request_payload = json.loads(request.read())
+    assert request_payload["properties"]["userId"] == "user-123"
+    assert request_payload["properties"]["orgId"] == "org-456"
 
 
 def test_create_repeat_request_invalid_repeat_start(test_client):
